@@ -1,60 +1,70 @@
 package main
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestHandler(t *testing.T) {
-	testCases := []struct {
-		name          string
-		request       events.APIGatewayProxyRequest
-		expectedBody  string
-		expectedError error
+	tests := []struct {
+		name           string
+		request        events.APIGatewayProxyRequest
+		expectedStatus int
+		expectedBody   string
 	}{
 		{
-			// mock a request with an empty SourceIP
-			name: "empty IP",
-			request: events.APIGatewayProxyRequest{
-				RequestContext: events.APIGatewayProxyRequestContext{
-					Identity: events.APIGatewayRequestIdentity{
-						SourceIP: "",
-					},
-				},
-			},
-			expectedBody:  "Hello, world!\n",
-			expectedError: nil,
+			name:           "GET Request",
+			request:        events.APIGatewayProxyRequest{HTTPMethod: http.MethodGet},
+			expectedStatus: http.StatusOK,
+			expectedBody:   "GET Request",
 		},
 		{
-			// mock a request with a localhost SourceIP
-			name: "localhost IP",
+			name: "POST Request with valid JSON",
 			request: events.APIGatewayProxyRequest{
-				RequestContext: events.APIGatewayProxyRequestContext{
-					Identity: events.APIGatewayRequestIdentity{
-						SourceIP: "127.0.0.1",
-					},
-				},
+				HTTPMethod: http.MethodPost,
+				Body:       `{"key": "value"}`,
 			},
-			expectedBody:  "Hello, 127.0.0.1!\n",
-			expectedError: nil,
+			expectedStatus: http.StatusOK,
+			expectedBody:   "Received value: value",
+		},
+		{
+			name: "POST Request with invalid JSON",
+			request: events.APIGatewayProxyRequest{
+				HTTPMethod: http.MethodPost,
+				Body:       "invalid-json",
+			},
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   "Invalid JSON format",
+		},
+		{
+			name:           "PUT Request",
+			request:        events.APIGatewayProxyRequest{HTTPMethod: http.MethodPut},
+			expectedStatus: http.StatusOK,
+			expectedBody:   "PUT Request",
+		},
+		{
+			name:           "DELETE Request",
+			request:        events.APIGatewayProxyRequest{HTTPMethod: http.MethodDelete},
+			expectedStatus: http.StatusOK,
+			expectedBody:   "DELETE Request",
+		},
+		{
+			name:           "Unsupported Method",
+			request:        events.APIGatewayProxyRequest{HTTPMethod: "INVALID"},
+			expectedStatus: http.StatusMethodNotAllowed,
+			expectedBody:   "",
 		},
 	}
 
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			response, err := handler(testCase.request)
-			if err != testCase.expectedError {
-				t.Errorf("Expected error %v, but got %v", testCase.expectedError, err)
-			}
-
-			if response.Body != testCase.expectedBody {
-				t.Errorf("Expected response %v, but got %v", testCase.expectedBody, response.Body)
-			}
-
-			if response.StatusCode != 200 {
-				t.Errorf("Expected status code 200, but got %v", response.StatusCode)
-			}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			response, err := handler(test.request)
+			assert.Nil(t, err)
+			assert.Equal(t, test.expectedStatus, response.StatusCode)
+			assert.Equal(t, test.expectedBody, response.Body)
 		})
 	}
 }
