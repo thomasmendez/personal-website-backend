@@ -4,7 +4,7 @@ version = 0.1
 
 [default]
 [default.global.parameters]
-stack_name = "sam-app-2"
+stack_name = "personal-website-backend"
 
 [default.build.parameters]
 cached = true
@@ -17,7 +17,7 @@ lint = true
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 resolve_s3 = true
-s3_prefix = "sam-app-2"
+s3_prefix = "personal-website-backend"
 region = "us-east-2"
 disable_rollback = true
 image_repositories = []
