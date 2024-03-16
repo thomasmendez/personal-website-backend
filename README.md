@@ -34,10 +34,42 @@ make
 
 ### Local development
 
+**DynamoDb Docker Container**
+
+```bash
+docker run -p 8000:8000 amazon/dynamodb-local
+```
+
+**Viewing DynamoDb Tables**
+
+```bash
+aws dynamodb list-tables --endpoint-url http://localhost:8000
+```
+
+**Creating DynamoDb Tables**
+
+```bash
+aws dynamodb create-table --cli-input-json file://json/create-table.json --endpoint-url http://localhost:8000
+```
+
+**Add DynamoDb Data**
+
+```bash
+aws dynamodb put-item --cli-input-json file://json/add-table-items.json --endpoint-url http://localhost:8000
+```
+
+**View DynamoDb Data**
+
+```bash
+aws dynamodb scan --table-name PersonalWebsiteTable --endpoint-url http://localhost:8000
+```
+
 **Invoking function locally through local API Gateway**
 
 ```bash
-sam local start-api
+sam.cmd local start-api --docker-network abp-sam-backend
+
+sam.cmd local start-api --docker-network dynamodb
 ```
 
 If the previous command ran successfully you should now be able to hit the following local endpoint to invoke your function `http://localhost:3000/hello`
