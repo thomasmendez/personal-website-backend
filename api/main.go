@@ -263,5 +263,34 @@ func handlePutRequest(ctx context.Context, request events.APIGatewayProxyRequest
 }
 
 func handleDeleteRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+
+	var deleteItem Item
+	if err := json.Unmarshal([]byte(request.Body), &deleteItem); err != nil {
+		log.Printf("Error parsing request body: %v", err)
+		return events.APIGatewayProxyResponse{StatusCode: 400}, err
+	}
+
+	// Prepare the key of the item to delete
+	key := map[string]*dynamodb.AttributeValue{
+		"id":   {S: aws.String(deleteItem.ID)},   // Assuming 'id' is the primary key
+		"name": {S: aws.String(deleteItem.Name)}, // Assuming 'id' is the primary key
+	}
+
+	// Construct DeleteItemInput
+	input := &dynamodb.DeleteItemInput{
+		Key:       key,
+		TableName: aws.String(tableName),
+	}
+
+	// Delete item from DynamoDB table
+	deleteItemOutput, err := dynamoDbClient.DeleteItem(input)
+	if err != nil {
+		log.Printf("Error deleting item: %v", err)
+		return events.APIGatewayProxyResponse{StatusCode: 500}, err
+	}
+
+	log.Printf("delete item output: %v", deleteItemOutput)
+
+	// responseBody := fmt.Sprintf("Item with ID %s deleted successfully", idToDelete)
 	return events.APIGatewayProxyResponse{StatusCode: http.StatusOK, Body: "DELETE Request"}, nil
 }
