@@ -259,6 +259,37 @@ func handlePostRequest(ctx context.Context, request events.APIGatewayProxyReques
 }
 
 func handlePutRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	var updateItem Item
+	if err := json.Unmarshal([]byte(request.Body), &updateItem); err != nil {
+		log.Printf("Error parsing request body: %v", err)
+		return events.APIGatewayProxyResponse{StatusCode: 400}, err
+	}
+
+	updateExpression := "SET #name = :name"
+	expressionAttributeValues := map[string]*dynamodb.AttributeValue{
+		":name": {S: aws.String(updateItem.Name)},
+	}
+	expressionAttributeNames := map[string]*string{
+		"#name": aws.String("name"),
+	}
+
+	// Construct UpdateItemInput
+	input := &dynamodb.UpdateItemInput{
+		TableName:                 aws.String(tableName),
+		Key:                       map[string]*dynamodb.AttributeValue{"id": {S: aws.String(updateItem.ID)}},
+		UpdateExpression:          aws.String(updateExpression),
+		ExpressionAttributeValues: expressionAttributeValues,
+		ExpressionAttributeNames:  expressionAttributeNames,
+	}
+
+	// Update item in DynamoDB table
+	updateItemOutput, err := dynamoDbClient.UpdateItem(input)
+	if err != nil {
+		log.Printf("Error updating item: %v", err)
+		return events.APIGatewayProxyResponse{StatusCode: 500}, err
+	}
+	log.Printf("updateItemOutput: %v", updateItemOutput)
+	// responseBody := fmt.Sprintf("Item with ID %s updated successfully", idToUpdate)
 	return events.APIGatewayProxyResponse{StatusCode: http.StatusOK, Body: "PUT Request"}, nil
 }
 
@@ -272,8 +303,7 @@ func handleDeleteRequest(ctx context.Context, request events.APIGatewayProxyRequ
 
 	// Prepare the key of the item to delete
 	key := map[string]*dynamodb.AttributeValue{
-		"id":   {S: aws.String(deleteItem.ID)},   // Assuming 'id' is the primary key
-		"name": {S: aws.String(deleteItem.Name)}, // Assuming 'id' is the primary key
+		"id": {S: aws.String(deleteItem.ID)}, // Assuming 'id' is the primary key
 	}
 
 	// Construct DeleteItemInput
