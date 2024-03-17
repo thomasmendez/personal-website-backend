@@ -96,7 +96,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 
 func handleGetRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
-	if !strings.HasPrefix(request.Path, "/api/jobs") {
+	if !strings.HasPrefix(request.Path, "/api/work") {
 		log.Printf("Invalid path: %s", request.Path)
 		return events.APIGatewayProxyResponse{StatusCode: 404}, fmt.Errorf("not found")
 	}
@@ -109,7 +109,7 @@ func handleGetRequest(ctx context.Context, request events.APIGatewayProxyRequest
 	// }
 	jobIDStr := pathParts[len(pathParts)-1]
 
-	if jobIDStr == "jobs" {
+	if jobIDStr == "work" {
 
 		input := &dynamodb.ScanInput{
 			TableName: aws.String("PersonalWebsiteTable"),
@@ -225,22 +225,27 @@ func handlePostRequest(ctx context.Context, request events.APIGatewayProxyReques
 	var newItem Item
 	err := json.Unmarshal([]byte(request.Body), &newItem)
 	if err != nil {
+		log.Printf("err: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Body:       "Bad Request: Invalid JSON",
 		}, nil
 	}
 
-	// Insert data into DynamoDB
-	// _, err = dynamoDbClient.PutItem(ctx, &dynamodb.PutItemInput{
-	// 	TableName: aws.String(tableName),
-	// 	Item: map[string]types.AttributeValue{
-	// 		"id":   &types.AttributeValueMemberS{Value: fmt.Sprint(newItem.ID)},
-	// 		"name": &types.AttributeValueMemberS{Value: newItem.Name},
-	// 	},
-	// })
+	item := map[string]*dynamodb.AttributeValue{
+		"id":   {S: aws.String(newItem.ID)},
+		"name": {S: aws.String(newItem.Name)},
+	}
 
+	input := &dynamodb.PutItemInput{
+		Item:      item,
+		TableName: aws.String(tableName),
+	}
+
+	// Insert item into DynamoDB table
+	_, err = dynamoDbClient.PutItem(input)
 	if err != nil {
+		fmt.Println("Error inserting item:", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusInternalServerError,
 			Body:       "Error inserting data into DynamoDB",
