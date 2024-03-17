@@ -1,17 +1,17 @@
 version: '3.8'
 services:
-  dynamo:
-    container_name: abp-sam-nestjs-dynamodb
-    image: amazon/dynamodb-local
-    networks:
-      - backend
-    ports:
-      - '8000:8000'
-    volumes:
-      - "./docker/dynamodb:/home/dynamodblocal/data"
-    working_dir: /home/dynamodblocal
-    command: '-jar DynamoDBLocal.jar -sharedDb -dbPath .'
+ dynamodb:
+   command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
+   image: "amazon/dynamodb-local:latest"
+   container_name: dynamodb-local
+   networks:
+     - backend
+   ports:
+     - "8000:8000"
+   volumes:
+     - "./docker/dynamodb:/home/dynamodblocal/data"
+   working_dir: /home/dynamodblocal
 
 networks:
   backend:
-    name: abp-sam-backend
+    name: dynamodb-backend

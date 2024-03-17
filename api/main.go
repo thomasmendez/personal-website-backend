@@ -12,7 +12,6 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
@@ -36,7 +35,7 @@ func main() {
 	// }))
 	session := session.Must(session.NewSessionWithOptions(session.Options{
 		Config: aws.Config{
-			Endpoint: aws.String("http://dynamo:8000"),
+			Endpoint: aws.String("http://dynamodb:8000"),
 			Region:   aws.String("us-west-2"),
 		},
 	}))
@@ -46,28 +45,28 @@ func main() {
 
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
-	input := &dynamodb.ListTablesInput{}
+	// input := &dynamodb.ListTablesInput{}
 
-	result, err := dynamoDbClient.ListTables(input)
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case dynamodb.ErrCodeInternalServerError:
-				fmt.Println(dynamodb.ErrCodeInternalServerError, aerr.Error())
-			default:
-				fmt.Println(aerr.Error())
-			}
-		} else {
-			// Print the error, cast err to awserr.Error to get the Code and
-			// Message from an error.
-			fmt.Println(err.Error())
-		}
-		return events.APIGatewayProxyResponse{StatusCode: 500}, fmt.Errorf("internal server error")
-	}
+	// result, err := dynamoDbClient.ListTables(input)
+	// if err != nil {
+	// 	if aerr, ok := err.(awserr.Error); ok {
+	// 		switch aerr.Code() {
+	// 		case dynamodb.ErrCodeInternalServerError:
+	// 			fmt.Println(dynamodb.ErrCodeInternalServerError, aerr.Error())
+	// 		default:
+	// 			fmt.Println(aerr.Error())
+	// 		}
+	// 	} else {
+	// 		// Print the error, cast err to awserr.Error to get the Code and
+	// 		// Message from an error.
+	// 		fmt.Println(err.Error())
+	// 	}
+	// 	return events.APIGatewayProxyResponse{StatusCode: 500}, fmt.Errorf("internal server error")
+	// }
 
-	for _, n := range result.TableNames {
-		fmt.Println(*n)
-	}
+	// for _, n := range result.TableNames {
+	// 	fmt.Println(*n)
+	// }
 
 	// assign the last read tablename as the start for our next call to the ListTables function
 	// the maximum number of table names returned in a call is 100 (default), which requires us to make

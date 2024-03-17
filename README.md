@@ -67,9 +67,7 @@ aws dynamodb scan --table-name PersonalWebsiteTable --endpoint-url http://localh
 **Invoking function locally through local API Gateway**
 
 ```bash
-sam.cmd local start-api --docker-network abp-sam-backend
-
-sam.cmd local start-api --docker-network dynamodb
+sam.cmd local start-api --docker-network dynamodb-backend
 ```
 
 If the previous command ran successfully you should now be able to hit the following local endpoint to invoke your function `http://localhost:3000/hello`
