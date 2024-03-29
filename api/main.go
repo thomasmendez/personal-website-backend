@@ -1,24 +1,15 @@
 package main
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
-	"log"
-	"net/http"
-	"strconv"
-	"strings"
-
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/thomasmendez/personal-website-backend/api/services"
 )
 
-var dynamoDbClient *dynamodb.DynamoDB
+// var dynamoDbClient *dynamodb.DynamoDB
 
 const tableName = "PersonalWebsiteTable"
+
+// var database *database.Database
 
 type ErrorResponse struct {
 	Message string `json:"message"`
@@ -33,294 +24,257 @@ func main() {
 	// session := session.Must(session.NewSessionWithOptions(session.Options{
 	// 	SharedConfigState: session.SharedConfigEnable,
 	// }))
-	session := session.Must(session.NewSessionWithOptions(session.Options{
-		Config: aws.Config{
-			Endpoint: aws.String("http://dynamodb:8000"),
-			Region:   aws.String("us-west-2"),
-		},
-	}))
-	dynamoDbClient = dynamodb.New(session)
-	lambda.Start(handler)
+
+	srv := services.NewService()
+
+	lambda.Start(srv.HandleRoute)
 }
 
-func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+// func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+// 	// switch request.HTTPMethod {
+// 	// case http.MethodGet:
+// 	// 	return handleGetRequest(ctx, request)
+// 	// case http.MethodPost:
+// 	// 	return handlePostRequest(ctx, request)
+// 	// case http.MethodPut:
+// 	// 	return handlePutRequest(ctx, request)
+// 	// case http.MethodDelete:
+// 	// 	return handleDeleteRequest(ctx, request)
+// 	// default:
+// 	// 	return events.APIGatewayProxyResponse{
+// 	// 		StatusCode: http.StatusMethodNotAllowed,
+// 	// 		Body:       http.StatusText(http.StatusMethodNotAllowed),
+// 	// 	}, nil
+// 	// }
+// }
 
-	// input := &dynamodb.ListTablesInput{}
+// func handleGetRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
-	// result, err := dynamoDbClient.ListTables(input)
-	// if err != nil {
-	// 	if aerr, ok := err.(awserr.Error); ok {
-	// 		switch aerr.Code() {
-	// 		case dynamodb.ErrCodeInternalServerError:
-	// 			fmt.Println(dynamodb.ErrCodeInternalServerError, aerr.Error())
-	// 		default:
-	// 			fmt.Println(aerr.Error())
-	// 		}
-	// 	} else {
-	// 		// Print the error, cast err to awserr.Error to get the Code and
-	// 		// Message from an error.
-	// 		fmt.Println(err.Error())
-	// 	}
-	// 	return events.APIGatewayProxyResponse{StatusCode: 500}, fmt.Errorf("internal server error")
-	// }
+// 	if !strings.HasPrefix(request.Path, "/api/work") {
+// 		log.Printf("Invalid path: %s", request.Path)
+// 		return events.APIGatewayProxyResponse{StatusCode: 404}, fmt.Errorf("not found")
+// 	}
 
-	// for _, n := range result.TableNames {
-	// 	fmt.Println(*n)
-	// }
+// 	pathParts := strings.Split(request.Path, "/")
+// 	log.Printf("path parts: %v", pathParts)
+// 	// if len(pathParts) < 4 {
+// 	// 	log.Printf("Invalid path: %s", request.Path)
+// 	// 	return events.APIGatewayProxyResponse{StatusCode: 404}, fmt.Errorf("not found")
+// 	// }
+// 	jobIDStr := pathParts[len(pathParts)-1]
 
-	// assign the last read tablename as the start for our next call to the ListTables function
-	// the maximum number of table names returned in a call is 100 (default), which requires us to make
-	// multiple calls to the ListTables function to retrieve all table names
-	// input.ExclusiveStartTableName = result.LastEvaluatedTableName
+// 	if jobIDStr == "work" {
 
-	// if result.LastEvaluatedTableName == nil {
-	// 	break
-	// }
+// 		input := &dynamodb.ScanInput{
+// 			TableName: aws.String("PersonalWebsiteTable"),
+// 		}
 
-	switch request.HTTPMethod {
-	case http.MethodGet:
-		return handleGetRequest(ctx, request)
-	case http.MethodPost:
-		return handlePostRequest(ctx, request)
-	case http.MethodPut:
-		return handlePutRequest(ctx, request)
-	case http.MethodDelete:
-		return handleDeleteRequest(ctx, request)
-	default:
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusMethodNotAllowed,
-			Body:       http.StatusText(http.StatusMethodNotAllowed),
-		}, nil
-	}
-}
+// 		result, err := dynamoDbClient.Scan(input)
+// 		if err != nil {
+// 			errorResponse := ErrorResponse{Message: fmt.Sprintf("Error scanning table: %s", err.Error())}
+// 			responseBody, _ := json.Marshal(errorResponse)
+// 			return events.APIGatewayProxyResponse{
+// 				StatusCode: 500,
+// 				Body:       string(responseBody),
+// 			}, nil
+// 		}
 
-func handleGetRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+// 		// Iterate through the result and construct a list of JobDescription objects
+// 		jobDescriptions := make([]Item, 0)
+// 		for _, item := range result.Items {
+// 			job := Item{
+// 				ID:   aws.StringValue(item["id"].S),
+// 				Name: aws.StringValue(item["name"].S),
+// 			}
+// 			jobDescriptions = append(jobDescriptions, job)
+// 		}
 
-	if !strings.HasPrefix(request.Path, "/api/work") {
-		log.Printf("Invalid path: %s", request.Path)
-		return events.APIGatewayProxyResponse{StatusCode: 404}, fmt.Errorf("not found")
-	}
+// 		// Marshal the list of job descriptions into JSON format for the response body
+// 		responseBody, err := json.Marshal(jobDescriptions)
+// 		if err != nil {
+// 			errorResponse := ErrorResponse{Message: fmt.Sprintf("Error marshalling response: %s", err.Error())}
+// 			responseBody, _ := json.Marshal(errorResponse)
+// 			return events.APIGatewayProxyResponse{
+// 				StatusCode: 500,
+// 				Body:       string(responseBody),
+// 			}, nil
+// 		}
 
-	pathParts := strings.Split(request.Path, "/")
-	log.Printf("path parts: %v", pathParts)
-	// if len(pathParts) < 4 {
-	// 	log.Printf("Invalid path: %s", request.Path)
-	// 	return events.APIGatewayProxyResponse{StatusCode: 404}, fmt.Errorf("not found")
-	// }
-	jobIDStr := pathParts[len(pathParts)-1]
+// 		// Return the list of job descriptions in the response
+// 		return events.APIGatewayProxyResponse{
+// 			StatusCode: 200,
+// 			Body:       string(responseBody),
+// 		}, nil
+// 	}
 
-	if jobIDStr == "work" {
+// 	// Validate that the ID is an integer
+// 	jobID, err := strconv.Atoi(jobIDStr)
+// 	if err != nil {
+// 		log.Printf("Error parsing job ID: %v", err)
+// 		return events.APIGatewayProxyResponse{StatusCode: 400}, fmt.Errorf("invalid job ID")
+// 	}
 
-		input := &dynamodb.ScanInput{
-			TableName: aws.String("PersonalWebsiteTable"),
-		}
+// 	log.Printf("jobId: %v", jobID)
 
-		result, err := dynamoDbClient.Scan(input)
-		if err != nil {
-			errorResponse := ErrorResponse{Message: fmt.Sprintf("Error scanning table: %s", err.Error())}
-			responseBody, _ := json.Marshal(errorResponse)
-			return events.APIGatewayProxyResponse{
-				StatusCode: 500,
-				Body:       string(responseBody),
-			}, nil
-		}
+// 	// Build DynamoDB query input
+// 	input := &dynamodb.GetItemInput{
+// 		TableName: aws.String(tableName),
+// 		Key: map[string]*dynamodb.AttributeValue{
+// 			// "id": &types.AttributeValueMemberS{Value: *aws.String(strconv.Itoa(jobID))},
+// 			"id": {
+// 				S: aws.String("1"),
+// 			},
+// 			"name": {
+// 				S: aws.String("John"),
+// 			},
+// 		},
+// 	}
 
-		// Iterate through the result and construct a list of JobDescription objects
-		jobDescriptions := make([]Item, 0)
-		for _, item := range result.Items {
-			job := Item{
-				ID:   aws.StringValue(item["id"].S),
-				Name: aws.StringValue(item["name"].S),
-			}
-			jobDescriptions = append(jobDescriptions, job)
-		}
+// 	result, err := dynamoDbClient.GetItem(input)
+// 	if err != nil {
+// 		log.Printf("Error calling DynamoDB GetItem API: %v", err)
 
-		// Marshal the list of job descriptions into JSON format for the response body
-		responseBody, err := json.Marshal(jobDescriptions)
-		if err != nil {
-			errorResponse := ErrorResponse{Message: fmt.Sprintf("Error marshalling response: %s", err.Error())}
-			responseBody, _ := json.Marshal(errorResponse)
-			return events.APIGatewayProxyResponse{
-				StatusCode: 500,
-				Body:       string(responseBody),
-			}, nil
-		}
+// 		if _, ok := err.(*dynamodb.ResourceNotFoundException); ok {
+// 			errorResponse := ErrorResponse{Message: "Item not found"}
+// 			responseBody, _ := json.Marshal(errorResponse)
+// 			return events.APIGatewayProxyResponse{
+// 				StatusCode: 404,
+// 				Body:       string(responseBody),
+// 			}, nil
+// 		}
 
-		// Return the list of job descriptions in the response
-		return events.APIGatewayProxyResponse{
-			StatusCode: 200,
-			Body:       string(responseBody),
-		}, nil
-	}
+// 		errorResponse := ErrorResponse{Message: fmt.Sprintf("Error retrieving item: %s", err.Error())}
+// 		responseBody, _ := json.Marshal(errorResponse)
+// 		return events.APIGatewayProxyResponse{
+// 			StatusCode: 500,
+// 			Body:       string(responseBody),
+// 		}, nil
+// 	}
 
-	// Validate that the ID is an integer
-	jobID, err := strconv.Atoi(jobIDStr)
-	if err != nil {
-		log.Printf("Error parsing job ID: %v", err)
-		return events.APIGatewayProxyResponse{StatusCode: 400}, fmt.Errorf("invalid job ID")
-	}
+// 	// Check if the item was found
+// 	if result.Item == nil {
+// 		return events.APIGatewayProxyResponse{StatusCode: 404, Body: "Item not found"}, nil
+// 	}
 
-	log.Printf("jobId: %v", jobID)
+// 	// item := Item{}
 
-	// Build DynamoDB query input
-	input := &dynamodb.GetItemInput{
-		TableName: aws.String(tableName),
-		Key: map[string]*dynamodb.AttributeValue{
-			// "id": &types.AttributeValueMemberS{Value: *aws.String(strconv.Itoa(jobID))},
-			"id": {
-				S: aws.String("1"),
-			},
-			"name": {
-				S: aws.String("John"),
-			},
-		},
-	}
+// 	// err = dynamodbattribute.UnmarshalMap(result.Item, &item)
+// 	// if err != nil {
+// 	// 	panic(fmt.Sprintf("Failed to unmarshal Record, %v", err))
+// 	// }
 
-	result, err := dynamoDbClient.GetItem(input)
-	if err != nil {
-		log.Printf("Error calling DynamoDB GetItem API: %v", err)
+// 	// Convert DynamoDB result to JSON
+// 	jsonData, err := json.Marshal(result.Item)
+// 	if err != nil {
+// 		return events.APIGatewayProxyResponse{StatusCode: 500, Body: "Error converting DynamoDB result to JSON"}, err
+// 	}
 
-		if _, ok := err.(*dynamodb.ResourceNotFoundException); ok {
-			errorResponse := ErrorResponse{Message: "Item not found"}
-			responseBody, _ := json.Marshal(errorResponse)
-			return events.APIGatewayProxyResponse{
-				StatusCode: 404,
-				Body:       string(responseBody),
-			}, nil
-		}
+// 	return events.APIGatewayProxyResponse{
+// 		StatusCode: 200,
+// 		Body:       string(jsonData),
+// 	}, nil
+// }
 
-		errorResponse := ErrorResponse{Message: fmt.Sprintf("Error retrieving item: %s", err.Error())}
-		responseBody, _ := json.Marshal(errorResponse)
-		return events.APIGatewayProxyResponse{
-			StatusCode: 500,
-			Body:       string(responseBody),
-		}, nil
-	}
+// func handlePostRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+// 	var newItem Item
+// 	err := json.Unmarshal([]byte(request.Body), &newItem)
+// 	if err != nil {
+// 		log.Printf("err: %v", err)
+// 		return events.APIGatewayProxyResponse{
+// 			StatusCode: http.StatusBadRequest,
+// 			Body:       "Bad Request: Invalid JSON",
+// 		}, nil
+// 	}
 
-	// Check if the item was found
-	if result.Item == nil {
-		return events.APIGatewayProxyResponse{StatusCode: 404, Body: "Item not found"}, nil
-	}
+// 	item := map[string]*dynamodb.AttributeValue{
+// 		"id":   {S: aws.String(newItem.ID)},
+// 		"name": {S: aws.String(newItem.Name)},
+// 	}
 
-	// item := Item{}
+// 	input := &dynamodb.PutItemInput{
+// 		Item:      item,
+// 		TableName: aws.String(tableName),
+// 	}
 
-	// err = dynamodbattribute.UnmarshalMap(result.Item, &item)
-	// if err != nil {
-	// 	panic(fmt.Sprintf("Failed to unmarshal Record, %v", err))
-	// }
+// 	// Insert item into DynamoDB table
+// 	_, err = dynamoDbClient.PutItem(input)
+// 	if err != nil {
+// 		fmt.Println("Error inserting item:", err)
+// 		return events.APIGatewayProxyResponse{
+// 			StatusCode: http.StatusInternalServerError,
+// 			Body:       "Error inserting data into DynamoDB",
+// 		}, err
+// 	}
 
-	// Convert DynamoDB result to JSON
-	jsonData, err := json.Marshal(result.Item)
-	if err != nil {
-		return events.APIGatewayProxyResponse{StatusCode: 500, Body: "Error converting DynamoDB result to JSON"}, err
-	}
+// 	return events.APIGatewayProxyResponse{
+// 		StatusCode: http.StatusCreated,
+// 		Body:       "Item Created",
+// 	}, nil
+// }
 
-	return events.APIGatewayProxyResponse{
-		StatusCode: 200,
-		Body:       string(jsonData),
-	}, nil
-}
+// func handlePutRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+// 	var updateItem Item
+// 	if err := json.Unmarshal([]byte(request.Body), &updateItem); err != nil {
+// 		log.Printf("Error parsing request body: %v", err)
+// 		return events.APIGatewayProxyResponse{StatusCode: 400}, err
+// 	}
 
-func handlePostRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	var newItem Item
-	err := json.Unmarshal([]byte(request.Body), &newItem)
-	if err != nil {
-		log.Printf("err: %v", err)
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       "Bad Request: Invalid JSON",
-		}, nil
-	}
+// 	updateExpression := "SET #name = :name"
+// 	expressionAttributeValues := map[string]*dynamodb.AttributeValue{
+// 		":name": {S: aws.String(updateItem.Name)},
+// 	}
+// 	expressionAttributeNames := map[string]*string{
+// 		"#name": aws.String("name"),
+// 	}
 
-	item := map[string]*dynamodb.AttributeValue{
-		"id":   {S: aws.String(newItem.ID)},
-		"name": {S: aws.String(newItem.Name)},
-	}
+// 	// Construct UpdateItemInput
+// 	input := &dynamodb.UpdateItemInput{
+// 		TableName:                 aws.String(tableName),
+// 		Key:                       map[string]*dynamodb.AttributeValue{"id": {S: aws.String(updateItem.ID)}},
+// 		UpdateExpression:          aws.String(updateExpression),
+// 		ExpressionAttributeValues: expressionAttributeValues,
+// 		ExpressionAttributeNames:  expressionAttributeNames,
+// 	}
 
-	input := &dynamodb.PutItemInput{
-		Item:      item,
-		TableName: aws.String(tableName),
-	}
+// 	// Update item in DynamoDB table
+// 	updateItemOutput, err := dynamoDbClient.UpdateItem(input)
+// 	if err != nil {
+// 		log.Printf("Error updating item: %v", err)
+// 		return events.APIGatewayProxyResponse{StatusCode: 500}, err
+// 	}
+// 	log.Printf("updateItemOutput: %v", updateItemOutput)
+// 	// responseBody := fmt.Sprintf("Item with ID %s updated successfully", idToUpdate)
+// 	return events.APIGatewayProxyResponse{StatusCode: http.StatusOK, Body: "PUT Request"}, nil
+// }
 
-	// Insert item into DynamoDB table
-	_, err = dynamoDbClient.PutItem(input)
-	if err != nil {
-		fmt.Println("Error inserting item:", err)
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusInternalServerError,
-			Body:       "Error inserting data into DynamoDB",
-		}, err
-	}
+// func handleDeleteRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
-	return events.APIGatewayProxyResponse{
-		StatusCode: http.StatusCreated,
-		Body:       "Item Created",
-	}, nil
-}
+// 	var deleteItem Item
+// 	if err := json.Unmarshal([]byte(request.Body), &deleteItem); err != nil {
+// 		log.Printf("Error parsing request body: %v", err)
+// 		return events.APIGatewayProxyResponse{StatusCode: 400}, err
+// 	}
 
-func handlePutRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	var updateItem Item
-	if err := json.Unmarshal([]byte(request.Body), &updateItem); err != nil {
-		log.Printf("Error parsing request body: %v", err)
-		return events.APIGatewayProxyResponse{StatusCode: 400}, err
-	}
+// 	// Prepare the key of the item to delete
+// 	key := map[string]*dynamodb.AttributeValue{
+// 		"id": {S: aws.String(deleteItem.ID)}, // Assuming 'id' is the primary key
+// 	}
 
-	updateExpression := "SET #name = :name"
-	expressionAttributeValues := map[string]*dynamodb.AttributeValue{
-		":name": {S: aws.String(updateItem.Name)},
-	}
-	expressionAttributeNames := map[string]*string{
-		"#name": aws.String("name"),
-	}
+// 	// Construct DeleteItemInput
+// 	input := &dynamodb.DeleteItemInput{
+// 		Key:       key,
+// 		TableName: aws.String(tableName),
+// 	}
 
-	// Construct UpdateItemInput
-	input := &dynamodb.UpdateItemInput{
-		TableName:                 aws.String(tableName),
-		Key:                       map[string]*dynamodb.AttributeValue{"id": {S: aws.String(updateItem.ID)}},
-		UpdateExpression:          aws.String(updateExpression),
-		ExpressionAttributeValues: expressionAttributeValues,
-		ExpressionAttributeNames:  expressionAttributeNames,
-	}
+// 	// Delete item from DynamoDB table
+// 	deleteItemOutput, err := dynamoDbClient.DeleteItem(input)
+// 	if err != nil {
+// 		log.Printf("Error deleting item: %v", err)
+// 		return events.APIGatewayProxyResponse{StatusCode: 500}, err
+// 	}
 
-	// Update item in DynamoDB table
-	updateItemOutput, err := dynamoDbClient.UpdateItem(input)
-	if err != nil {
-		log.Printf("Error updating item: %v", err)
-		return events.APIGatewayProxyResponse{StatusCode: 500}, err
-	}
-	log.Printf("updateItemOutput: %v", updateItemOutput)
-	// responseBody := fmt.Sprintf("Item with ID %s updated successfully", idToUpdate)
-	return events.APIGatewayProxyResponse{StatusCode: http.StatusOK, Body: "PUT Request"}, nil
-}
+// 	log.Printf("delete item output: %v", deleteItemOutput)
 
-func handleDeleteRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-
-	var deleteItem Item
-	if err := json.Unmarshal([]byte(request.Body), &deleteItem); err != nil {
-		log.Printf("Error parsing request body: %v", err)
-		return events.APIGatewayProxyResponse{StatusCode: 400}, err
-	}
-
-	// Prepare the key of the item to delete
-	key := map[string]*dynamodb.AttributeValue{
-		"id": {S: aws.String(deleteItem.ID)}, // Assuming 'id' is the primary key
-	}
-
-	// Construct DeleteItemInput
-	input := &dynamodb.DeleteItemInput{
-		Key:       key,
-		TableName: aws.String(tableName),
-	}
-
-	// Delete item from DynamoDB table
-	deleteItemOutput, err := dynamoDbClient.DeleteItem(input)
-	if err != nil {
-		log.Printf("Error deleting item: %v", err)
-		return events.APIGatewayProxyResponse{StatusCode: 500}, err
-	}
-
-	log.Printf("delete item output: %v", deleteItemOutput)
-
-	// responseBody := fmt.Sprintf("Item with ID %s deleted successfully", idToDelete)
-	return events.APIGatewayProxyResponse{StatusCode: http.StatusOK, Body: "DELETE Request"}, nil
-}
+// 	// responseBody := fmt.Sprintf("Item with ID %s deleted successfully", idToDelete)
+// 	return events.APIGatewayProxyResponse{StatusCode: http.StatusOK, Body: "DELETE Request"}, nil
+// }

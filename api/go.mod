@@ -6,6 +6,6 @@ require (
 
 replace gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.2.8
 
-module api
+module github.com/thomasmendez/personal-website-backend/api
 
 go 1.16

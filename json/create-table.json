@@ -1,13 +1,15 @@
 {
-    "TableName": "PersonalWebsiteTable",
-    "KeySchema": [
-      { "AttributeName": "id", "KeyType": "HASH" }
-    ],
-    "AttributeDefinitions": [
-      { "AttributeName": "id", "AttributeType": "S" }
-    ],
-    "ProvisionedThroughput": {
-      "ReadCapacityUnits": 5,
-      "WriteCapacityUnits": 5
-    }
+  "TableName": "PersonalWebsiteTable",
+  "KeySchema": [
+    { "AttributeName": "jobTitle", "KeyType": "HASH" },
+    { "AttributeName": "company", "KeyType": "RANGE" }
+  ],
+  "AttributeDefinitions": [
+    { "AttributeName": "jobTitle", "AttributeType": "S" },
+    { "AttributeName": "company", "AttributeType": "S" }
+  ],
+  "ProvisionedThroughput": {
+    "ReadCapacityUnits": 5,
+    "WriteCapacityUnits": 5
+  }
 }

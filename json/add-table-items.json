@@ -1,8 +1,88 @@
 {
-  "TableName": "PersonalWebsiteTable",
-  "Item": {
-    "id": {"S": "1"},
-    "name": {"S": "John"}
-  }
+    "RequestItems": {
+        "PersonalWebsiteTable": [
+            {
+                "PutRequest": {
+                    "Item": {
+                        "jobTitle": {
+                            "S": "Software Engineer"
+                        },
+                        "company": {
+                            "S": "DEF Inc"
+                        },
+                        "location": {
+                            "M": {
+                                "city": {
+                                    "S": "New York"
+                                },
+                                "state": {
+                                    "S": "NY"
+                                }
+                            }
+                        },
+                        "date": {
+                            "M": {
+                                "startDate": {
+                                    "S": "01/01/2020"
+                                },
+                                "endDate": {
+                                    "S": "12/31/2020"
+                                }
+                            }
+                        },
+                        "jobRole": {
+                            "S": "Backend Developer"
+                        },
+                        "jobDescription": {
+                            "SS": [
+                                "Developed backend systems",
+                                "Optimized database queries"
+                            ]
+                        }
+                    }
+                }
+            },
+            {
+                "PutRequest": {
+                    "Item": {
+                        "jobTitle": {
+                            "S": "Frontend Developer"
+                        },
+                        "company": {
+                            "S": "XYZ Corp"
+                        },
+                        "location": {
+                            "M": {
+                                "city": {
+                                    "S": "San Francisco"
+                                },
+                                "state": {
+                                    "S": "CA"
+                                }
+                            }
+                        },
+                        "date": {
+                            "M": {
+                                "startDate": {
+                                    "S": "01/01/2021"
+                                },
+                                "endDate": {
+                                    "S": "12/31/2021"
+                                }
+                            }
+                        },
+                        "jobRole": {
+                            "S": "Frontend Developer"
+                        },
+                        "jobDescription": {
+                            "SS": [
+                                "Developed user interfaces",
+                                "Worked with JavaScript frameworks"
+                            ]
+                        }
+                    }
+                }
+            }
+        ]
+    }
 }
-  

@@ -54,8 +54,14 @@ aws dynamodb create-table --cli-input-json file://json/create-table.json --endpo
 
 **Add DynamoDb Data**
 
+To write one item
 ```bash
-aws dynamodb put-item --cli-input-json file://json/add-table-items.json --endpoint-url http://localhost:8000
+aws dynamodb put-item --cli-input-json file://json/add-table-item.json --endpoint-url http://localhost:8000
+```
+
+To write multiple
+```bash
+aws dynamodb batch-write-item --cli-input-json file://json/add-table-items.json --endpoint-url http://localhost:8000
 ```
 
 **View DynamoDb Data**
@@ -68,6 +74,12 @@ aws dynamodb scan --table-name PersonalWebsiteTable --endpoint-url http://localh
 
 ```bash
 sam.cmd local start-api --docker-network dynamodb-backend
+```
+
+**Rebuild function locally through local API Gateway**
+
+```bash
+sam.cmd build
 ```
 
 If the previous command ran successfully you should now be able to hit the following local endpoint to invoke your function `http://localhost:3000/hello`
