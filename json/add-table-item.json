@@ -1,6 +1,8 @@
 {
   "TableName": "PersonalWebsiteTable",
   "Item": {
+    "personalWebsiteType": "Job",
+    "sortValue": "2020-01-01",
     "jobTitle": { "S": "Software Engineer" },
     "company": { "S": "ABC Inc" },
     "location": {
@@ -9,12 +11,8 @@
         "state": { "S": "NY" }
       }
     },
-    "date": {
-      "M": {
-        "startDate": { "S": "01/01/2020" },
-        "endDate": { "S": "12/31/2020" }
-      }
-    },
+    "startDate": { "S": "2020-01-01" },
+    "endDate": { "S": "2020-12-31" },
     "jobRole": { "S": "Backend Developer" },
     "jobDescription": { "SS": ["Developed backend systems", "Optimized database queries"] }
   }

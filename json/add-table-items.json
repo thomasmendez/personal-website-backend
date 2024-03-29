@@ -4,6 +4,12 @@
             {
                 "PutRequest": {
                     "Item": {
+                        "personalWebsiteType": {
+                            "S": "Job"
+                        },
+                        "sortValue": {
+                            "S": "2020-01-01"
+                        },
                         "jobTitle": {
                             "S": "Software Engineer"
                         },
@@ -20,15 +26,11 @@
                                 }
                             }
                         },
-                        "date": {
-                            "M": {
-                                "startDate": {
-                                    "S": "01/01/2020"
-                                },
-                                "endDate": {
-                                    "S": "12/31/2020"
-                                }
-                            }
+                        "startDate": {
+                            "S": "2020-01-01"
+                        },
+                        "endDate": {
+                            "S": "2020-12-31"
                         },
                         "jobRole": {
                             "S": "Backend Developer"
@@ -45,8 +47,14 @@
             {
                 "PutRequest": {
                     "Item": {
+                        "personalWebsiteType": {
+                            "S": "Job"
+                        },
+                        "sortValue": {
+                            "S": "2021-01-01"
+                        },
                         "jobTitle": {
-                            "S": "Frontend Developer"
+                            "S": "Software Engineer"
                         },
                         "company": {
                             "S": "XYZ Corp"
@@ -61,15 +69,11 @@
                                 }
                             }
                         },
-                        "date": {
-                            "M": {
-                                "startDate": {
-                                    "S": "01/01/2021"
-                                },
-                                "endDate": {
-                                    "S": "12/31/2021"
-                                }
-                            }
+                        "startDate": {
+                            "S": "2021-01-01"
+                        },
+                        "endDate": {
+                            "S": "2021-12-31"
                         },
                         "jobRole": {
                             "S": "Frontend Developer"
@@ -78,6 +82,49 @@
                             "SS": [
                                 "Developed user interfaces",
                                 "Worked with JavaScript frameworks"
+                            ]
+                        }
+                    }
+                }
+            },
+            {
+                "PutRequest": {
+                    "Item": {
+                        "personalWebsiteType": {
+                            "S": "Job"
+                        },
+                        "sortValue": {
+                            "S": "2022-01-01"
+                        },
+                        "jobTitle": {
+                            "S": "Software Engineer"
+                        },
+                        "company": {
+                            "S": "New LLC"
+                        },
+                        "location": {
+                            "M": {
+                                "city": {
+                                    "S": "Austin"
+                                },
+                                "state": {
+                                    "S": "TX"
+                                }
+                            }
+                        },
+                        "startDate": {
+                            "S": "2022-01-01"
+                        },
+                        "endDate": {
+                            "S": "2022-12-31"
+                        },
+                        "jobRole": {
+                            "S": "Backend Developer"
+                        },
+                        "jobDescription": {
+                            "SS": [
+                                "Developed REST APIs",
+                                "Worked with Java Springboot"
                             ]
                         }
                     }

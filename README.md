@@ -70,6 +70,12 @@ aws dynamodb batch-write-item --cli-input-json file://json/add-table-items.json 
 aws dynamodb scan --table-name PersonalWebsiteTable --endpoint-url http://localhost:8000
 ```
 
+**Query DynamoDb Data - Recent to Oldest**
+
+```bash
+aws dynamodb query --cli-input-json file://json/query-table-recent-items.json --endpoint-url http://localhost:8000
+```
+
 **Invoking function locally through local API Gateway**
 
 ```bash
