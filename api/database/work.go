@@ -1,6 +1,8 @@
 package database
 
 import (
+	"log"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -9,7 +11,7 @@ import (
 
 func (db *Database) GetWork() (work []models.Work, err error) {
 	input := &dynamodb.QueryInput{
-		TableName:              aws.String("PersonalWebsiteTable"),
+		TableName:              aws.String(tableName),
 		KeyConditionExpression: aws.String("personalWebsiteType = :partitionKey and sortValue > :startDateValue"),
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":partitionKey": {
@@ -35,6 +37,104 @@ func (db *Database) GetWork() (work []models.Work, err error) {
 			return nil, err
 		}
 		work = append(work, workItem)
+	}
+
+	return work, nil
+}
+
+func (db *Database) PostWork(newWork models.Work) (work models.Work, err error) {
+	item := map[string]*dynamodb.AttributeValue{
+		"personalWebsiteType": {S: aws.String("Job")},
+		"sortValue":           {S: aws.String(newWork.StartDate)},
+		"jobTitle":            {S: aws.String(newWork.JobTitle)},
+		"company":             {S: aws.String(newWork.Company)},
+		"location": {
+			M: map[string]*dynamodb.AttributeValue{
+				"city":  {S: aws.String(newWork.Location.City)},
+				"state": {S: aws.String(newWork.Location.State)},
+			},
+		},
+		"startDate": {S: aws.String(newWork.StartDate)},
+		"endDate":   {S: aws.String(newWork.EndDate)},
+		"jobRole":   {S: aws.String(newWork.JobRole)},
+	}
+
+	jobDescription := make([]*string, len(newWork.JobDescription))
+	for i, desc := range newWork.JobDescription {
+		jobDescription[i] = aws.String(desc)
+	}
+	item["jobDescription"] = &dynamodb.AttributeValue{SS: jobDescription}
+
+	input := &dynamodb.PutItemInput{
+		Item:      item,
+		TableName: aws.String(tableName),
+	}
+
+	_, err = db.DB.PutItem(input)
+	if err != nil {
+		log.Print("here3")
+		log.Print(err)
+		return work, err
+	}
+
+	inputGet := &dynamodb.GetItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"personalWebsiteType": {S: aws.String("Job")},
+			"sortValue":           {S: aws.String(newWork.StartDate)},
+		},
+		TableName: aws.String(tableName),
+	}
+
+	result, err := db.DB.GetItem(inputGet)
+	if err != nil {
+		log.Print("here2")
+		log.Print(err)
+		return work, err
+	}
+
+	log.Print(result)
+
+	work, err = ParseDynamoDBItemToWork(result.Item)
+	if err != nil {
+		log.Print("here1")
+		log.Print(err)
+		return work, err
+	}
+
+	return work, nil
+}
+
+func ParseDynamoDBItemToWork(item map[string]*dynamodb.AttributeValue) (work models.Work, err error) {
+	if jobTitleAttr, ok := item["jobTitle"]; ok {
+		work.JobTitle = aws.StringValue(jobTitleAttr.S)
+	}
+	if companyAttr, ok := item["company"]; ok {
+		work.Company = aws.StringValue(companyAttr.S)
+	}
+	if locationAttr, ok := item["location"]; ok {
+		if cityAttr, ok := locationAttr.M["city"]; ok {
+			work.Location.City = aws.StringValue(cityAttr.S)
+		}
+		if stateAttr, ok := locationAttr.M["state"]; ok {
+			work.Location.State = aws.StringValue(stateAttr.S)
+		}
+	}
+	if startDateAttr, ok := item["startDate"]; ok {
+		work.StartDate = aws.StringValue(startDateAttr.S)
+	}
+	if endDateAttr, ok := item["endDate"]; ok {
+		work.EndDate = aws.StringValue(endDateAttr.S)
+	}
+	if jobRoleAttr, ok := item["jobRole"]; ok {
+		work.JobRole = aws.StringValue(jobRoleAttr.S)
+	}
+	if jobDescriptionAttr, ok := item["jobDescription"]; ok {
+		if jobDescriptionAttr.SS != nil {
+			work.JobDescription = make([]string, len(jobDescriptionAttr.SS))
+			for i, desc := range jobDescriptionAttr.SS {
+				work.JobDescription[i] = aws.StringValue(desc)
+			}
+		}
 	}
 
 	return work, nil

@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/thomasmendez/personal-website-backend/api/database"
+	"github.com/thomasmendez/personal-website-backend/api/models"
 )
 
 type Service struct {
@@ -20,7 +21,7 @@ type Service struct {
 type RouteHandler struct {
 	Route   string
 	Method  string
-	Handler func() (events.APIGatewayProxyResponse, error)
+	Handler func(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error)
 }
 
 type ErrorResponse struct {
@@ -45,6 +46,11 @@ func NewService() *Service {
 			Method:  http.MethodGet,
 			Handler: s.getWorkHandler,
 		},
+		{
+			Route:   "/api/v1/work",
+			Method:  http.MethodPost,
+			Handler: s.postWorkHandler,
+		},
 	}
 
 	return s
@@ -53,7 +59,7 @@ func NewService() *Service {
 func (s *Service) HandleRoute(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	for _, route := range *s.Routes {
 		if request.Path == route.Route && request.HTTPMethod == route.Method {
-			return route.Handler()
+			return route.Handler(ctx, request)
 		}
 	}
 	return events.APIGatewayProxyResponse{
@@ -62,8 +68,7 @@ func (s *Service) HandleRoute(ctx context.Context, request events.APIGatewayProx
 	}, nil
 }
 
-func (s *Service) getWorkHandler() (events.APIGatewayProxyResponse, error) {
-
+func (s *Service) getWorkHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	work, err := s.DB.GetWork()
 
 	if err != nil {
@@ -78,6 +83,36 @@ func (s *Service) getWorkHandler() (events.APIGatewayProxyResponse, error) {
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
+		Body:       string(workJson),
+	}, err
+}
+
+func (s *Service) postWorkHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+
+	var newWork models.Work
+	err := json.Unmarshal([]byte(request.Body), &newWork)
+	if err != nil {
+		log.Printf("err: %v", err)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusBadRequest,
+			Body:       "Bad Request: Invalid JSON",
+		}, nil
+	}
+
+	work, err := s.DB.PostWork(newWork)
+
+	if err != nil {
+		log.Print(err.Error())
+		return events.APIGatewayProxyResponse{
+			StatusCode: 500,
+			Body:       string("done"),
+		}, err
+	}
+
+	workJson, err := json.Marshal(work)
+
+	return events.APIGatewayProxyResponse{
+		StatusCode: http.StatusCreated,
 		Body:       string(workJson),
 	}, err
 }

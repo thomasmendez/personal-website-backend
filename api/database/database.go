@@ -5,6 +5,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
+const tableName = "PersonalWebsiteTable"
+
 type Database struct {
 	DB *dynamodb.DynamoDB
 }
