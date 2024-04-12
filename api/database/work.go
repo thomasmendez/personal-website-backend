@@ -10,6 +10,7 @@ import (
 )
 
 func (db *Database) GetWork() (work []models.Work, err error) {
+	work = make([]models.Work, 0)
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(tableName),
 		KeyConditionExpression: aws.String("personalWebsiteType = :partitionKey and sortValue > :startDateValue"),
@@ -29,12 +30,11 @@ func (db *Database) GetWork() (work []models.Work, err error) {
 		return work, err
 	}
 
-	// Unmarshal the results
 	for _, item := range queryOutput.Items {
 		var workItem models.Work
 		err := dynamodbattribute.UnmarshalMap(item, &workItem)
 		if err != nil {
-			return nil, err
+			return work, err
 		}
 		work = append(work, workItem)
 	}
@@ -45,7 +45,7 @@ func (db *Database) GetWork() (work []models.Work, err error) {
 func (db *Database) PostWork(newWork models.Work) (work models.Work, err error) {
 	item := map[string]*dynamodb.AttributeValue{
 		"personalWebsiteType": {S: aws.String("Job")},
-		"sortValue":           {S: aws.String(newWork.StartDate)},
+		"sortValue":           {S: aws.String(newWork.SortValue)},
 		"jobTitle":            {S: aws.String(newWork.JobTitle)},
 		"company":             {S: aws.String(newWork.Company)},
 		"location": {
@@ -72,7 +72,89 @@ func (db *Database) PostWork(newWork models.Work) (work models.Work, err error) 
 
 	_, err = db.DB.PutItem(input)
 	if err != nil {
-		log.Print("here3")
+		log.Print(err)
+		return work, err
+	}
+
+	inputGet := &dynamodb.GetItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"personalWebsiteType": {S: aws.String("Job")},
+			"sortValue":           {S: aws.String(newWork.SortValue)},
+		},
+		TableName: aws.String(tableName),
+	}
+
+	result, err := db.DB.GetItem(inputGet)
+	if err != nil {
+		log.Print(err)
+		return work, err
+	}
+
+	work, err = ParseDynamoDBItemToWork(result.Item)
+	if err != nil {
+		log.Print(err)
+		return work, err
+	}
+
+	return work, nil
+}
+
+func (db *Database) UpdateWork(newWork models.Work) (work models.Work, err error) {
+	item := map[string]*dynamodb.AttributeValue{
+		"personalWebsiteType": {S: aws.String("Job")},
+		"sortValue":           {S: aws.String(newWork.SortValue)},
+		"jobTitle":            {S: aws.String(newWork.JobTitle)},
+		"company":             {S: aws.String(newWork.Company)},
+		"location": {
+			M: map[string]*dynamodb.AttributeValue{
+				"city":  {S: aws.String(newWork.Location.City)},
+				"state": {S: aws.String(newWork.Location.State)},
+			},
+		},
+		"startDate": {S: aws.String(newWork.StartDate)},
+		"endDate":   {S: aws.String(newWork.EndDate)},
+		"jobRole":   {S: aws.String(newWork.JobRole)},
+	}
+
+	jobDescription := make([]*string, len(newWork.JobDescription))
+	for i, desc := range newWork.JobDescription {
+		jobDescription[i] = aws.String(desc)
+	}
+	item["jobDescription"] = &dynamodb.AttributeValue{SS: jobDescription}
+
+	updateExpression := "SET #jobTitle = :jobTitleVal, #company = :companyVal, #location = :locationVal, #startDate = :startDateVal, #endDate = :endDateVal, #jobRole = :jobRoleVal, #jobDescription = :jobDescriptionVal"
+	expressionAttributeNames := map[string]*string{
+		"#jobTitle":       aws.String("jobTitle"),
+		"#company":        aws.String("company"),
+		"#location":       aws.String("location"),
+		"#startDate":      aws.String("startDate"),
+		"#endDate":        aws.String("endDate"),
+		"#jobRole":        aws.String("jobRole"),
+		"#jobDescription": aws.String("jobDescription"),
+	}
+	expressionAttributeValues := map[string]*dynamodb.AttributeValue{
+		":jobTitleVal":       {S: aws.String(newWork.JobTitle)},
+		":companyVal":        {S: aws.String(newWork.Company)},
+		":locationVal":       {M: item["location"].M},
+		":startDateVal":      {S: aws.String(newWork.StartDate)},
+		":endDateVal":        {S: aws.String(newWork.EndDate)},
+		":jobRoleVal":        {S: aws.String(newWork.JobRole)},
+		":jobDescriptionVal": item["jobDescription"],
+	}
+
+	updateInput := &dynamodb.UpdateItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			"personalWebsiteType": {S: aws.String("Job")},
+			"sortValue":           {S: aws.String(newWork.StartDate)},
+		},
+		UpdateExpression:          aws.String(updateExpression),
+		ExpressionAttributeNames:  expressionAttributeNames,
+		ExpressionAttributeValues: expressionAttributeValues,
+	}
+
+	_, err = db.DB.UpdateItem(updateInput)
+	if err != nil {
 		log.Print(err)
 		return work, err
 	}
@@ -87,16 +169,12 @@ func (db *Database) PostWork(newWork models.Work) (work models.Work, err error) 
 
 	result, err := db.DB.GetItem(inputGet)
 	if err != nil {
-		log.Print("here2")
 		log.Print(err)
 		return work, err
 	}
 
-	log.Print(result)
-
 	work, err = ParseDynamoDBItemToWork(result.Item)
 	if err != nil {
-		log.Print("here1")
 		log.Print(err)
 		return work, err
 	}
@@ -105,6 +183,12 @@ func (db *Database) PostWork(newWork models.Work) (work models.Work, err error) 
 }
 
 func ParseDynamoDBItemToWork(item map[string]*dynamodb.AttributeValue) (work models.Work, err error) {
+	if personalWebsiteType, ok := item["personalWebsiteType"]; ok {
+		work.PersonalWebsiteType = aws.StringValue(personalWebsiteType.S)
+	}
+	if sortValue, ok := item["sortValue"]; ok {
+		work.SortValue = aws.StringValue(sortValue.S)
+	}
 	if jobTitleAttr, ok := item["jobTitle"]; ok {
 		work.JobTitle = aws.StringValue(jobTitleAttr.S)
 	}
@@ -136,7 +220,6 @@ func ParseDynamoDBItemToWork(item map[string]*dynamodb.AttributeValue) (work mod
 			}
 		}
 	}
-
 	return work, nil
 }
 
