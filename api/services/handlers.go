@@ -46,8 +46,6 @@ func (s *Service) postWorkHandler(ctx context.Context, request events.APIGateway
 		}, nil
 	}
 
-	log.Printf("Post req body: %s", newWork)
-
 	work, err := s.DB.PostWork(newWork)
 
 	if err != nil {
