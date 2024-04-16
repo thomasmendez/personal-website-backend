@@ -29,6 +29,7 @@ func (s *Service) getWorkHandler(ctx context.Context, request events.APIGatewayP
 	workJson, err := json.Marshal(work)
 
 	return events.APIGatewayProxyResponse{
+		Headers:    headers,
 		StatusCode: http.StatusOK,
 		Body:       string(workJson),
 	}, err
@@ -63,6 +64,7 @@ func (s *Service) postWorkHandler(ctx context.Context, request events.APIGateway
 	workJson, err := json.Marshal(work)
 
 	return events.APIGatewayProxyResponse{
+		Headers:    headers,
 		StatusCode: http.StatusCreated,
 		Body:       string(workJson),
 	}, err
@@ -75,6 +77,7 @@ func (s *Service) updateWorkHandler(ctx context.Context, request events.APIGatew
 	if err != nil {
 		log.Printf("err: %v", err)
 		return events.APIGatewayProxyResponse{
+			Headers:    headers,
 			StatusCode: http.StatusBadRequest,
 			Body:       "Bad Request: Invalid JSON",
 		}, nil
@@ -89,6 +92,7 @@ func (s *Service) updateWorkHandler(ctx context.Context, request events.APIGatew
 		}
 		res, _ := json.Marshal(errRes)
 		return events.APIGatewayProxyResponse{
+			Headers:    headers,
 			StatusCode: http.StatusInternalServerError,
 			Body:       string(res),
 		}, err
@@ -97,6 +101,7 @@ func (s *Service) updateWorkHandler(ctx context.Context, request events.APIGatew
 	workJson, err := json.Marshal(work)
 
 	return events.APIGatewayProxyResponse{
+		Headers:    headers,
 		StatusCode: http.StatusCreated,
 		Body:       string(workJson),
 	}, err

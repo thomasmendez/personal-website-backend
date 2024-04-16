@@ -26,6 +26,12 @@ type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
+var headers = map[string]string{
+	"Access-Control-Allow-Origin":  "*",
+	"Access-Control-Allow-Headers": "*",
+	"Access-Control-Allow-Methods": "*",
+}
+
 func NewService() *Service {
 	awsSession := session.Must(session.NewSessionWithOptions(session.Options{
 		Config: aws.Config{
@@ -70,7 +76,9 @@ func (s *Service) HandleRoute(ctx context.Context, request events.APIGatewayProx
 		Message: "Route not found",
 	}
 	res, _ := json.Marshal(errRes)
+
 	return events.APIGatewayProxyResponse{
+		Headers:    headers,
 		StatusCode: http.StatusNotFound,
 		Body:       string(res),
 	}, nil
