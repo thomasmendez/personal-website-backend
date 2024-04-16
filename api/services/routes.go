@@ -26,12 +26,6 @@ type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
-var headers = map[string]string{
-	"Access-Control-Allow-Origin":  "*",
-	"Access-Control-Allow-Headers": "*",
-	"Access-Control-Allow-Methods": "*",
-}
-
 func NewService() *Service {
 	awsSession := session.Must(session.NewSessionWithOptions(session.Options{
 		Config: aws.Config{
@@ -68,7 +62,9 @@ func NewService() *Service {
 func (s *Service) HandleRoute(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	for _, route := range *s.Routes {
 		if request.Path == route.Route && request.HTTPMethod == route.Method {
-			return route.Handler(ctx, request)
+			proxyResponse, err := route.Handler(ctx, request)
+			proxyResponse.Headers = s.addProxyHeaders("dev")
+			return proxyResponse, err
 		}
 	}
 
@@ -78,8 +74,25 @@ func (s *Service) HandleRoute(ctx context.Context, request events.APIGatewayProx
 	res, _ := json.Marshal(errRes)
 
 	return events.APIGatewayProxyResponse{
-		Headers:    headers,
+		Headers:    s.addProxyHeaders("dev"),
 		StatusCode: http.StatusNotFound,
 		Body:       string(res),
 	}, nil
+}
+
+func (s *Service) addProxyHeaders(env string) map[string]string {
+	switch env {
+	case "dev":
+		return map[string]string{
+			"Access-Control-Allow-Origin":  "*",
+			"Access-Control-Allow-Headers": "*",
+			"Access-Control-Allow-Methods": "*",
+		}
+	default:
+		return map[string]string{
+			"Access-Control-Allow-Origin":  "*",
+			"Access-Control-Allow-Headers": "*",
+			"Access-Control-Allow-Methods": "*",
+		}
+	}
 }
