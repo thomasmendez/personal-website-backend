@@ -9,7 +9,7 @@ type Work struct {
 	StartDate           string   `json:"startDate"`
 	EndDate             string   `json:"endDate"`
 	JobRole             string   `json:"jobRole"`
-	JobDescription      []string `json:"JobDescription"`
+	JobDescription      []string `json:"jobDescription"`
 }
 
 type Location struct {
