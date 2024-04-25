@@ -54,6 +54,11 @@ func NewService() *Service {
 			Method:  http.MethodPut,
 			Handler: s.updateWorkHandler,
 		},
+		{
+			Route:   "/api/v1/skillsTools",
+			Method:  http.MethodGet,
+			Handler: s.getSkillsToolsHandler,
+		},
 	}
 
 	return s

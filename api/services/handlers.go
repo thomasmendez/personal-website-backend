@@ -101,3 +101,26 @@ func (s *Service) updateWorkHandler(ctx context.Context, request events.APIGatew
 		Body:       string(workJson),
 	}, err
 }
+
+func (s *Service) getSkillsToolsHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	skillsTools, err := s.DB.GetSkillsTools()
+
+	if err != nil {
+		log.Print(err.Error())
+		errRes := ErrorResponse{
+			Message: "There was an error in getting skillsTools",
+		}
+		res, _ := json.Marshal(errRes)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusInternalServerError,
+			Body:       string(res),
+		}, err
+	}
+
+	skillsToolsJson, err := json.Marshal(skillsTools)
+
+	return events.APIGatewayProxyResponse{
+		StatusCode: http.StatusOK,
+		Body:       string(skillsToolsJson),
+	}, err
+}

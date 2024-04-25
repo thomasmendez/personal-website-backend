@@ -10,6 +10,6 @@ dynamodb-local-create-table:
 dynamodb-local-add-items-jobs:
 	aws dynamodb batch-write-item --cli-input-json file://json/jobs/add-items.json --endpoint-url http://localhost:8000
 dynamodb-local-add-items-skills-tools:
-	aws dynamodb batch-write-item --cli-input.json file://json/skills-tools/add-items.json --endpoint-url http://localhost:8000
+	aws dynamodb batch-write-item --cli-input-json file://json/skills-tools/add-items.json --endpoint-url http://localhost:8000
 start:
 	sam.cmd local start-api --docker-network dynamodb-backend

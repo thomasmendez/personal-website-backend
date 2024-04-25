@@ -16,7 +16,7 @@
                         "skillsToolsType": {
                             "S": "Trilingual"
                         },
-                        "jobDescription": {
+                        "skillsToolsList": {
                             "SS": [
                                 "English",
                                 "Spanish",
@@ -41,7 +41,7 @@
                         "skillsToolsType": {
                             "S": "Cloud Services"
                         },
-                        "jobDescription": {
+                        "skillsToolsList": {
                             "SS": [
                                 "AWS",
                                 "Azure",
