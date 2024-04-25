@@ -1,8 +1,8 @@
 {
   "TableName": "PersonalWebsiteTable",
   "Item": {
-    "personalWebsiteType": "Job",
-    "sortValue": "2020-01-01",
+    "personalWebsiteType": { "S": "Job" },
+    "sortValue": { "S": "2020-01-01" },
     "jobTitle": { "S": "Software Engineer" },
     "company": { "S": "ABC Inc" },
     "location": {

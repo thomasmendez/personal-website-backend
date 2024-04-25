@@ -1,0 +1,57 @@
+{
+    "RequestItems": {
+        "PersonalWebsiteTable": [
+            {
+                "PutRequest": {
+                    "Item": {
+                        "personalWebsiteType": {
+                            "S": "SkillsTools"
+                        },
+                        "sortValue": {
+                            "S": "Trilingual"
+                        },
+                        "skillsToolsCategory": {
+                            "S": "Skills"
+                        },
+                        "skillsToolsType": {
+                            "S": "Trilingual"
+                        },
+                        "jobDescription": {
+                            "SS": [
+                                "English",
+                                "Spanish",
+                                "Portuguese"
+                            ]
+                        }
+                    }
+                }
+            },
+            {
+                "PutRequest": {
+                    "Item": {
+                        "personalWebsiteType": {
+                            "S": "SkillsTools"
+                        },
+                        "sortValue": {
+                            "S": "Cloud Services"
+                        },
+                        "skillsToolsCategory": {
+                            "S": "Tools"
+                        },
+                        "skillsToolsType": {
+                            "S": "Cloud Services"
+                        },
+                        "jobDescription": {
+                            "SS": [
+                                "AWS",
+                                "Azure",
+                                "GCP",
+                                "Digital Ocean"
+                            ]
+                        }
+                    }
+                }
+            }
+        ]
+    }
+}

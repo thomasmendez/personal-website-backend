@@ -1,0 +1,7 @@
+{
+  "TableName": "PersonalWebsiteTable",
+  "KeyConditionExpression": "personalWebsiteType = :partitionKey",
+  "ExpressionAttributeValues": {
+      ":partitionKey": {"S": "SkillsTools"}
+  }
+}
