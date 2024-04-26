@@ -8,10 +8,9 @@ import (
 const tableName = "PersonalWebsiteTable"
 
 type Database struct {
-	DB *dynamodb.DynamoDB
+	*dynamodb.DynamoDB
 }
 
 func NewDatabase(awsSession *session.Session) (database *Database) {
-	dynamoDbClient := dynamodb.New(awsSession)
-	return &Database{dynamoDbClient}
+	return &Database{dynamodb.New(awsSession)}
 }

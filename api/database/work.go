@@ -6,10 +6,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/thomasmendez/personal-website-backend/api/models"
 )
 
-func (db *Database) GetWork() (work []models.Work, err error) {
+func GetWork(svc dynamodbiface.DynamoDBAPI) (work []models.Work, err error) {
 	work = make([]models.Work, 0)
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(tableName),
@@ -25,7 +26,7 @@ func (db *Database) GetWork() (work []models.Work, err error) {
 		ScanIndexForward: aws.Bool(false),
 	}
 
-	queryOutput, err := db.DB.Query(input)
+	queryOutput, err := svc.Query(input)
 	if err != nil {
 		return work, err
 	}
@@ -42,7 +43,7 @@ func (db *Database) GetWork() (work []models.Work, err error) {
 	return work, nil
 }
 
-func (db *Database) PostWork(newWork models.Work) (work models.Work, err error) {
+func PostWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.Work, err error) {
 	item := map[string]*dynamodb.AttributeValue{
 		"personalWebsiteType": {S: aws.String("Job")},
 		"sortValue":           {S: aws.String(newWork.SortValue)},
@@ -70,7 +71,7 @@ func (db *Database) PostWork(newWork models.Work) (work models.Work, err error) 
 		TableName: aws.String(tableName),
 	}
 
-	_, err = db.DB.PutItem(input)
+	_, err = svc.PutItem(input)
 	if err != nil {
 		log.Print(err)
 		return work, err
@@ -84,7 +85,7 @@ func (db *Database) PostWork(newWork models.Work) (work models.Work, err error) 
 		TableName: aws.String(tableName),
 	}
 
-	result, err := db.DB.GetItem(inputGet)
+	result, err := svc.GetItem(inputGet)
 	if err != nil {
 		log.Print(err)
 		return work, err
@@ -98,7 +99,7 @@ func (db *Database) PostWork(newWork models.Work) (work models.Work, err error) 
 	return work, nil
 }
 
-func (db *Database) UpdateWork(newWork models.Work) (work models.Work, err error) {
+func UpdateWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.Work, err error) {
 	item := map[string]*dynamodb.AttributeValue{
 		"personalWebsiteType": {S: aws.String("Job")},
 		"sortValue":           {S: aws.String(newWork.SortValue)},
@@ -152,7 +153,7 @@ func (db *Database) UpdateWork(newWork models.Work) (work models.Work, err error
 		ExpressionAttributeValues: expressionAttributeValues,
 	}
 
-	_, err = db.DB.UpdateItem(updateInput)
+	_, err = svc.UpdateItem(updateInput)
 	if err != nil {
 		log.Print(err)
 		return work, err
@@ -166,7 +167,7 @@ func (db *Database) UpdateWork(newWork models.Work) (work models.Work, err error
 		TableName: aws.String(tableName),
 	}
 
-	result, err := db.DB.GetItem(inputGet)
+	result, err := svc.GetItem(inputGet)
 	if err != nil {
 		log.Print(err)
 		return work, err
@@ -179,43 +180,3 @@ func (db *Database) UpdateWork(newWork models.Work) (work models.Work, err error
 
 	return work, nil
 }
-
-// func (db *Database) GetWork() (work []models.Work, err error) {
-// 	input := &dynamodb.ScanInput{
-// 		TableName: aws.String("PersonalWebsiteTable"),
-// 	}
-
-// 	scanOutput, err := db.DB.Scan(input)
-// 	if err != nil {
-// 		return work, err
-// 	}
-
-// 	// Iterate through the result and construct a list of JobDescription objects
-// 	for _, item := range scanOutput.Items {
-
-// 		locationMap := item["location"].M
-// 		dateMap := item["date"].M
-
-// 		location := models.Location{
-// 			City:  aws.StringValue(locationMap["city"].S),
-// 			State: aws.StringValue(locationMap["state"].S),
-// 		}
-
-// 		date := models.Date{
-// 			StartDate: aws.StringValue(dateMap["startDate"].S),
-// 			EndDate:   aws.StringValue(dateMap["endDate"].S),
-// 		}
-
-// 		workItem := models.Work{
-// 			JobTitle:       aws.StringValue(item["jobTitle"].S),
-// 			Company:        aws.StringValue(item["company"].S),
-// 			Location:       location,
-// 			Date:           date,
-// 			JobRole:        aws.StringValue(item["jobRole"].S),
-// 			JobDescription: aws.StringValueSlice(item["jobDescription"].SS),
-// 		}
-// 		work = append(work, workItem)
-// 	}
-
-// 	return work, err
-// }

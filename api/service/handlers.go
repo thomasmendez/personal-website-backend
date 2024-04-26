@@ -8,11 +8,12 @@ import (
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/thomasmendez/personal-website-backend/api/database"
 	"github.com/thomasmendez/personal-website-backend/api/models"
 )
 
 func (s *Service) getWorkHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	work, err := s.DB.GetWork()
+	work, err := database.GetWork(s.DB)
 
 	if err != nil {
 		log.Print(err.Error())
@@ -46,7 +47,7 @@ func (s *Service) postWorkHandler(ctx context.Context, request events.APIGateway
 		}, nil
 	}
 
-	work, err := s.DB.PostWork(newWork)
+	work, err := database.PostWork(s.DB, newWork)
 
 	if err != nil {
 		log.Print(err.Error())
@@ -80,7 +81,7 @@ func (s *Service) updateWorkHandler(ctx context.Context, request events.APIGatew
 		}, nil
 	}
 
-	work, err := s.DB.PostWork(updateWork)
+	work, err := database.PostWork(s.DB, updateWork)
 
 	if err != nil {
 		log.Print(err.Error())
@@ -103,7 +104,7 @@ func (s *Service) updateWorkHandler(ctx context.Context, request events.APIGatew
 }
 
 func (s *Service) getSkillsToolsHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	skillsTools, err := s.DB.GetSkillsTools()
+	skillsTools, err := database.GetSkillsTools(s.DB)
 
 	if err != nil {
 		log.Print(err.Error())

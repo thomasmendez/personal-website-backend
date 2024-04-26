@@ -4,10 +4,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/thomasmendez/personal-website-backend/api/models"
 )
 
-func (db *Database) GetSkillsTools() (skillsTools []models.SkillsTools, err error) {
+func GetSkillsTools(svc dynamodbiface.DynamoDBAPI) (skillsTools []models.SkillsTools, err error) {
 	skillsTools = make([]models.SkillsTools, 0)
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(tableName),
@@ -19,7 +20,7 @@ func (db *Database) GetSkillsTools() (skillsTools []models.SkillsTools, err erro
 		},
 	}
 
-	queryOutput, err := db.DB.Query(input)
+	queryOutput, err := svc.Query(input)
 	if err != nil {
 		return skillsTools, err
 	}
