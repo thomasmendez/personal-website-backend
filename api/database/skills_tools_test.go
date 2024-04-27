@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/stretchr/testify/assert"
+	"github.com/thomasmendez/personal-website-backend/api/models"
 )
 
 func TestGetSkillsTools(t *testing.T) {
@@ -14,8 +15,10 @@ func TestGetSkillsTools(t *testing.T) {
 	mockDB := &mockDynamoDB{}
 
 	for _, test := range []struct {
-		label         string
-		mockQueryFunc func(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error)
+		label          string
+		mockQueryFunc  func(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error)
+		expectedResult []models.SkillsTools
+		expectedError  error
 	}{
 		{
 			label: "valid query output",
@@ -32,6 +35,15 @@ func TestGetSkillsTools(t *testing.T) {
 					},
 				}
 				return mockOutput, nil
+			},
+			expectedResult: []models.SkillsTools{
+				{
+					PersonalWebsite:     "SkillsTools",
+					SortValue:           "Programming Languages",
+					SkillsToolsCategory: "Tools",
+					SkillsToolsType:     "Programming Languages",
+					SkillsToolsList:     []string{"Go", "Python", "JavaScript", "Java", "Swift", "C#"},
+				},
 			},
 		},
 		{
@@ -55,11 +67,14 @@ func TestGetSkillsTools(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Len(t, result, 1)
-			assert.Equal(t, "SkillsTools", result[0].PersonalWebsite)
-			assert.Equal(t, "Programming Languages", result[0].SortValue)
-			assert.Equal(t, "Tools", result[0].SkillsToolsCategory)
-			assert.Equal(t, "Programming Languages", result[0].SkillsToolsType)
-			assert.Equal(t, []string{"Go", "Python", "JavaScript", "Java", "Swift", "C#"}, result[0].SkillsToolsList)
+
+			for i, skillsToolsResult := range result {
+				assert.Equal(t, test.expectedResult[i].PersonalWebsite, skillsToolsResult.PersonalWebsite)
+				assert.Equal(t, test.expectedResult[i].SortValue, skillsToolsResult.SortValue)
+				assert.Equal(t, test.expectedResult[i].SkillsToolsCategory, skillsToolsResult.SkillsToolsCategory)
+				assert.Equal(t, test.expectedResult[i].SkillsToolsType, skillsToolsResult.SkillsToolsType)
+				assert.Equal(t, test.expectedResult[i].SkillsToolsList, skillsToolsResult.SkillsToolsList)
+			}
 		})
 	}
 }
