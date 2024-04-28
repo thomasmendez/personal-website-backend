@@ -56,12 +56,12 @@ aws dynamodb create-table --cli-input-json file://json/create-table.json --endpo
 
 To write one item
 ```bash
-aws dynamodb put-item --cli-input-json file://json/jobs/add-item.json --endpoint-url http://localhost:8000
+aws dynamodb put-item --cli-input-json file://json/work/add-item.json --endpoint-url http://localhost:8000
 ```
 
 To write multiple
 ```bash
-aws dynamodb batch-write-item --cli-input-json file://json/jobs/add-items.json --endpoint-url http://localhost:8000
+aws dynamodb batch-write-item --cli-input-json file://json/work/add-items.json --endpoint-url http://localhost:8000
 ```
 
 **View DynamoDb Data**
@@ -73,7 +73,7 @@ aws dynamodb scan --table-name PersonalWebsiteTable --endpoint-url http://localh
 **Query DynamoDb Data - Recent to Oldest**
 
 ```bash
-aws dynamodb query --cli-input-json file://json/jobs/query-recent-items.json --endpoint-url http://localhost:8000
+aws dynamodb query --cli-input-json file://json/work/query-recent-items.json --endpoint-url http://localhost:8000
 ```
 
 **Invoking function locally through local API Gateway**

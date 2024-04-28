@@ -17,7 +17,7 @@ func GetWork(svc dynamodbiface.DynamoDBAPI) (work []models.Work, err error) {
 		KeyConditionExpression: aws.String("personalWebsiteType = :partitionKey and sortValue > :startDateValue"),
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":partitionKey": {
-				S: aws.String("Job"),
+				S: aws.String("Work"),
 			},
 			":startDateValue": {
 				S: aws.String("1970-01-01"),
@@ -45,7 +45,7 @@ func GetWork(svc dynamodbiface.DynamoDBAPI) (work []models.Work, err error) {
 
 func PostWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.Work, err error) {
 	item := map[string]*dynamodb.AttributeValue{
-		"personalWebsiteType": {S: aws.String("Job")},
+		"personalWebsiteType": {S: aws.String("Work")},
 		"sortValue":           {S: aws.String(newWork.SortValue)},
 		"jobTitle":            {S: aws.String(newWork.JobTitle)},
 		"company":             {S: aws.String(newWork.Company)},
@@ -79,7 +79,7 @@ func PostWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.W
 
 	inputGet := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			"personalWebsiteType": {S: aws.String("Job")},
+			"personalWebsiteType": {S: aws.String("Work")},
 			"sortValue":           {S: aws.String(newWork.SortValue)},
 		},
 		TableName: aws.String(tableName),
@@ -101,7 +101,7 @@ func PostWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.W
 
 func UpdateWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.Work, err error) {
 	item := map[string]*dynamodb.AttributeValue{
-		"personalWebsiteType": {S: aws.String("Job")},
+		"personalWebsiteType": {S: aws.String("Work")},
 		"sortValue":           {S: aws.String(newWork.SortValue)},
 		"jobTitle":            {S: aws.String(newWork.JobTitle)},
 		"company":             {S: aws.String(newWork.Company)},
@@ -145,7 +145,7 @@ func UpdateWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models
 	updateInput := &dynamodb.UpdateItemInput{
 		TableName: aws.String(tableName),
 		Key: map[string]*dynamodb.AttributeValue{
-			"personalWebsiteType": {S: aws.String("Job")},
+			"personalWebsiteType": {S: aws.String("Work")},
 			"sortValue":           {S: aws.String(newWork.StartDate)},
 		},
 		UpdateExpression:          aws.String(updateExpression),
@@ -161,7 +161,7 @@ func UpdateWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models
 
 	inputGet := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			"personalWebsiteType": {S: aws.String("Job")},
+			"personalWebsiteType": {S: aws.String("Work")},
 			"sortValue":           {S: aws.String(newWork.StartDate)},
 		},
 		TableName: aws.String(tableName),

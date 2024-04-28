@@ -5,7 +5,7 @@
                 "PutRequest": {
                     "Item": {
                         "personalWebsiteType": {
-                            "S": "Job"
+                            "S": "Work"
                         },
                         "sortValue": {
                             "S": "2020-01-01"

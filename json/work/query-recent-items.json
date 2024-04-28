@@ -2,7 +2,7 @@
   "TableName": "PersonalWebsiteTable",
   "KeyConditionExpression": "personalWebsiteType = :partitionKey and sortValue > :startDateValue",
   "ExpressionAttributeValues": {
-      ":partitionKey": {"S": "Job"},
+      ":partitionKey": {"S": "Work"},
       ":startDateValue": {"S": "1970-01-01"}
   },
   "ScanIndexForward": false

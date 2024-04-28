@@ -26,7 +26,7 @@ func TestWorkGet(t *testing.T) {
 				mockOutput := &dynamodb.QueryOutput{
 					Items: []map[string]*dynamodb.AttributeValue{
 						{
-							"personalWebsiteType": {S: aws.String("Job")},
+							"personalWebsiteType": {S: aws.String("Work")},
 							"sortValue":           {S: aws.String("2020-01-01")},
 							"jobTitle":            {S: aws.String("Software Engineer")},
 							"company":             {S: aws.String("ABC Inc")},
@@ -47,7 +47,7 @@ func TestWorkGet(t *testing.T) {
 			},
 			expectedWork: []models.Work{
 				{
-					PersonalWebsiteType: "Job",
+					PersonalWebsiteType: "Work",
 					SortValue:           "2020-01-01",
 					JobTitle:            "Software Engineer",
 					Company:             "ABC Inc",
