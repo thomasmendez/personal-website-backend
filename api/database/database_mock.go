@@ -9,9 +9,10 @@ import (
 
 type mockDynamoDB struct {
 	dynamodbiface.DynamoDBAPI
-	QueryFunc func(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error)
-	PutFunc   func(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error)
-	GetFunc   func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
+	QueryFunc  func(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error)
+	PutFunc    func(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error)
+	GetFunc    func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
+	UpdateFunc func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error)
 }
 
 func (m *mockDynamoDB) Query(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
@@ -31,4 +32,10 @@ func (m *mockDynamoDB) GetItem(input *dynamodb.GetItemInput) (*dynamodb.GetItemO
 		return m.GetFunc(input)
 	}
 	return nil, errors.New("GetItem not implemented")
+}
+func (m *mockDynamoDB) UpdateItem(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
+	if m.UpdateFunc != nil {
+		return m.UpdateFunc(input)
+	}
+	return nil, errors.New("UpdateItem not implemented")
 }
