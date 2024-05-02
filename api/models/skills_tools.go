@@ -1,9 +1,9 @@
 package models
 
 type SkillsTools struct {
-	PersonalWebsite     string   `json:"PersonalWebsiteType"`
-	SortValue           string   `json:"SortValue"`
-	SkillsToolsCategory string   `json:"SkillsToolsCategory"`
-	SkillsToolsType     string   `json:"SkillsToolsType"`
-	SkillsToolsList     []string `json:"SkillsToolsList"`
+	PersonalWebsiteType string   `json:"personalWebsiteType"`
+	SortValue           string   `json:"sortValue"`
+	SkillsToolsCategory string   `json:"skillsToolsCategory"`
+	SkillsToolsType     string   `json:"skillsToolsType"`
+	SkillsToolsList     []string `json:"skillsToolsList"`
 }

@@ -179,7 +179,7 @@ func TestPostWork(t *testing.T) {
 	}
 }
 
-func TestPutWork(t *testing.T) {
+func TestUpdateWork(t *testing.T) {
 	mockDB := &mockDynamoDB{}
 	for _, test := range []struct {
 		label          string
