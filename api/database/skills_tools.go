@@ -60,10 +60,15 @@ func PostSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.Skills
 		log.Print(err)
 		return skillsTools, err
 	}
+	skillsTools, err = getSkillsToolsBySortValue(svc, newSkillsTools.SortValue)
+	return skillsTools, err
+}
+
+func getSkillsToolsBySortValue(svc dynamodbiface.DynamoDBAPI, sortValue string) (skillsTools models.SkillsTools, err error) {
 	inputGet := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
 			"personalWebsiteType": {S: aws.String("SkillsTools")},
-			"sortValue":           {S: aws.String(skillsTools.SortValue)},
+			"sortValue":           {S: aws.String(sortValue)},
 		},
 		TableName: aws.String(tableName),
 	}
@@ -76,10 +81,10 @@ func PostSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.Skills
 
 	err = dynamodbattribute.UnmarshalMap(result.Item, &skillsTools)
 	if err != nil {
+		log.Print(err)
 		return skillsTools, err
 	}
-
-	return skillsTools, nil
+	return skillsTools, err
 }
 
 func UpdateSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.SkillsTools) (skillsTools models.SkillsTools, err error) {

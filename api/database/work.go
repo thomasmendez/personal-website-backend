@@ -77,10 +77,16 @@ func PostWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.W
 		return work, err
 	}
 
+	work, err = getWorkBySortValue(svc, newWork.StartDate)
+
+	return work, err
+}
+
+func getWorkBySortValue(svc dynamodbiface.DynamoDBAPI, sortValue string) (work models.Work, err error) {
 	inputGet := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
 			"personalWebsiteType": {S: aws.String("Work")},
-			"sortValue":           {S: aws.String(newWork.SortValue)},
+			"sortValue":           {S: aws.String(sortValue)},
 		},
 		TableName: aws.String(tableName),
 	}
@@ -93,10 +99,10 @@ func PostWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.W
 
 	err = dynamodbattribute.UnmarshalMap(result.Item, &work)
 	if err != nil {
+		log.Print(err)
 		return work, err
 	}
-
-	return work, nil
+	return work, err
 }
 
 func UpdateWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.Work, err error) {
@@ -159,24 +165,7 @@ func UpdateWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models
 		return work, err
 	}
 
-	inputGet := &dynamodb.GetItemInput{
-		Key: map[string]*dynamodb.AttributeValue{
-			"personalWebsiteType": {S: aws.String("Work")},
-			"sortValue":           {S: aws.String(newWork.StartDate)},
-		},
-		TableName: aws.String(tableName),
-	}
+	work, err = getWorkBySortValue(svc, newWork.StartDate)
 
-	result, err := svc.GetItem(inputGet)
-	if err != nil {
-		log.Print(err)
-		return work, err
-	}
-
-	err = dynamodbattribute.UnmarshalMap(result.Item, &work)
-	if err != nil {
-		return work, err
-	}
-
-	return work, nil
+	return work, err
 }
