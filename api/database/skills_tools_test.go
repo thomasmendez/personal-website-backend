@@ -152,72 +152,67 @@ func TestPostSkillsTools(t *testing.T) {
 	}
 }
 
-// func TestUpdateSkillsTools(t *testing.T) {
-// 	mockDB := &mockDynamoDB{}
-// 	for _, test := range []struct {
-// 		label               string
-// 		newSkillsTools      models.SkillsTools
-// 		mockUpdateFunc      func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error)
-// 		mockGetFunc         func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
-// 		expectedSkillsTools models.SkillsTools
-// 		expectedError       error
-// 	}{
-// 		{
-// 			label:          "valid query output",
-// 			newSkillsTools: expectedSkillsTools,
-// 			mockUpdateFunc: func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
-// 				return nil, nil
-// 			},
-// 			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
-// 				mockOutput := &dynamodb.GetItemOutput{
-// 					Item: map[string]*dynamodb.AttributeValue{
-// 						"personalWebsiteType": {S: aws.String("SkillsTools")},
-// 						"sortValue":           {S: aws.String("Programming Languages")},
-// 						"skillsToolsCategory": {S: aws.String("Tools")},
-// 						"skillsToolsType":     {S: aws.String("Programming Languages")},
-// 						"skillsToolsList":     {SS: aws.StringSlice([]string{"Go", "Python", "JavaScript", "Java", "Swift", "C#"})},
-// 					},
-// 				}
-// 				return mockOutput, nil
-// 			},
-// 			expectedSkillsTools: expectedSkillsTools,
-// 			expectedError:       nil,
-// 		},
-// 		{
-// 			label:          "query error",
-// 			newSkillsTools: expectedSkillsTools,
-// 			mockUpdateFunc: func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
-// 				return nil, nil
-// 			},
-// 			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
-// 				return nil, errors.New("error updating item from database")
-// 			},
-// 		},
-// 	} {
-// 		t.Run(test.label, func(t *testing.T) {
-// 			mockDB.UpdateFunc = test.mockUpdateFunc
-// 			mockDB.GetFunc = test.mockGetFunc
+func TestUpdateSkillsTools(t *testing.T) {
+	mockDB := &mockDynamoDB{}
+	for _, test := range []struct {
+		label               string
+		newSkillsTools      models.SkillsTools
+		mockUpdateFunc      func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error)
+		mockGetFunc         func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
+		expectedSkillsTools models.SkillsTools
+		expectedError       error
+	}{
+		{
+			label:          "valid query output",
+			newSkillsTools: expectedSkillsTools,
+			mockUpdateFunc: func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
+				return nil, nil
+			},
+			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
+				mockOutput := &dynamodb.GetItemOutput{
+					Item: map[string]*dynamodb.AttributeValue{
+						"personalWebsiteType": {S: aws.String("SkillsTools")},
+						"sortValue":           {S: aws.String("Programming Languages")},
+						"skillsToolsCategory": {S: aws.String("Tools")},
+						"skillsToolsType":     {S: aws.String("Programming Languages")},
+						"skillsToolsList":     {SS: aws.StringSlice([]string{"Go", "Python", "JavaScript", "Java", "Swift", "C#"})},
+					},
+				}
+				return mockOutput, nil
+			},
+			expectedSkillsTools: expectedSkillsTools,
+			expectedError:       nil,
+		},
+		{
+			label:          "query error",
+			newSkillsTools: expectedSkillsTools,
+			mockUpdateFunc: func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
+				return nil, nil
+			},
+			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
+				return nil, errors.New("error updating item from database")
+			},
+		},
+	} {
+		t.Run(test.label, func(t *testing.T) {
+			mockDB.UpdateFunc = test.mockUpdateFunc
+			mockDB.GetFunc = test.mockGetFunc
 
-// 			result, err := UpdateSkillsTools(mockDB, test.newSkillsTools)
+			result, err := UpdateSkillsTools(mockDB, test.newSkillsTools)
 
-// 			if err != nil {
-// 				assert.Error(t, err)
-// 				assert.Empty(t, result)
-// 				assert.Equal(t, "error updating item from database", err.Error())
-// 				return
-// 			}
+			if err != nil {
+				assert.Error(t, err)
+				assert.Empty(t, result)
+				assert.Equal(t, "error updating item from database", err.Error())
+				return
+			}
 
-// 			assert.NoError(t, err)
-// 			assert.Equal(t, test.expectedSkillsTools.PersonalWebsiteType, result.PersonalWebsiteType)
-// 			assert.Equal(t, test.expectedSkillsTools.SortValue, result.SortValue)
-// 			assert.Equal(t, test.expectedSkillsTools.JobTitle, result.JobTitle)
-// 			assert.Equal(t, test.expectedSkillsTools.Company, result.Company)
-// 			assert.Equal(t, test.expectedSkillsTools.Location.City, result.Location.City)
-// 			assert.Equal(t, test.expectedSkillsTools.Location.State, result.Location.State)
-// 			assert.Equal(t, test.expectedSkillsTools.StartDate, result.StartDate)
-// 			assert.Equal(t, test.expectedSkillsTools.EndDate, result.EndDate)
-// 			assert.Equal(t, test.expectedSkillsTools.JobRole, result.JobRole)
-// 			assert.Equal(t, test.expectedSkillsTools.JobDescription, result.JobDescription)
-// 		})
-// 	}
-// }
+			assert.NoError(t, err)
+			assert.Equal(t, test.expectedSkillsTools.PersonalWebsiteType, result.PersonalWebsiteType)
+			assert.Equal(t, test.expectedSkillsTools.SortValue, result.SortValue)
+			assert.Equal(t, test.expectedSkillsTools.SkillsToolsCategory, result.SkillsToolsCategory)
+			assert.Equal(t, test.expectedSkillsTools.SkillsToolsType, result.SkillsToolsType)
+			assert.Equal(t, test.expectedSkillsTools.SkillsToolsList, result.SkillsToolsList)
+		})
+	}
+}
