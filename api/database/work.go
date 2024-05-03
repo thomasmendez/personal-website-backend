@@ -25,12 +25,10 @@ func GetWork(svc dynamodbiface.DynamoDBAPI) (work []models.Work, err error) {
 		},
 		ScanIndexForward: aws.Bool(false),
 	}
-
 	queryOutput, err := svc.Query(input)
 	if err != nil {
 		return work, err
 	}
-
 	for _, item := range queryOutput.Items {
 		var workItem models.Work
 		err := dynamodbattribute.UnmarshalMap(item, &workItem)
@@ -39,7 +37,6 @@ func GetWork(svc dynamodbiface.DynamoDBAPI) (work []models.Work, err error) {
 		}
 		work = append(work, workItem)
 	}
-
 	return work, nil
 }
 
@@ -59,49 +56,21 @@ func PostWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.W
 		"endDate":   {S: aws.String(newWork.EndDate)},
 		"jobRole":   {S: aws.String(newWork.JobRole)},
 	}
-
 	jobDescription := make([]*string, len(newWork.JobDescription))
 	for i, desc := range newWork.JobDescription {
 		jobDescription[i] = aws.String(desc)
 	}
 	item["jobDescription"] = &dynamodb.AttributeValue{SS: jobDescription}
-
 	input := &dynamodb.PutItemInput{
 		Item:      item,
 		TableName: aws.String(tableName),
 	}
-
 	_, err = svc.PutItem(input)
 	if err != nil {
 		log.Print(err)
 		return work, err
 	}
-
-	work, err = getWorkBySortValue(svc, newWork.StartDate)
-
-	return work, err
-}
-
-func getWorkBySortValue(svc dynamodbiface.DynamoDBAPI, sortValue string) (work models.Work, err error) {
-	inputGet := &dynamodb.GetItemInput{
-		Key: map[string]*dynamodb.AttributeValue{
-			"personalWebsiteType": {S: aws.String("Work")},
-			"sortValue":           {S: aws.String(sortValue)},
-		},
-		TableName: aws.String(tableName),
-	}
-
-	result, err := svc.GetItem(inputGet)
-	if err != nil {
-		log.Print(err)
-		return work, err
-	}
-
-	err = dynamodbattribute.UnmarshalMap(result.Item, &work)
-	if err != nil {
-		log.Print(err)
-		return work, err
-	}
+	err = GetItem(svc, newWork.PersonalWebsiteType, newWork.SortValue, &work)
 	return work, err
 }
 
@@ -121,13 +90,11 @@ func UpdateWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models
 		"endDate":   {S: aws.String(newWork.EndDate)},
 		"jobRole":   {S: aws.String(newWork.JobRole)},
 	}
-
 	jobDescription := make([]*string, len(newWork.JobDescription))
 	for i, desc := range newWork.JobDescription {
 		jobDescription[i] = aws.String(desc)
 	}
 	item["jobDescription"] = &dynamodb.AttributeValue{SS: jobDescription}
-
 	updateExpression := "SET #jobTitle = :jobTitleVal, #company = :companyVal, #location = :locationVal, #startDate = :startDateVal, #endDate = :endDateVal, #jobRole = :jobRoleVal, #jobDescription = :jobDescriptionVal"
 	expressionAttributeNames := map[string]*string{
 		"#jobTitle":       aws.String("jobTitle"),
@@ -147,25 +114,21 @@ func UpdateWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models
 		":jobRoleVal":        {S: aws.String(newWork.JobRole)},
 		":jobDescriptionVal": item["jobDescription"],
 	}
-
 	updateInput := &dynamodb.UpdateItemInput{
 		TableName: aws.String(tableName),
 		Key: map[string]*dynamodb.AttributeValue{
 			"personalWebsiteType": {S: aws.String("Work")},
-			"sortValue":           {S: aws.String(newWork.StartDate)},
+			"sortValue":           {S: aws.String(newWork.SortValue)},
 		},
 		UpdateExpression:          aws.String(updateExpression),
 		ExpressionAttributeNames:  expressionAttributeNames,
 		ExpressionAttributeValues: expressionAttributeValues,
 	}
-
 	_, err = svc.UpdateItem(updateInput)
 	if err != nil {
 		log.Print(err)
 		return work, err
 	}
-
-	work, err = getWorkBySortValue(svc, newWork.StartDate)
-
+	err = GetItem(svc, newWork.PersonalWebsiteType, newWork.SortValue, &work)
 	return work, err
 }
