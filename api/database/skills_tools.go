@@ -10,6 +10,8 @@ import (
 	"github.com/thomasmendez/personal-website-backend/api/models"
 )
 
+const partitionKeySkillsTools = "SkillsTools"
+
 func GetSkillsTools(svc dynamodbiface.DynamoDBAPI) (skillsTools []models.SkillsTools, err error) {
 	skillsTools = make([]models.SkillsTools, 0)
 	input := &dynamodb.QueryInput{
@@ -17,7 +19,7 @@ func GetSkillsTools(svc dynamodbiface.DynamoDBAPI) (skillsTools []models.SkillsT
 		KeyConditionExpression: aws.String("personalWebsiteType = :partitionKey"),
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":partitionKey": {
-				S: aws.String("SkillsTools"),
+				S: aws.String(partitionKeySkillsTools),
 			},
 		},
 	}
@@ -38,7 +40,7 @@ func GetSkillsTools(svc dynamodbiface.DynamoDBAPI) (skillsTools []models.SkillsT
 
 func PostSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.SkillsTools) (skillsTools models.SkillsTools, err error) {
 	item := map[string]*dynamodb.AttributeValue{
-		"personalWebsiteType": {S: aws.String("SkillsTools")},
+		"personalWebsiteType": {S: aws.String(partitionKeySkillsTools)},
 		"sortValue":           {S: aws.String(newSkillsTools.SortValue)},
 		"skillsToolsCategory": {S: aws.String(newSkillsTools.SkillsToolsCategory)},
 		"skillsToolsType":     {S: aws.String(newSkillsTools.SkillsToolsType)},
@@ -63,7 +65,7 @@ func PostSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.Skills
 
 func UpdateSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.SkillsTools) (skillsTools models.SkillsTools, err error) {
 	item := map[string]*dynamodb.AttributeValue{
-		"personalWebsiteType": {S: aws.String("SkillsTools")},
+		"personalWebsiteType": {S: aws.String(partitionKeySkillsTools)},
 		"sortValue":           {S: aws.String(newSkillsTools.SortValue)},
 		"skillsToolsCategory": {S: aws.String(newSkillsTools.SkillsToolsCategory)},
 		"skillsToolsType":     {S: aws.String(newSkillsTools.SkillsToolsType)},
@@ -88,7 +90,7 @@ func UpdateSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.Skil
 	updateInput := &dynamodb.UpdateItemInput{
 		TableName: aws.String(tableName),
 		Key: map[string]*dynamodb.AttributeValue{
-			"personalWebsiteType": {S: aws.String("SkillsTools")},
+			"personalWebsiteType": {S: aws.String(partitionKeySkillsTools)},
 			"sortValue":           {S: aws.String(newSkillsTools.SkillsToolsCategory)},
 		},
 		UpdateExpression:          aws.String(updateExpression),

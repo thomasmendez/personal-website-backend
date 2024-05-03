@@ -10,6 +10,8 @@ import (
 	"github.com/thomasmendez/personal-website-backend/api/models"
 )
 
+const partitionKeyWork = "Work"
+
 func GetWork(svc dynamodbiface.DynamoDBAPI) (work []models.Work, err error) {
 	work = make([]models.Work, 0)
 	input := &dynamodb.QueryInput{
@@ -17,7 +19,7 @@ func GetWork(svc dynamodbiface.DynamoDBAPI) (work []models.Work, err error) {
 		KeyConditionExpression: aws.String("personalWebsiteType = :partitionKey and sortValue > :startDateValue"),
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":partitionKey": {
-				S: aws.String("Work"),
+				S: aws.String(partitionKeyWork),
 			},
 			":startDateValue": {
 				S: aws.String("1970-01-01"),
@@ -42,7 +44,7 @@ func GetWork(svc dynamodbiface.DynamoDBAPI) (work []models.Work, err error) {
 
 func PostWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.Work, err error) {
 	item := map[string]*dynamodb.AttributeValue{
-		"personalWebsiteType": {S: aws.String("Work")},
+		"personalWebsiteType": {S: aws.String(partitionKeyWork)},
 		"sortValue":           {S: aws.String(newWork.SortValue)},
 		"jobTitle":            {S: aws.String(newWork.JobTitle)},
 		"company":             {S: aws.String(newWork.Company)},
@@ -76,7 +78,7 @@ func PostWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.W
 
 func UpdateWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.Work, err error) {
 	item := map[string]*dynamodb.AttributeValue{
-		"personalWebsiteType": {S: aws.String("Work")},
+		"personalWebsiteType": {S: aws.String(partitionKeyWork)},
 		"sortValue":           {S: aws.String(newWork.SortValue)},
 		"jobTitle":            {S: aws.String(newWork.JobTitle)},
 		"company":             {S: aws.String(newWork.Company)},
@@ -117,7 +119,7 @@ func UpdateWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models
 	updateInput := &dynamodb.UpdateItemInput{
 		TableName: aws.String(tableName),
 		Key: map[string]*dynamodb.AttributeValue{
-			"personalWebsiteType": {S: aws.String("Work")},
+			"personalWebsiteType": {S: aws.String(partitionKeyWork)},
 			"sortValue":           {S: aws.String(newWork.SortValue)},
 		},
 		UpdateExpression:          aws.String(updateExpression),
