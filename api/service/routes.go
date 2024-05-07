@@ -59,6 +59,19 @@ func NewService() *Service {
 			Method:  http.MethodGet,
 			Handler: s.getSkillsToolsHandler,
 		},
+		// TODO: postSkillsToolsHandler
+		// TODO: updateSkillsToolsHandler
+		{
+			Route:   "/api/v1/projects",
+			Method:  http.MethodGet,
+			Handler: s.getProjectsHandler,
+		},
+		{
+			Route:   "/api/v1/projects",
+			Method:  http.MethodPost,
+			Handler: s.postProjectsHandler,
+		},
+		// TODO: updateProjectHandler
 	}
 
 	return s
