@@ -24,7 +24,7 @@ func TestWorkApi(t *testing.T) {
 			label:       "post Work",
 			route:       "/api/v1/work",
 			method:      http.MethodPost,
-			reqBodyWork: &models.ExpectedWork,
+			reqBodyWork: &models.TestWork,
 		},
 	} {
 		t.Run(test.label, func(t *testing.T) {

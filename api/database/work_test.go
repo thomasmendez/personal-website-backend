@@ -45,7 +45,7 @@ func TestWorkGet(t *testing.T) {
 				}
 				return mockOutput, nil
 			},
-			expectedWork:  []models.Work{models.ExpectedWork},
+			expectedWork:  []models.Work{models.TestWork},
 			expectedError: nil,
 		},
 		{
@@ -97,7 +97,7 @@ func TestPostWork(t *testing.T) {
 	}{
 		{
 			label:   "valid query output",
-			newWork: models.ExpectedWork,
+			newWork: models.TestWork,
 			mockPutFunc: func(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
 				return nil, nil
 			},
@@ -122,12 +122,12 @@ func TestPostWork(t *testing.T) {
 				}
 				return mockOutput, nil
 			},
-			expectedWork:  models.ExpectedWork,
+			expectedWork:  models.TestWork,
 			expectedError: nil,
 		},
 		{
 			label:   "query error",
-			newWork: models.ExpectedWork,
+			newWork: models.TestWork,
 			mockPutFunc: func(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
 				return nil, nil
 			},
@@ -168,15 +168,15 @@ func TestUpdateWork(t *testing.T) {
 	mockDB := &mockDynamoDB{}
 	for _, test := range []struct {
 		label          string
-		newWork        models.Work
+		updateWork     models.Work
 		mockUpdateFunc func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error)
 		mockGetFunc    func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
 		expectedWork   models.Work
 		expectedError  error
 	}{
 		{
-			label:   "valid query output",
-			newWork: models.ExpectedWork,
+			label:      "valid query output",
+			updateWork: models.TestWork,
 			mockUpdateFunc: func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
 				return nil, nil
 			},
@@ -201,12 +201,12 @@ func TestUpdateWork(t *testing.T) {
 				}
 				return mockOutput, nil
 			},
-			expectedWork:  models.ExpectedWork,
+			expectedWork:  models.TestWork,
 			expectedError: nil,
 		},
 		{
-			label:   "query error",
-			newWork: models.ExpectedWork,
+			label:      "query error",
+			updateWork: models.TestWork,
 			mockUpdateFunc: func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
 				return nil, nil
 			},
@@ -219,7 +219,7 @@ func TestUpdateWork(t *testing.T) {
 			mockDB.UpdateFunc = test.mockUpdateFunc
 			mockDB.GetFunc = test.mockGetFunc
 
-			result, err := UpdateWork(mockDB, test.newWork)
+			result, err := UpdateWork(mockDB, test.updateWork)
 
 			if err != nil {
 				assert.Error(t, err)

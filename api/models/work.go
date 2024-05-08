@@ -18,7 +18,7 @@ type Location struct {
 }
 
 // Work model used for test cases
-var ExpectedWork = Work{
+var TestWork = Work{
 	PersonalWebsiteType: "Work",
 	SortValue:           "2020-01-01",
 	JobTitle:            "Software Engineer",

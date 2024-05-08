@@ -72,7 +72,7 @@ func PostWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.W
 	return work, err
 }
 
-func UpdateWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.Work, err error) {
+func UpdateWork(svc dynamodbiface.DynamoDBAPI, updateWork models.Work) (work models.Work, err error) {
 	updateExpression := "SET #jobTitle = :jobTitleVal, #company = :companyVal, #location = :locationVal, #startDate = :startDateVal, #endDate = :endDateVal, #jobRole = :jobRoleVal, #jobDescription = :jobDescriptionVal"
 	expressionAttributeNames := map[string]*string{
 		"#jobTitle":       aws.String("jobTitle"),
@@ -84,22 +84,22 @@ func UpdateWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models
 		"#jobDescription": aws.String("jobDescription"),
 	}
 	expressionAttributeValues := map[string]*dynamodb.AttributeValue{
-		":jobTitleVal": {S: aws.String(newWork.JobTitle)},
-		":companyVal":  {S: aws.String(newWork.Company)},
+		":jobTitleVal": {S: aws.String(updateWork.JobTitle)},
+		":companyVal":  {S: aws.String(updateWork.Company)},
 		":locationVal": {M: map[string]*dynamodb.AttributeValue{
-			"city":  {S: aws.String(newWork.Location.City)},
-			"state": {S: aws.String(newWork.Location.State)},
+			"city":  {S: aws.String(updateWork.Location.City)},
+			"state": {S: aws.String(updateWork.Location.State)},
 		}},
-		":startDateVal":      {S: aws.String(newWork.StartDate)},
-		":endDateVal":        {S: aws.String(newWork.EndDate)},
-		":jobRoleVal":        {S: aws.String(newWork.JobRole)},
-		":jobDescriptionVal": {SS: aws.StringSlice(newWork.JobDescription)},
+		":startDateVal":      {S: aws.String(updateWork.StartDate)},
+		":endDateVal":        {S: aws.String(updateWork.EndDate)},
+		":jobRoleVal":        {S: aws.String(updateWork.JobRole)},
+		":jobDescriptionVal": {SS: aws.StringSlice(updateWork.JobDescription)},
 	}
 	updateInput := &dynamodb.UpdateItemInput{
 		TableName: aws.String(tableName),
 		Key: map[string]*dynamodb.AttributeValue{
 			"personalWebsiteType": {S: aws.String(partitionKeyWork)},
-			"sortValue":           {S: aws.String(newWork.SortValue)},
+			"sortValue":           {S: aws.String(updateWork.SortValue)},
 		},
 		UpdateExpression:          aws.String(updateExpression),
 		ExpressionAttributeNames:  expressionAttributeNames,
@@ -110,6 +110,6 @@ func UpdateWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models
 		log.Print(err)
 		return work, err
 	}
-	err = GetItem(svc, newWork.PersonalWebsiteType, newWork.SortValue, &work)
+	err = GetItem(svc, updateWork.PersonalWebsiteType, updateWork.SortValue, &work)
 	return work, err
 }
