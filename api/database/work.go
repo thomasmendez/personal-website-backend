@@ -54,15 +54,11 @@ func PostWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.W
 				"state": {S: aws.String(newWork.Location.State)},
 			},
 		},
-		"startDate": {S: aws.String(newWork.StartDate)},
-		"endDate":   {S: aws.String(newWork.EndDate)},
-		"jobRole":   {S: aws.String(newWork.JobRole)},
+		"startDate":      {S: aws.String(newWork.StartDate)},
+		"endDate":        {S: aws.String(newWork.EndDate)},
+		"jobRole":        {S: aws.String(newWork.JobRole)},
+		"jobDescription": {SS: aws.StringSlice(newWork.JobDescription)},
 	}
-	jobDescription := make([]*string, len(newWork.JobDescription))
-	for i, desc := range newWork.JobDescription {
-		jobDescription[i] = aws.String(desc)
-	}
-	item["jobDescription"] = &dynamodb.AttributeValue{SS: jobDescription}
 	input := &dynamodb.PutItemInput{
 		Item:      item,
 		TableName: aws.String(tableName),
@@ -77,26 +73,6 @@ func PostWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.W
 }
 
 func UpdateWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.Work, err error) {
-	item := map[string]*dynamodb.AttributeValue{
-		"personalWebsiteType": {S: aws.String(partitionKeyWork)},
-		"sortValue":           {S: aws.String(newWork.SortValue)},
-		"jobTitle":            {S: aws.String(newWork.JobTitle)},
-		"company":             {S: aws.String(newWork.Company)},
-		"location": {
-			M: map[string]*dynamodb.AttributeValue{
-				"city":  {S: aws.String(newWork.Location.City)},
-				"state": {S: aws.String(newWork.Location.State)},
-			},
-		},
-		"startDate": {S: aws.String(newWork.StartDate)},
-		"endDate":   {S: aws.String(newWork.EndDate)},
-		"jobRole":   {S: aws.String(newWork.JobRole)},
-	}
-	jobDescription := make([]*string, len(newWork.JobDescription))
-	for i, desc := range newWork.JobDescription {
-		jobDescription[i] = aws.String(desc)
-	}
-	item["jobDescription"] = &dynamodb.AttributeValue{SS: jobDescription}
 	updateExpression := "SET #jobTitle = :jobTitleVal, #company = :companyVal, #location = :locationVal, #startDate = :startDateVal, #endDate = :endDateVal, #jobRole = :jobRoleVal, #jobDescription = :jobDescriptionVal"
 	expressionAttributeNames := map[string]*string{
 		"#jobTitle":       aws.String("jobTitle"),
@@ -108,13 +84,16 @@ func UpdateWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models
 		"#jobDescription": aws.String("jobDescription"),
 	}
 	expressionAttributeValues := map[string]*dynamodb.AttributeValue{
-		":jobTitleVal":       {S: aws.String(newWork.JobTitle)},
-		":companyVal":        {S: aws.String(newWork.Company)},
-		":locationVal":       {M: item["location"].M},
+		":jobTitleVal": {S: aws.String(newWork.JobTitle)},
+		":companyVal":  {S: aws.String(newWork.Company)},
+		":locationVal": {M: map[string]*dynamodb.AttributeValue{
+			"city":  {S: aws.String(newWork.Location.City)},
+			"state": {S: aws.String(newWork.Location.State)},
+		}},
 		":startDateVal":      {S: aws.String(newWork.StartDate)},
 		":endDateVal":        {S: aws.String(newWork.EndDate)},
 		":jobRoleVal":        {S: aws.String(newWork.JobRole)},
-		":jobDescriptionVal": item["jobDescription"],
+		":jobDescriptionVal": {SS: aws.StringSlice(newWork.JobDescription)},
 	}
 	updateInput := &dynamodb.UpdateItemInput{
 		TableName: aws.String(tableName),

@@ -60,13 +60,6 @@ func PostSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.Skills
 }
 
 func UpdateSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.SkillsTools) (skillsTools models.SkillsTools, err error) {
-	item := map[string]*dynamodb.AttributeValue{
-		"personalWebsiteType": {S: aws.String(partitionKeySkillsTools)},
-		"sortValue":           {S: aws.String(newSkillsTools.SortValue)},
-		"skillsToolsCategory": {S: aws.String(newSkillsTools.SkillsToolsCategory)},
-		"skillsToolsType":     {S: aws.String(newSkillsTools.SkillsToolsType)},
-		"skillsToolsList":     {SS: aws.StringSlice(newSkillsTools.SkillsToolsList)},
-	}
 	updateExpression := "SET #skillsToolsCategory = :skillsToolsCategoryVal, #skillsToolsType = :skillsToolsTypeVal, #skillsToolsList = :skillsToolsListVal"
 	expressionAttributeNames := map[string]*string{
 		"#skillsToolsCategory": aws.String("skillsToolsCategory"),
@@ -76,7 +69,7 @@ func UpdateSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.Skil
 	expressionAttributeValues := map[string]*dynamodb.AttributeValue{
 		":skillsToolsCategoryVal": {S: aws.String(newSkillsTools.SkillsToolsCategory)},
 		":skillsToolsTypeVal":     {S: aws.String(newSkillsTools.SkillsToolsType)},
-		":skillsToolsListVal":     item["skillsToolsList"],
+		":skillsToolsListVal":     {SS: aws.StringSlice(newSkillsTools.SkillsToolsList)},
 	}
 	updateInput := &dynamodb.UpdateItemInput{
 		TableName: aws.String(tableName),
