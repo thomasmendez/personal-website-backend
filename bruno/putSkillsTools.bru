@@ -1,0 +1,21 @@
+meta {
+  name: putSkillsTools
+  type: http
+  seq: 6
+}
+
+put {
+  url: http://127.0.0.1:3000/api/v1/skillsTools
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "personalWebsiteType": "SkillsTools",
+    "sortValue": "Programming Languages",
+    "skillsToolsCategory": "Tools",
+    "skillsToolsType": "Programming Languages",
+    "skillsToolsList": ["Go", "Python", "React", "Java", "Swift", "C#"]
+  }
+}

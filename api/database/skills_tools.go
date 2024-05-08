@@ -91,7 +91,7 @@ func UpdateSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.Skil
 		TableName: aws.String(tableName),
 		Key: map[string]*dynamodb.AttributeValue{
 			"personalWebsiteType": {S: aws.String(partitionKeySkillsTools)},
-			"sortValue":           {S: aws.String(newSkillsTools.SkillsToolsCategory)},
+			"sortValue":           {S: aws.String(newSkillsTools.SortValue)},
 		},
 		UpdateExpression:          aws.String(updateExpression),
 		ExpressionAttributeNames:  expressionAttributeNames,
