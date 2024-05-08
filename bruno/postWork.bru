@@ -6,6 +6,26 @@ meta {
 
 post {
   url: http://127.0.0.1:3000/api/v1/work
-  body: none
+  body: json
   auth: none
+}
+
+body:json {
+  {
+      "personalWebsiteType": "Work",
+      "sortValue": "2019-11-11",
+      "jobTitle": "Software Engineer",
+      "company": "New Company",
+      "location": {
+          "city": "New York",
+          "state": "NY"
+      },
+      "startDate": "2019-06-11",
+      "endDate": "2020-12-31",
+      "jobRole": "Backend Developer",
+      "JobDescription": [
+          "Developed backend systems",
+          "Optimized database queries"
+      ]
+  }
 }

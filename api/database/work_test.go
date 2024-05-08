@@ -45,7 +45,7 @@ func TestWorkGet(t *testing.T) {
 				}
 				return mockOutput, nil
 			},
-			expectedWork:  []models.Work{expectedWork},
+			expectedWork:  []models.Work{models.ExpectedWork},
 			expectedError: nil,
 		},
 		{
@@ -85,21 +85,6 @@ func TestWorkGet(t *testing.T) {
 	}
 }
 
-var expectedWork = models.Work{
-	PersonalWebsiteType: "Work",
-	SortValue:           "2020-01-01",
-	JobTitle:            "Software Engineer",
-	Company:             "ABC Inc",
-	Location: models.Location{
-		City:  "New York",
-		State: "NY",
-	},
-	StartDate:      "2020-01-01",
-	EndDate:        "2020-12-31",
-	JobRole:        "Backend Developer",
-	JobDescription: []string{"Developed backend systems", "Optimized database queries"},
-}
-
 func TestPostWork(t *testing.T) {
 	mockDB := &mockDynamoDB{}
 	for _, test := range []struct {
@@ -112,7 +97,7 @@ func TestPostWork(t *testing.T) {
 	}{
 		{
 			label:   "valid query output",
-			newWork: expectedWork,
+			newWork: models.ExpectedWork,
 			mockPutFunc: func(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
 				return nil, nil
 			},
@@ -137,12 +122,12 @@ func TestPostWork(t *testing.T) {
 				}
 				return mockOutput, nil
 			},
-			expectedWork:  expectedWork,
+			expectedWork:  models.ExpectedWork,
 			expectedError: nil,
 		},
 		{
 			label:   "query error",
-			newWork: expectedWork,
+			newWork: models.ExpectedWork,
 			mockPutFunc: func(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
 				return nil, nil
 			},
@@ -191,7 +176,7 @@ func TestUpdateWork(t *testing.T) {
 	}{
 		{
 			label:   "valid query output",
-			newWork: expectedWork,
+			newWork: models.ExpectedWork,
 			mockUpdateFunc: func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
 				return nil, nil
 			},
@@ -216,12 +201,12 @@ func TestUpdateWork(t *testing.T) {
 				}
 				return mockOutput, nil
 			},
-			expectedWork:  expectedWork,
+			expectedWork:  models.ExpectedWork,
 			expectedError: nil,
 		},
 		{
 			label:   "query error",
-			newWork: expectedWork,
+			newWork: models.ExpectedWork,
 			mockUpdateFunc: func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
 				return nil, nil
 			},

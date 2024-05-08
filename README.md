@@ -88,6 +88,20 @@ sam.cmd local start-api --docker-network dynamodb-backend
 sam.cmd build
 ```
 
+**Testing - Unit Tests**
+
+`cd api` to run tests
+
+```bash
+go test ./...
+```
+
+**Testing - Integration Tests**
+
+```bash
+INTEGRATION=1 go test ./...
+```
+
 If the previous command ran successfully you should now be able to hit the following local endpoint to invoke your function `http://localhost:3000/hello`
 
 **SAM CLI** is used to emulate both Lambda and API Gateway locally and uses our `template.yaml` to understand how to bootstrap this environment (runtime, where the source code is, etc.) - The following excerpt is what the CLI will read in order to initialize an API and its routes:

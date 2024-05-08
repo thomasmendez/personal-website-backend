@@ -16,3 +16,19 @@ type Location struct {
 	City  string `json:"city"`
 	State string `json:"state"`
 }
+
+// Work model used for test cases
+var ExpectedWork = Work{
+	PersonalWebsiteType: "Work",
+	SortValue:           "2020-01-01",
+	JobTitle:            "Software Engineer",
+	Company:             "ABC Inc",
+	Location: Location{
+		City:  "New York",
+		State: "NY",
+	},
+	StartDate:      "2020-01-01",
+	EndDate:        "2020-12-31",
+	JobRole:        "Backend Developer",
+	JobDescription: []string{"Developed backend systems", "Optimized database queries"},
+}
