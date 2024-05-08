@@ -126,7 +126,39 @@ func (s *Service) getSkillsToolsHandler(ctx context.Context, request events.APIG
 	}, err
 }
 
-// TODO: postSkillsToolsHandler
+func (s *Service) postSkillsToolsHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	var newSkillsTools models.SkillsTools
+	err := json.Unmarshal([]byte(request.Body), &newSkillsTools)
+	if err != nil {
+		log.Printf("err: %v", err)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusBadRequest,
+			Body:       "Bad Request: Invalid JSON",
+		}, nil
+	}
+
+	skillsTools, err := database.PostSkillsTools(s.DB, newSkillsTools)
+
+	if err != nil {
+		log.Print(err.Error())
+		errRes := ErrorResponse{
+			Message: fmt.Sprintf("There was an error in inserting skillsTools with sortValue of: %s", newSkillsTools.SortValue),
+		}
+		res, _ := json.Marshal(errRes)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusInternalServerError,
+			Body:       string(res),
+		}, err
+	}
+
+	skillsToolsJson, err := json.Marshal(skillsTools)
+
+	return events.APIGatewayProxyResponse{
+		StatusCode: http.StatusCreated,
+		Body:       string(skillsToolsJson),
+	}, err
+}
+
 // TODO: updateSkillsToolsHandler
 
 func (s *Service) getProjectsHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
