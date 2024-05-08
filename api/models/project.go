@@ -9,7 +9,7 @@ type Project struct {
 	FeaturesDescription string    `json:"featuresDescription"`
 	Role                string    `json:"role"`
 	Tasks               []string  `json:"tasks"`
-	TeamSize            *int      `json:"teamSize"`
+	TeamSize            *string   `json:"teamSize"`
 	TeamRoles           *[]string `json:"teamRoles"`
 	CloudServices       *[]string `json:"cloudServices"`
 	Tools               []string  `json:"tools"`

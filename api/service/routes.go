@@ -71,7 +71,11 @@ func NewService() *Service {
 			Method:  http.MethodPost,
 			Handler: s.postProjectsHandler,
 		},
-		// TODO: updateProjectHandler
+		{
+			Route:   "/api/v1/projects",
+			Method:  http.MethodPut,
+			Handler: s.updateProjectsHandler,
+		},
 	}
 
 	return s

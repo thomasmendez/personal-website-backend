@@ -13,7 +13,7 @@ import (
 func TestGetProjects(t *testing.T) {
 
 	mockDB := &mockDynamoDB{}
-	teamSize := 1
+	teamSize := "1"
 	teamRoles := []string{"Frontend Developer", "Backend Developer"}
 	cloudServices := []string{"AWS"}
 	notes := "Site is still in development stages"
@@ -243,81 +243,95 @@ func TestPostProject(t *testing.T) {
 	}
 }
 
-// func TestUpdateProject(t *testing.T) {
-// 	mockDB := &mockDynamoDB{}
-// 	for _, test := range []struct {
-// 		label           string
-// 		newProject      models.Project
-// 		mockUpdateFunc  func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error)
-// 		mockGetFunc     func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
-// 		expectedProject models.Project
-// 		expectedError   error
-// 	}{
-// 		{
-// 			label:      "valid query output",
-// 			newProject: expectedProject,
-// 			mockUpdateFunc: func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
-// 				return nil, nil
-// 			},
-// 			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
-// 				mockOutput := &dynamodb.GetItemOutput{
-// 					Item: map[string]*dynamodb.AttributeValue{
-// 						"personalWebsiteType": {S: aws.String("Projects")},
-// 						"sortValue":           {S: aws.String("Project Title")},
-// 						"category":            {S: aws.String("Software Engineering")},
-// 						"name":                {S: aws.String("Project Title")},
-// 						"description":         {SS: aws.StringSlice([]string{"Develop backend microservices"})},
-// 					},
-// 				}
-// 				return mockOutput, nil
-// 			},
-// 			expectedProject: expectedProject,
-// 			expectedError:   nil,
-// 		},
-// 		{
-// 			label:      "query error",
-// 			newProject: expectedProject,
-// 			mockUpdateFunc: func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
-// 				return nil, nil
-// 			},
-// 			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
-// 				return nil, errors.New("error updating item from database")
-// 			},
-// 		},
-// 	} {
-// 		t.Run(test.label, func(t *testing.T) {
-// 			mockDB.UpdateFunc = test.mockUpdateFunc
-// 			mockDB.GetFunc = test.mockGetFunc
+func TestUpdateProject(t *testing.T) {
+	mockDB := &mockDynamoDB{}
+	for _, test := range []struct {
+		label           string
+		updateProject   models.Project
+		mockUpdateFunc  func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error)
+		mockGetFunc     func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
+		expectedProject models.Project
+		expectedError   error
+	}{
+		{
+			label:         "valid query output",
+			updateProject: expectedProject,
+			mockUpdateFunc: func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
+				return nil, nil
+			},
+			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
+				mockOutput := &dynamodb.GetItemOutput{
+					Item: map[string]*dynamodb.AttributeValue{
+						"personalWebsiteType": {S: aws.String("Projects")},
+						"sortValue":           {S: aws.String("Project Title")},
+						"category":            {S: aws.String("Software Engineering")},
+						"name":                {S: aws.String("Personal Website")},
+						"description":         {S: aws.String("My personal website created in the cloud")},
+						"featuresDescription": {S: aws.String("User is able to view my work")},
+						"role":                {S: aws.String("Project Lead")},
+						"tasks":               {SS: aws.StringSlice([]string{"Develop backend microservices"})},
+						"teamSize":            {NULL: aws.Bool(true)},
+						"teamRoles":           {NULL: aws.Bool(true)},
+						"cloudServices":       {NULL: aws.Bool(true)},
+						"tools":               {SS: aws.StringSlice([]string{"React", "Go"})},
+						"duration":            {S: aws.String("6 Months")},
+						"startDate":           {S: aws.String("Jan 2024")},
+						"endDate":             {S: aws.String("Dec 2024")},
+						"notes":               {NULL: aws.Bool(true)},
+						"link":                {NULL: aws.Bool(true)},
+						"linkType":            {NULL: aws.Bool(true)},
+						"mediaLink":           {NULL: aws.Bool(true)},
+					},
+				}
+				return mockOutput, nil
+			},
+			expectedProject: expectedProject,
+			expectedError:   nil,
+		},
+		{
+			label:         "query error",
+			updateProject: expectedProject,
+			mockUpdateFunc: func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
+				return nil, nil
+			},
+			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
+				return nil, errors.New("error updating item from database")
+			},
+		},
+	} {
+		t.Run(test.label, func(t *testing.T) {
+			mockDB.UpdateFunc = test.mockUpdateFunc
+			mockDB.GetFunc = test.mockGetFunc
 
-// 			result, err := UpdateProject(mockDB, test.newProject)
+			result, err := UpdateProject(mockDB, test.updateProject)
 
-// 			if err != nil {
-// 				assert.Error(t, err)
-// 				assert.Empty(t, result)
-// 				assert.Equal(t, "error updating item from database", err.Error())
-// 				return
-// 			}
+			if err != nil {
+				assert.Error(t, err)
+				assert.Empty(t, result)
+				assert.Equal(t, "error updating item from database", err.Error())
+				return
+			}
 
-// 			assert.NoError(t, err)
-// 			assert.Equal(t, test.expectedProject.PersonalWebsiteType, result.PersonalWebsiteType)
-// 			assert.Equal(t, test.expectedProject.SortValue, result.SortValue)
-// 			assert.Equal(t, test.expectedProject.Category, result.Category)
-// 			assert.Equal(t, test.expectedProject.Name, result.Name)
-// 			assert.Equal(t, test.expectedProject.Description, result.Description)
-// 			assert.Equal(t, test.expectedProject.FeaturesDescription, result.FeaturesDescription)
-// 			assert.Equal(t, test.expectedProject.Role, result.Role)
-// 			assert.Equal(t, test.expectedProject.Tasks, result.Tasks)
-// 			assert.Equal(t, test.expectedProject.TeamSize, result.TeamSize)
-// 			assert.Equal(t, test.expectedProject.TeamRoles, result.TeamRoles)
-// 			assert.Equal(t, test.expectedProject.CloudServices, result.CloudServices)
-// 			assert.Equal(t, test.expectedProject.Tools, result.Tools)
-// 			assert.Equal(t, test.expectedProject.Duration, result.Duration)
-// 			assert.Equal(t, test.expectedProject.StartDate, result.StartDate)
-// 			assert.Equal(t, test.expectedProject.EndDate, result.EndDate)
-// 			assert.Equal(t, test.expectedProject.Notes, result.Notes)
-// 			assert.Equal(t, test.expectedProject.Link, result.Link)
-// 			assert.Equal(t, test.expectedProject.LinkType, result.LinkType)
-// 			assert.Equal(t, test.expectedProject.MediaLink, result.MediaLink)
-// 		})
-// 	}
-// }
+			assert.NoError(t, err)
+			assert.Equal(t, test.expectedProject.PersonalWebsiteType, result.PersonalWebsiteType)
+			assert.Equal(t, test.expectedProject.SortValue, result.SortValue)
+			assert.Equal(t, test.expectedProject.Category, result.Category)
+			assert.Equal(t, test.expectedProject.Name, result.Name)
+			assert.Equal(t, test.expectedProject.Description, result.Description)
+			assert.Equal(t, test.expectedProject.FeaturesDescription, result.FeaturesDescription)
+			assert.Equal(t, test.expectedProject.Role, result.Role)
+			assert.Equal(t, test.expectedProject.Tasks, result.Tasks)
+			assert.Equal(t, test.expectedProject.TeamSize, result.TeamSize)
+			assert.Equal(t, test.expectedProject.TeamRoles, result.TeamRoles)
+			assert.Equal(t, test.expectedProject.CloudServices, result.CloudServices)
+			assert.Equal(t, test.expectedProject.Tools, result.Tools)
+			assert.Equal(t, test.expectedProject.Duration, result.Duration)
+			assert.Equal(t, test.expectedProject.StartDate, result.StartDate)
+			assert.Equal(t, test.expectedProject.EndDate, result.EndDate)
+			assert.Equal(t, test.expectedProject.Notes, result.Notes)
+			assert.Equal(t, test.expectedProject.Link, result.Link)
+			assert.Equal(t, test.expectedProject.LinkType, result.LinkType)
+			assert.Equal(t, test.expectedProject.MediaLink, result.MediaLink)
+		})
+	}
+}

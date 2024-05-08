@@ -185,3 +185,36 @@ func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGat
 		Body:       string(projectJson),
 	}, err
 }
+
+func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	var updateProject models.Project
+	err := json.Unmarshal([]byte(request.Body), &updateProject)
+	if err != nil {
+		log.Printf("err: %v", err)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusBadRequest,
+			Body:       "Bad Request: Invalid JSON",
+		}, nil
+	}
+
+	project, err := database.UpdateProject(s.DB, updateProject)
+
+	if err != nil {
+		log.Print(err.Error())
+		errRes := ErrorResponse{
+			Message: fmt.Sprintf("There was an error in updating project with startDate of: %s", updateProject.StartDate),
+		}
+		res, _ := json.Marshal(errRes)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusInternalServerError,
+			Body:       string(res),
+		}, err
+	}
+
+	projectJson, err := json.Marshal(project)
+
+	return events.APIGatewayProxyResponse{
+		StatusCode: http.StatusCreated,
+		Body:       string(projectJson),
+	}, err
+}
