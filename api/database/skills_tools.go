@@ -44,12 +44,8 @@ func PostSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.Skills
 		"sortValue":           {S: aws.String(newSkillsTools.SortValue)},
 		"skillsToolsCategory": {S: aws.String(newSkillsTools.SkillsToolsCategory)},
 		"skillsToolsType":     {S: aws.String(newSkillsTools.SkillsToolsType)},
+		"skillsToolsList":     {SS: aws.StringSlice(newSkillsTools.SkillsToolsList)},
 	}
-	skillsToolsList := make([]*string, len(newSkillsTools.SkillsToolsList))
-	for i, skillTool := range newSkillsTools.SkillsToolsList {
-		skillsToolsList[i] = aws.String(skillTool)
-	}
-	item["skillsToolsList"] = &dynamodb.AttributeValue{SS: skillsToolsList}
 	input := &dynamodb.PutItemInput{
 		Item:      item,
 		TableName: aws.String(tableName),
@@ -69,13 +65,8 @@ func UpdateSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.Skil
 		"sortValue":           {S: aws.String(newSkillsTools.SortValue)},
 		"skillsToolsCategory": {S: aws.String(newSkillsTools.SkillsToolsCategory)},
 		"skillsToolsType":     {S: aws.String(newSkillsTools.SkillsToolsType)},
+		"skillsToolsList":     {SS: aws.StringSlice(newSkillsTools.SkillsToolsList)},
 	}
-	skillsToolsList := make([]*string, len(newSkillsTools.SkillsToolsList))
-	for i, skillTool := range newSkillsTools.SkillsToolsList {
-		skillsToolsList[i] = aws.String(skillTool)
-	}
-	item["skillsToolsList"] = &dynamodb.AttributeValue{SS: skillsToolsList}
-
 	updateExpression := "SET #skillsToolsCategory = :skillsToolsCategoryVal, #skillsToolsType = :skillsToolsTypeVal, #skillsToolsList = :skillsToolsListVal"
 	expressionAttributeNames := map[string]*string{
 		"#skillsToolsCategory": aws.String("skillsToolsCategory"),
