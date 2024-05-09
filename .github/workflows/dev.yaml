@@ -32,14 +32,10 @@ jobs:
         cd api
         go test -v -coverprofile=coverage.out ./...
 
-    - name: Run integration tests
-      uses: aws-actions/setup-sam@v2
-    - run: docker compose up -d
-    - run: sam local start-api --docker-network dynamodb-backend
-    - run: cd api
-    - run: INTEGRATION=1 go test ./...
-    # - run: |
-    #     docker compose up -d
-    #     sam local start-api --docker-network dynamodb-backend
-    #     cd api
-    #     INTEGRATION=1 go test ./...
+    # Cannot run sam local in detached mode
+    # - name: Run integration tests
+    #   uses: aws-actions/setup-sam@v2
+    # - run: docker compose up -d
+    # - run: sam local start-api --docker-network dynamodb-backend
+    # - run: cd api
+    # - run: INTEGRATION=1 go test ./...
