@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasmendez/personal-website-backend/api/models"
+	"github.com/thomasmendez/personal-website-backend/api/tests"
 )
 
 func TestGetProjects(t *testing.T) {
@@ -24,13 +25,13 @@ func TestGetProjects(t *testing.T) {
 			mockQueryFunc: func(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
 				mockOutput := &dynamodb.QueryOutput{
 					Items: []map[string]*dynamodb.AttributeValue{
-						models.TestProjectItem,
+						tests.TestProjectItem,
 					},
 				}
 				return mockOutput, nil
 			},
 			expectedResult: []models.Project{
-				models.TestProject,
+				tests.TestProject,
 			},
 		},
 		{
@@ -56,32 +57,10 @@ func TestGetProjects(t *testing.T) {
 			assert.Len(t, result, 1)
 
 			for i, project := range result {
-				assertProject(t, test.expectedResult[i], project)
+				tests.AssertProject(t, test.expectedResult[i], project)
 			}
 		})
 	}
-}
-
-func assertProject(t *testing.T, expectedProject models.Project, actualProject models.Project) {
-	assert.Equal(t, expectedProject.PersonalWebsiteType, actualProject.PersonalWebsiteType)
-	assert.Equal(t, expectedProject.SortValue, actualProject.SortValue)
-	assert.Equal(t, expectedProject.Category, actualProject.Category)
-	assert.Equal(t, expectedProject.Name, actualProject.Name)
-	assert.Equal(t, expectedProject.Description, actualProject.Description)
-	assert.Equal(t, expectedProject.FeaturesDescription, actualProject.FeaturesDescription)
-	assert.Equal(t, expectedProject.Role, actualProject.Role)
-	assert.Equal(t, expectedProject.Tasks, actualProject.Tasks)
-	assert.Equal(t, expectedProject.TeamSize, actualProject.TeamSize)
-	assert.Equal(t, expectedProject.TeamRoles, actualProject.TeamRoles)
-	assert.Equal(t, expectedProject.CloudServices, actualProject.CloudServices)
-	assert.Equal(t, expectedProject.Tools, actualProject.Tools)
-	assert.Equal(t, expectedProject.Duration, actualProject.Duration)
-	assert.Equal(t, expectedProject.StartDate, actualProject.StartDate)
-	assert.Equal(t, expectedProject.EndDate, actualProject.EndDate)
-	assert.Equal(t, expectedProject.Notes, actualProject.Notes)
-	assert.Equal(t, expectedProject.Link, actualProject.Link)
-	assert.Equal(t, expectedProject.LinkType, actualProject.LinkType)
-	assert.Equal(t, expectedProject.MediaLink, actualProject.MediaLink)
 }
 
 func TestPostProject(t *testing.T) {
@@ -96,22 +75,22 @@ func TestPostProject(t *testing.T) {
 	}{
 		{
 			label:      "valid query output",
-			newProject: models.TestProject,
+			newProject: tests.TestProject,
 			mockPutFunc: func(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
 				return nil, nil
 			},
 			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
 				mockOutput := &dynamodb.GetItemOutput{
-					Item: models.TestProjectItemNil,
+					Item: tests.TestProjectItemNil,
 				}
 				return mockOutput, nil
 			},
-			expectedProject: models.TestProjectNil,
+			expectedProject: tests.TestProjectNil,
 			expectedError:   nil,
 		},
 		{
 			label:      "query error",
-			newProject: models.TestProjectNil,
+			newProject: tests.TestProjectNil,
 			mockPutFunc: func(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
 				return nil, nil
 			},
@@ -134,7 +113,7 @@ func TestPostProject(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
-			assertProject(t, test.expectedProject, result)
+			tests.AssertProject(t, test.expectedProject, result)
 		})
 	}
 }
@@ -151,22 +130,22 @@ func TestUpdateProject(t *testing.T) {
 	}{
 		{
 			label:         "valid query output",
-			updateProject: models.TestProjectNil,
+			updateProject: tests.TestProjectNil,
 			mockUpdateFunc: func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
 				return nil, nil
 			},
 			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
 				mockOutput := &dynamodb.GetItemOutput{
-					Item: models.TestProjectItemNil,
+					Item: tests.TestProjectItemNil,
 				}
 				return mockOutput, nil
 			},
-			expectedProject: models.TestProjectNil,
+			expectedProject: tests.TestProjectNil,
 			expectedError:   nil,
 		},
 		{
 			label:         "query error",
-			updateProject: models.TestProjectNil,
+			updateProject: tests.TestProjectNil,
 			mockUpdateFunc: func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
 				return nil, nil
 			},
@@ -189,7 +168,7 @@ func TestUpdateProject(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
-			assertProject(t, test.expectedProject, result)
+			tests.AssertProject(t, test.expectedProject, result)
 		})
 	}
 }

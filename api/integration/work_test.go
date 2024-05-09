@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/thomasmendez/personal-website-backend/api/models"
+	"github.com/thomasmendez/personal-website-backend/api/tests"
 )
 
 func TestWorkApi(t *testing.T) {
@@ -24,7 +25,7 @@ func TestWorkApi(t *testing.T) {
 			label:       "post Work",
 			route:       "/api/v1/work",
 			method:      http.MethodPost,
-			reqBodyWork: &models.TestWork,
+			reqBodyWork: &tests.TestWork,
 		},
 	} {
 		t.Run(test.label, func(t *testing.T) {
@@ -54,6 +55,13 @@ func TestWorkApi(t *testing.T) {
 			t.Log(actualResponse)
 
 			// assert
+			// check that all values are present from what was given
+			var work models.Work
+			err = json.Unmarshal(body, &work)
+			if err != nil {
+				t.Fatalf("error in unmarshal: %v", err)
+			}
+			tests.AssertWork(t, *test.reqBodyWork, work)
 		})
 	}
 }

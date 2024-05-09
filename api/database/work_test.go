@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasmendez/personal-website-backend/api/models"
+	"github.com/thomasmendez/personal-website-backend/api/tests"
 )
 
 func TestWorkGet(t *testing.T) {
@@ -24,12 +25,12 @@ func TestWorkGet(t *testing.T) {
 			mockQueryFunc: func(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
 				mockOutput := &dynamodb.QueryOutput{
 					Items: []map[string]*dynamodb.AttributeValue{
-						models.TestWorkItem,
+						tests.TestWorkItem,
 					},
 				}
 				return mockOutput, nil
 			},
-			expectedWork:  []models.Work{models.TestWork},
+			expectedWork:  []models.Work{tests.TestWork},
 			expectedError: nil,
 		},
 		{
@@ -54,23 +55,10 @@ func TestWorkGet(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Len(t, result, 1)
 			for i, work := range result {
-				assertWork(t, test.expectedWork[i], work)
+				tests.AssertWork(t, test.expectedWork[i], work)
 			}
 		})
 	}
-}
-
-func assertWork(t *testing.T, expectedWork models.Work, actualWork models.Work) {
-	assert.Equal(t, expectedWork.PersonalWebsiteType, actualWork.PersonalWebsiteType)
-	assert.Equal(t, expectedWork.SortValue, actualWork.SortValue)
-	assert.Equal(t, expectedWork.JobTitle, actualWork.JobTitle)
-	assert.Equal(t, expectedWork.Company, actualWork.Company)
-	assert.Equal(t, expectedWork.Location.City, actualWork.Location.City)
-	assert.Equal(t, expectedWork.Location.State, actualWork.Location.State)
-	assert.Equal(t, expectedWork.StartDate, actualWork.StartDate)
-	assert.Equal(t, expectedWork.EndDate, actualWork.EndDate)
-	assert.Equal(t, expectedWork.JobRole, actualWork.JobRole)
-	assert.Equal(t, expectedWork.JobDescription, actualWork.JobDescription)
 }
 
 func TestPostWork(t *testing.T) {
@@ -85,22 +73,22 @@ func TestPostWork(t *testing.T) {
 	}{
 		{
 			label:   "valid query output",
-			newWork: models.TestWork,
+			newWork: tests.TestWork,
 			mockPutFunc: func(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
 				return nil, nil
 			},
 			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
 				mockOutput := &dynamodb.GetItemOutput{
-					Item: models.TestWorkItem,
+					Item: tests.TestWorkItem,
 				}
 				return mockOutput, nil
 			},
-			expectedWork:  models.TestWork,
+			expectedWork:  tests.TestWork,
 			expectedError: nil,
 		},
 		{
 			label:   "query error",
-			newWork: models.TestWork,
+			newWork: tests.TestWork,
 			mockPutFunc: func(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
 				return nil, nil
 			},
@@ -123,7 +111,7 @@ func TestPostWork(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
-			assertWork(t, test.expectedWork, result)
+			tests.AssertWork(t, test.expectedWork, result)
 		})
 	}
 }
@@ -140,22 +128,22 @@ func TestUpdateWork(t *testing.T) {
 	}{
 		{
 			label:      "valid query output",
-			updateWork: models.TestWork,
+			updateWork: tests.TestWork,
 			mockUpdateFunc: func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
 				return nil, nil
 			},
 			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
 				mockOutput := &dynamodb.GetItemOutput{
-					Item: models.TestWorkItem,
+					Item: tests.TestWorkItem,
 				}
 				return mockOutput, nil
 			},
-			expectedWork:  models.TestWork,
+			expectedWork:  tests.TestWork,
 			expectedError: nil,
 		},
 		{
 			label:      "query error",
-			updateWork: models.TestWork,
+			updateWork: tests.TestWork,
 			mockUpdateFunc: func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
 				return nil, nil
 			},
@@ -178,7 +166,7 @@ func TestUpdateWork(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
-			assertWork(t, test.expectedWork, result)
+			tests.AssertWork(t, test.expectedWork, result)
 		})
 	}
 }
