@@ -14,7 +14,7 @@ import (
 )
 
 func TestSkillsToolsApi(t *testing.T) {
-	// integrationTest(t)
+	integrationTest(t)
 
 	var latestSkillsToolsResponse models.SkillsTools
 	for _, test := range []struct {
