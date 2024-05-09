@@ -13,24 +13,24 @@ import (
 var TestSkillsTools = models.SkillsTools{
 	PersonalWebsiteType: "SkillsTools",
 	SortValue:           "Programming Languages",
-	SkillsToolsCategory: "Tools",
-	SkillsToolsType:     "Programming Languages",
-	SkillsToolsList:     []string{"Go", "Python", "JavaScript", "Java", "Swift", "C#"},
+	Category:            "Tools",
+	Type:                "Programming Languages",
+	List:                []string{"C#", "Go", "Java", "JavaScript", "Python", "Swift"},
 }
 
 // SkillsTools Item model used for dynamodb
 var TestSkillsToolsItem = map[string]*dynamodb.AttributeValue{
 	"personalWebsiteType": {S: aws.String("SkillsTools")},
 	"sortValue":           {S: aws.String("Programming Languages")},
-	"skillsToolsCategory": {S: aws.String("Tools")},
-	"skillsToolsType":     {S: aws.String("Programming Languages")},
-	"skillsToolsList":     {SS: aws.StringSlice([]string{"Go", "Python", "JavaScript", "Java", "Swift", "C#"})},
+	"category":            {S: aws.String("Tools")},
+	"type":                {S: aws.String("Programming Languages")},
+	"list":                {SS: aws.StringSlice([]string{"C#", "Go", "Java", "JavaScript", "Python", "Swift"})},
 }
 
 func AssertSkillsTools(t *testing.T, expectedSkillsTools models.SkillsTools, actualSkillsTools models.SkillsTools) {
 	assert.Equal(t, expectedSkillsTools.PersonalWebsiteType, actualSkillsTools.PersonalWebsiteType)
 	assert.Equal(t, expectedSkillsTools.SortValue, actualSkillsTools.SortValue)
-	assert.Equal(t, expectedSkillsTools.SkillsToolsCategory, actualSkillsTools.SkillsToolsCategory)
-	assert.Equal(t, expectedSkillsTools.SkillsToolsType, actualSkillsTools.SkillsToolsType)
-	assert.Equal(t, expectedSkillsTools.SkillsToolsList, actualSkillsTools.SkillsToolsList)
+	assert.Equal(t, expectedSkillsTools.Category, actualSkillsTools.Category)
+	assert.Equal(t, expectedSkillsTools.Type, actualSkillsTools.Type)
+	assert.Equal(t, expectedSkillsTools.List, actualSkillsTools.List)
 }

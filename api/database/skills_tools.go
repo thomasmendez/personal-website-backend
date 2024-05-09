@@ -42,9 +42,9 @@ func PostSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.Skills
 	item := map[string]*dynamodb.AttributeValue{
 		"personalWebsiteType": {S: aws.String(partitionKeySkillsTools)},
 		"sortValue":           {S: aws.String(newSkillsTools.SortValue)},
-		"skillsToolsCategory": {S: aws.String(newSkillsTools.SkillsToolsCategory)},
-		"skillsToolsType":     {S: aws.String(newSkillsTools.SkillsToolsType)},
-		"skillsToolsList":     {SS: aws.StringSlice(newSkillsTools.SkillsToolsList)},
+		"category":            {S: aws.String(newSkillsTools.Category)},
+		"type":                {S: aws.String(newSkillsTools.Type)},
+		"list":                {SS: aws.StringSlice(newSkillsTools.List)},
 	}
 	input := &dynamodb.PutItemInput{
 		Item:      item,
@@ -60,16 +60,16 @@ func PostSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.Skills
 }
 
 func UpdateSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.SkillsTools) (skillsTools models.SkillsTools, err error) {
-	updateExpression := "SET #skillsToolsCategory = :skillsToolsCategoryVal, #skillsToolsType = :skillsToolsTypeVal, #skillsToolsList = :skillsToolsListVal"
+	updateExpression := "SET #category = :categoryVal, #type = :typeVal, #list = :listVal"
 	expressionAttributeNames := map[string]*string{
-		"#skillsToolsCategory": aws.String("skillsToolsCategory"),
-		"#skillsToolsType":     aws.String("skillsToolsType"),
-		"#skillsToolsList":     aws.String("skillsToolsList"),
+		"#category": aws.String("category"),
+		"#type":     aws.String("type"),
+		"#list":     aws.String("list"),
 	}
 	expressionAttributeValues := map[string]*dynamodb.AttributeValue{
-		":skillsToolsCategoryVal": {S: aws.String(newSkillsTools.SkillsToolsCategory)},
-		":skillsToolsTypeVal":     {S: aws.String(newSkillsTools.SkillsToolsType)},
-		":skillsToolsListVal":     {SS: aws.StringSlice(newSkillsTools.SkillsToolsList)},
+		":categoryVal": {S: aws.String(newSkillsTools.Category)},
+		":typeVal":     {S: aws.String(newSkillsTools.Type)},
+		":listVal":     {SS: aws.StringSlice(newSkillsTools.List)},
 	}
 	updateInput := &dynamodb.UpdateItemInput{
 		TableName: aws.String(tableName),

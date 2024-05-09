@@ -35,9 +35,9 @@ func TestGetSkillsTools(t *testing.T) {
 				{
 					PersonalWebsiteType: "SkillsTools",
 					SortValue:           "Programming Languages",
-					SkillsToolsCategory: "Tools",
-					SkillsToolsType:     "Programming Languages",
-					SkillsToolsList:     []string{"Go", "Python", "JavaScript", "Java", "Swift", "C#"},
+					Category:            "Tools",
+					Type:                "Programming Languages",
+					List:                []string{"C#", "Go", "Java", "JavaScript", "Python", "Swift"},
 				},
 			},
 		},
@@ -146,9 +146,9 @@ func TestUpdateSkillsTools(t *testing.T) {
 					Item: map[string]*dynamodb.AttributeValue{
 						"personalWebsiteType": {S: aws.String("SkillsTools")},
 						"sortValue":           {S: aws.String("Programming Languages")},
-						"skillsToolsCategory": {S: aws.String("Tools")},
-						"skillsToolsType":     {S: aws.String("Programming Languages")},
-						"skillsToolsList":     {SS: aws.StringSlice([]string{"Go", "Python", "JavaScript", "Java", "Swift", "C#"})},
+						"Category":            {S: aws.String("Tools")},
+						"Type":                {S: aws.String("Programming Languages")},
+						"List":                {SS: aws.StringSlice([]string{"C#", "Go", "Java", "JavaScript", "Python", "Swift"})},
 					},
 				}
 				return mockOutput, nil

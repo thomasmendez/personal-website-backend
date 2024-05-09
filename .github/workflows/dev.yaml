@@ -27,17 +27,12 @@ jobs:
         cd api
         go mod download
 
-    - name: Run tests
+    - name: Run unit tests
       run: |
         cd api
         go test -v -coverprofile=coverage.out ./...
 
-    - name: Update coverage report
-      uses: ncruces/go-coverage-report@v0
-      with:
-        report: true
-        chart: true
-        amend: true
-      if: |
-        matrix.os == 'ubuntu-latest' 
-      continue-on-error: true
+    # - name: Run integration tests
+    #   run: |
+    #     cd api
+    #     INTEGRATION=1 go test ./...

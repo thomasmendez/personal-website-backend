@@ -3,9 +3,9 @@
   "Item": {
     "personalWebsiteType": {"S": "SkillsTools"},
     "sortValue": {"S": "Programming Languages"},
-    "skillsToolsCategory": {"S": "Tools"},
-    "skillsToolsType": {"S": "Programming Languages"},
-    "skillsToolsList": {"SS": ["Go", "Python", "JavaScript", "Java", "Swift", "C#"]}
+    "category": {"S": "Tools"},
+    "type": {"S": "Programming Languages"},
+    "list": {"SS": ["C#", "Go", "Java", "JavaScript", "Python", "Swift"]}
   }
 }
   
