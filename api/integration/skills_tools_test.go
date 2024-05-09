@@ -62,22 +62,22 @@ func TestSkillsToolsApi(t *testing.T) {
 				latestSkillsToolsResponse = skillsTools
 			},
 		},
-		// {
-		// 	label:              "Get SkillsTools list",
-		// 	route:              "/api/v1/skillsTools",
-		// 	method:             http.MethodGet,
-		// 	reqBodySkillsTools: nil,
-		// 	assertFunc: func(expectedStruct interface{}, resBody []byte) {
-		// 		var skillsTools []models.SkillsTools
-		// 		err := json.Unmarshal(resBody, &skillsTools)
-		// 		if err != nil {
-		// 			t.Fatalf("error in unmarshal: %v", err)
-		// 		}
-		// 		for i, result := range skillsTools {
-		// 			tests.AssertSkillsTools(t, expectedStruct.([]models.SkillsTools)[i], result)
-		// 		}
-		// 	},
-		// },
+		{
+			label:              "Get SkillsTools list",
+			route:              "/api/v1/skillsTools",
+			method:             http.MethodGet,
+			reqBodySkillsTools: nil,
+			assertFunc: func(expectedStruct interface{}, resBody []byte) {
+				var skillsTools []models.SkillsTools
+				err := json.Unmarshal(resBody, &skillsTools)
+				if err != nil {
+					t.Fatalf("error in unmarshal: %v", err)
+				}
+				for i, result := range skillsTools {
+					tests.AssertSkillsTools(t, expectedStruct.([]models.SkillsTools)[i], result)
+				}
+			},
+		},
 	} {
 		t.Run(test.label, func(t *testing.T) {
 			// arrange
