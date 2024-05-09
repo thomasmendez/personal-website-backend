@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasmendez/personal-website-backend/api/models"
@@ -25,22 +24,7 @@ func TestWorkGet(t *testing.T) {
 			mockQueryFunc: func(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
 				mockOutput := &dynamodb.QueryOutput{
 					Items: []map[string]*dynamodb.AttributeValue{
-						{
-							"personalWebsiteType": {S: aws.String("Work")},
-							"sortValue":           {S: aws.String("2020-01-01")},
-							"jobTitle":            {S: aws.String("Software Engineer")},
-							"company":             {S: aws.String("ABC Inc")},
-							"location": {
-								M: map[string]*dynamodb.AttributeValue{
-									"city":  {S: aws.String("New York")},
-									"state": {S: aws.String("NY")},
-								},
-							},
-							"startDate":      {S: aws.String("2020-01-01")},
-							"endDate":        {S: aws.String("2020-12-31")},
-							"jobRole":        {S: aws.String("Backend Developer")},
-							"jobDescription": {SS: []*string{aws.String("Developed backend systems"), aws.String("Optimized database queries")}},
-						},
+						models.TestWorkItem,
 					},
 				}
 				return mockOutput, nil
@@ -70,19 +54,23 @@ func TestWorkGet(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Len(t, result, 1)
 			for i, work := range result {
-				assert.Equal(t, test.expectedWork[i].PersonalWebsiteType, work.PersonalWebsiteType)
-				assert.Equal(t, test.expectedWork[i].SortValue, work.SortValue)
-				assert.Equal(t, test.expectedWork[i].JobTitle, work.JobTitle)
-				assert.Equal(t, test.expectedWork[i].Company, work.Company)
-				assert.Equal(t, test.expectedWork[i].Location.City, work.Location.City)
-				assert.Equal(t, test.expectedWork[i].Location.State, work.Location.State)
-				assert.Equal(t, test.expectedWork[i].StartDate, work.StartDate)
-				assert.Equal(t, test.expectedWork[i].EndDate, work.EndDate)
-				assert.Equal(t, test.expectedWork[i].JobRole, work.JobRole)
-				assert.Equal(t, test.expectedWork[i].JobDescription, work.JobDescription)
+				assertWork(t, test.expectedWork[i], work)
 			}
 		})
 	}
+}
+
+func assertWork(t *testing.T, expectedWork models.Work, actualWork models.Work) {
+	assert.Equal(t, expectedWork.PersonalWebsiteType, actualWork.PersonalWebsiteType)
+	assert.Equal(t, expectedWork.SortValue, actualWork.SortValue)
+	assert.Equal(t, expectedWork.JobTitle, actualWork.JobTitle)
+	assert.Equal(t, expectedWork.Company, actualWork.Company)
+	assert.Equal(t, expectedWork.Location.City, actualWork.Location.City)
+	assert.Equal(t, expectedWork.Location.State, actualWork.Location.State)
+	assert.Equal(t, expectedWork.StartDate, actualWork.StartDate)
+	assert.Equal(t, expectedWork.EndDate, actualWork.EndDate)
+	assert.Equal(t, expectedWork.JobRole, actualWork.JobRole)
+	assert.Equal(t, expectedWork.JobDescription, actualWork.JobDescription)
 }
 
 func TestPostWork(t *testing.T) {
@@ -103,22 +91,7 @@ func TestPostWork(t *testing.T) {
 			},
 			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
 				mockOutput := &dynamodb.GetItemOutput{
-					Item: map[string]*dynamodb.AttributeValue{
-						"personalWebsiteType": {S: aws.String("Work")},
-						"sortValue":           {S: aws.String("2020-01-01")},
-						"jobTitle":            {S: aws.String("Software Engineer")},
-						"company":             {S: aws.String("ABC Inc")},
-						"location": {
-							M: map[string]*dynamodb.AttributeValue{
-								"city":  {S: aws.String("New York")},
-								"state": {S: aws.String("NY")},
-							},
-						},
-						"startDate":      {S: aws.String("2020-01-01")},
-						"endDate":        {S: aws.String("2020-12-31")},
-						"jobRole":        {S: aws.String("Backend Developer")},
-						"jobDescription": {SS: []*string{aws.String("Developed backend systems"), aws.String("Optimized database queries")}},
-					},
+					Item: models.TestWorkItem,
 				}
 				return mockOutput, nil
 			},
@@ -150,16 +123,7 @@ func TestPostWork(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
-			assert.Equal(t, test.expectedWork.PersonalWebsiteType, result.PersonalWebsiteType)
-			assert.Equal(t, test.expectedWork.SortValue, result.SortValue)
-			assert.Equal(t, test.expectedWork.JobTitle, result.JobTitle)
-			assert.Equal(t, test.expectedWork.Company, result.Company)
-			assert.Equal(t, test.expectedWork.Location.City, result.Location.City)
-			assert.Equal(t, test.expectedWork.Location.State, result.Location.State)
-			assert.Equal(t, test.expectedWork.StartDate, result.StartDate)
-			assert.Equal(t, test.expectedWork.EndDate, result.EndDate)
-			assert.Equal(t, test.expectedWork.JobRole, result.JobRole)
-			assert.Equal(t, test.expectedWork.JobDescription, result.JobDescription)
+			assertWork(t, test.expectedWork, result)
 		})
 	}
 }
@@ -182,22 +146,7 @@ func TestUpdateWork(t *testing.T) {
 			},
 			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
 				mockOutput := &dynamodb.GetItemOutput{
-					Item: map[string]*dynamodb.AttributeValue{
-						"personalWebsiteType": {S: aws.String("Work")},
-						"sortValue":           {S: aws.String("2020-01-01")},
-						"jobTitle":            {S: aws.String("Software Engineer")},
-						"company":             {S: aws.String("ABC Inc")},
-						"location": {
-							M: map[string]*dynamodb.AttributeValue{
-								"city":  {S: aws.String("New York")},
-								"state": {S: aws.String("NY")},
-							},
-						},
-						"startDate":      {S: aws.String("2020-01-01")},
-						"endDate":        {S: aws.String("2020-12-31")},
-						"jobRole":        {S: aws.String("Backend Developer")},
-						"jobDescription": {SS: []*string{aws.String("Developed backend systems"), aws.String("Optimized database queries")}},
-					},
+					Item: models.TestWorkItem,
 				}
 				return mockOutput, nil
 			},
@@ -229,16 +178,7 @@ func TestUpdateWork(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
-			assert.Equal(t, test.expectedWork.PersonalWebsiteType, result.PersonalWebsiteType)
-			assert.Equal(t, test.expectedWork.SortValue, result.SortValue)
-			assert.Equal(t, test.expectedWork.JobTitle, result.JobTitle)
-			assert.Equal(t, test.expectedWork.Company, result.Company)
-			assert.Equal(t, test.expectedWork.Location.City, result.Location.City)
-			assert.Equal(t, test.expectedWork.Location.State, result.Location.State)
-			assert.Equal(t, test.expectedWork.StartDate, result.StartDate)
-			assert.Equal(t, test.expectedWork.EndDate, result.EndDate)
-			assert.Equal(t, test.expectedWork.JobRole, result.JobRole)
-			assert.Equal(t, test.expectedWork.JobDescription, result.JobDescription)
+			assertWork(t, test.expectedWork, result)
 		})
 	}
 }

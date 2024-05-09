@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasmendez/personal-website-backend/api/models"
@@ -13,13 +12,6 @@ import (
 func TestGetProjects(t *testing.T) {
 
 	mockDB := &mockDynamoDB{}
-	teamSize := "1"
-	teamRoles := []string{"Frontend Developer", "Backend Developer"}
-	cloudServices := []string{"AWS"}
-	notes := "Site is still in development stages"
-	link := "http://my-url"
-	linkType := "YouTube"
-	mediaLink := "http://link-to-media-file"
 
 	for _, test := range []struct {
 		label          string
@@ -32,53 +24,13 @@ func TestGetProjects(t *testing.T) {
 			mockQueryFunc: func(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
 				mockOutput := &dynamodb.QueryOutput{
 					Items: []map[string]*dynamodb.AttributeValue{
-						{
-							"personalWebsiteType": {S: aws.String("Projects")},
-							"sortValue":           {S: aws.String("Project Title")},
-							"category":            {S: aws.String("Software Engineering")},
-							"name":                {S: aws.String("Personal Website")},
-							"description":         {S: aws.String("My personal website created in the cloud")},
-							"featuresDescription": {S: aws.String("User is able to view my work")},
-							"role":                {S: aws.String("Project Lead")},
-							"tasks":               {SS: aws.StringSlice([]string{"Develop backend microservices"})},
-							"teamSize":            {N: aws.String("1")},
-							"teamRoles":           {SS: aws.StringSlice([]string{"Frontend Developer", "Backend Developer"})},
-							"cloudServices":       {SS: aws.StringSlice([]string{"AWS"})},
-							"tools":               {SS: aws.StringSlice([]string{"React", "Go"})},
-							"duration":            {S: aws.String("6 Months")},
-							"startDate":           {S: aws.String("Jan 2024")},
-							"endDate":             {S: aws.String("Dec 2024")},
-							"notes":               {S: aws.String("Site is still in development stages")},
-							"link":                {S: aws.String("http://my-url")},
-							"linkType":            {S: aws.String("YouTube")},
-							"mediaLink":           {S: aws.String("http://link-to-media-file")},
-						},
+						models.TestProjectItem,
 					},
 				}
 				return mockOutput, nil
 			},
 			expectedResult: []models.Project{
-				{
-					PersonalWebsiteType: "Projects",
-					SortValue:           "Project Title",
-					Category:            "Software Engineering",
-					Name:                "Personal Website",
-					Description:         "My personal website created in the cloud",
-					FeaturesDescription: "User is able to view my work",
-					Role:                "Project Lead",
-					Tasks:               []string{"Develop backend microservices"},
-					TeamSize:            &teamSize,
-					TeamRoles:           &teamRoles,
-					CloudServices:       &cloudServices,
-					Tools:               []string{"React", "Go"},
-					Duration:            "6 Months",
-					StartDate:           "Jan 2024",
-					EndDate:             "Dec 2024",
-					Notes:               &notes,
-					Link:                &link,
-					LinkType:            &linkType,
-					MediaLink:           &mediaLink,
-				},
+				models.TestProject,
 			},
 		},
 		{
@@ -104,50 +56,32 @@ func TestGetProjects(t *testing.T) {
 			assert.Len(t, result, 1)
 
 			for i, project := range result {
-				assert.Equal(t, test.expectedResult[i].PersonalWebsiteType, project.PersonalWebsiteType)
-				assert.Equal(t, test.expectedResult[i].SortValue, project.SortValue)
-				assert.Equal(t, test.expectedResult[i].Category, project.Category)
-				assert.Equal(t, test.expectedResult[i].Name, project.Name)
-				assert.Equal(t, test.expectedResult[i].Description, project.Description)
-				assert.Equal(t, test.expectedResult[i].FeaturesDescription, project.FeaturesDescription)
-				assert.Equal(t, test.expectedResult[i].Role, project.Role)
-				assert.Equal(t, test.expectedResult[i].Tasks, project.Tasks)
-				assert.Equal(t, test.expectedResult[i].TeamSize, project.TeamSize)
-				assert.Equal(t, test.expectedResult[i].TeamRoles, project.TeamRoles)
-				assert.Equal(t, test.expectedResult[i].CloudServices, project.CloudServices)
-				assert.Equal(t, test.expectedResult[i].Tools, project.Tools)
-				assert.Equal(t, test.expectedResult[i].Duration, project.Duration)
-				assert.Equal(t, test.expectedResult[i].StartDate, project.StartDate)
-				assert.Equal(t, test.expectedResult[i].EndDate, project.EndDate)
-				assert.Equal(t, test.expectedResult[i].Notes, project.Notes)
-				assert.Equal(t, test.expectedResult[i].Link, project.Link)
-				assert.Equal(t, test.expectedResult[i].LinkType, project.LinkType)
-				assert.Equal(t, test.expectedResult[i].MediaLink, project.MediaLink)
+				assertProject(t, test.expectedResult[i], project)
 			}
 		})
 	}
 }
 
-var expectedProject = models.Project{
-	PersonalWebsiteType: "Projects",
-	SortValue:           "Project Title",
-	Category:            "Software Engineering",
-	Name:                "Personal Website",
-	Description:         "My personal website created in the cloud",
-	FeaturesDescription: "User is able to view my work",
-	Role:                "Project Lead",
-	Tasks:               []string{"Develop backend microservices"},
-	TeamSize:            nil,
-	TeamRoles:           nil,
-	CloudServices:       nil,
-	Tools:               []string{"React", "Go"},
-	Duration:            "6 Months",
-	StartDate:           "Jan 2024",
-	EndDate:             "Dec 2024",
-	Notes:               nil,
-	Link:                nil,
-	LinkType:            nil,
-	MediaLink:           nil,
+func assertProject(t *testing.T, expectedProject models.Project, actualProject models.Project) {
+	assert.Equal(t, expectedProject.PersonalWebsiteType, actualProject.PersonalWebsiteType)
+	assert.Equal(t, expectedProject.SortValue, actualProject.SortValue)
+	assert.Equal(t, expectedProject.Category, actualProject.Category)
+	assert.Equal(t, expectedProject.Name, actualProject.Name)
+	assert.Equal(t, expectedProject.Description, actualProject.Description)
+	assert.Equal(t, expectedProject.FeaturesDescription, actualProject.FeaturesDescription)
+	assert.Equal(t, expectedProject.Role, actualProject.Role)
+	assert.Equal(t, expectedProject.Tasks, actualProject.Tasks)
+	assert.Equal(t, expectedProject.TeamSize, actualProject.TeamSize)
+	assert.Equal(t, expectedProject.TeamRoles, actualProject.TeamRoles)
+	assert.Equal(t, expectedProject.CloudServices, actualProject.CloudServices)
+	assert.Equal(t, expectedProject.Tools, actualProject.Tools)
+	assert.Equal(t, expectedProject.Duration, actualProject.Duration)
+	assert.Equal(t, expectedProject.StartDate, actualProject.StartDate)
+	assert.Equal(t, expectedProject.EndDate, actualProject.EndDate)
+	assert.Equal(t, expectedProject.Notes, actualProject.Notes)
+	assert.Equal(t, expectedProject.Link, actualProject.Link)
+	assert.Equal(t, expectedProject.LinkType, actualProject.LinkType)
+	assert.Equal(t, expectedProject.MediaLink, actualProject.MediaLink)
 }
 
 func TestPostProject(t *testing.T) {
@@ -162,47 +96,27 @@ func TestPostProject(t *testing.T) {
 	}{
 		{
 			label:      "valid query output",
-			newProject: expectedProject,
+			newProject: models.TestProject,
 			mockPutFunc: func(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
 				return nil, nil
 			},
 			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
 				mockOutput := &dynamodb.GetItemOutput{
-					Item: map[string]*dynamodb.AttributeValue{
-						"personalWebsiteType": {S: aws.String("Projects")},
-						"sortValue":           {S: aws.String("Project Title")},
-						"category":            {S: aws.String("Software Engineering")},
-						"name":                {S: aws.String("Personal Website")},
-						"description":         {S: aws.String("My personal website created in the cloud")},
-						"featuresDescription": {S: aws.String("User is able to view my work")},
-						"role":                {S: aws.String("Project Lead")},
-						"tasks":               {SS: aws.StringSlice([]string{"Develop backend microservices"})},
-						"teamSize":            {NULL: aws.Bool(true)},
-						"teamRoles":           {NULL: aws.Bool(true)},
-						"cloudServices":       {NULL: aws.Bool(true)},
-						"tools":               {SS: aws.StringSlice([]string{"React", "Go"})},
-						"duration":            {S: aws.String("6 Months")},
-						"startDate":           {S: aws.String("Jan 2024")},
-						"endDate":             {S: aws.String("Dec 2024")},
-						"notes":               {NULL: aws.Bool(true)},
-						"link":                {NULL: aws.Bool(true)},
-						"linkType":            {NULL: aws.Bool(true)},
-						"mediaLink":           {NULL: aws.Bool(true)},
-					},
+					Item: models.TestProjectItemNil,
 				}
 				return mockOutput, nil
 			},
-			expectedProject: expectedProject,
+			expectedProject: models.TestProjectNil,
 			expectedError:   nil,
 		},
 		{
 			label:      "query error",
-			newProject: expectedProject,
+			newProject: models.TestProjectNil,
 			mockPutFunc: func(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
 				return nil, nil
 			},
 			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
-				return nil, errors.New("error getting item from database")
+				return nil, errors.New("error inserting item")
 			},
 		},
 	} {
@@ -215,30 +129,12 @@ func TestPostProject(t *testing.T) {
 			if err != nil {
 				assert.Error(t, err)
 				assert.Empty(t, result)
-				assert.Equal(t, "error getting item from database", err.Error())
+				assert.Equal(t, "error inserting item", err.Error())
 				return
 			}
 
 			assert.NoError(t, err)
-			assert.Equal(t, test.expectedProject.PersonalWebsiteType, result.PersonalWebsiteType)
-			assert.Equal(t, test.expectedProject.SortValue, result.SortValue)
-			assert.Equal(t, test.expectedProject.Category, result.Category)
-			assert.Equal(t, test.expectedProject.Name, result.Name)
-			assert.Equal(t, test.expectedProject.Description, result.Description)
-			assert.Equal(t, test.expectedProject.FeaturesDescription, result.FeaturesDescription)
-			assert.Equal(t, test.expectedProject.Role, result.Role)
-			assert.Equal(t, test.expectedProject.Tasks, result.Tasks)
-			assert.Equal(t, test.expectedProject.TeamSize, result.TeamSize)
-			assert.Equal(t, test.expectedProject.TeamRoles, result.TeamRoles)
-			assert.Equal(t, test.expectedProject.CloudServices, result.CloudServices)
-			assert.Equal(t, test.expectedProject.Tools, result.Tools)
-			assert.Equal(t, test.expectedProject.Duration, result.Duration)
-			assert.Equal(t, test.expectedProject.StartDate, result.StartDate)
-			assert.Equal(t, test.expectedProject.EndDate, result.EndDate)
-			assert.Equal(t, test.expectedProject.Notes, result.Notes)
-			assert.Equal(t, test.expectedProject.Link, result.Link)
-			assert.Equal(t, test.expectedProject.LinkType, result.LinkType)
-			assert.Equal(t, test.expectedProject.MediaLink, result.MediaLink)
+			assertProject(t, test.expectedProject, result)
 		})
 	}
 }
@@ -255,42 +151,22 @@ func TestUpdateProject(t *testing.T) {
 	}{
 		{
 			label:         "valid query output",
-			updateProject: expectedProject,
+			updateProject: models.TestProjectNil,
 			mockUpdateFunc: func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
 				return nil, nil
 			},
 			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
 				mockOutput := &dynamodb.GetItemOutput{
-					Item: map[string]*dynamodb.AttributeValue{
-						"personalWebsiteType": {S: aws.String("Projects")},
-						"sortValue":           {S: aws.String("Project Title")},
-						"category":            {S: aws.String("Software Engineering")},
-						"name":                {S: aws.String("Personal Website")},
-						"description":         {S: aws.String("My personal website created in the cloud")},
-						"featuresDescription": {S: aws.String("User is able to view my work")},
-						"role":                {S: aws.String("Project Lead")},
-						"tasks":               {SS: aws.StringSlice([]string{"Develop backend microservices"})},
-						"teamSize":            {NULL: aws.Bool(true)},
-						"teamRoles":           {NULL: aws.Bool(true)},
-						"cloudServices":       {NULL: aws.Bool(true)},
-						"tools":               {SS: aws.StringSlice([]string{"React", "Go"})},
-						"duration":            {S: aws.String("6 Months")},
-						"startDate":           {S: aws.String("Jan 2024")},
-						"endDate":             {S: aws.String("Dec 2024")},
-						"notes":               {NULL: aws.Bool(true)},
-						"link":                {NULL: aws.Bool(true)},
-						"linkType":            {NULL: aws.Bool(true)},
-						"mediaLink":           {NULL: aws.Bool(true)},
-					},
+					Item: models.TestProjectItemNil,
 				}
 				return mockOutput, nil
 			},
-			expectedProject: expectedProject,
+			expectedProject: models.TestProjectNil,
 			expectedError:   nil,
 		},
 		{
 			label:         "query error",
-			updateProject: expectedProject,
+			updateProject: models.TestProjectNil,
 			mockUpdateFunc: func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
 				return nil, nil
 			},
@@ -313,25 +189,7 @@ func TestUpdateProject(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
-			assert.Equal(t, test.expectedProject.PersonalWebsiteType, result.PersonalWebsiteType)
-			assert.Equal(t, test.expectedProject.SortValue, result.SortValue)
-			assert.Equal(t, test.expectedProject.Category, result.Category)
-			assert.Equal(t, test.expectedProject.Name, result.Name)
-			assert.Equal(t, test.expectedProject.Description, result.Description)
-			assert.Equal(t, test.expectedProject.FeaturesDescription, result.FeaturesDescription)
-			assert.Equal(t, test.expectedProject.Role, result.Role)
-			assert.Equal(t, test.expectedProject.Tasks, result.Tasks)
-			assert.Equal(t, test.expectedProject.TeamSize, result.TeamSize)
-			assert.Equal(t, test.expectedProject.TeamRoles, result.TeamRoles)
-			assert.Equal(t, test.expectedProject.CloudServices, result.CloudServices)
-			assert.Equal(t, test.expectedProject.Tools, result.Tools)
-			assert.Equal(t, test.expectedProject.Duration, result.Duration)
-			assert.Equal(t, test.expectedProject.StartDate, result.StartDate)
-			assert.Equal(t, test.expectedProject.EndDate, result.EndDate)
-			assert.Equal(t, test.expectedProject.Notes, result.Notes)
-			assert.Equal(t, test.expectedProject.Link, result.Link)
-			assert.Equal(t, test.expectedProject.LinkType, result.LinkType)
-			assert.Equal(t, test.expectedProject.MediaLink, result.MediaLink)
+			assertProject(t, test.expectedProject, result)
 		})
 	}
 }

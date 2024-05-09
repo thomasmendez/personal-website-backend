@@ -25,13 +25,7 @@ func TestGetSkillsTools(t *testing.T) {
 			mockQueryFunc: func(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
 				mockOutput := &dynamodb.QueryOutput{
 					Items: []map[string]*dynamodb.AttributeValue{
-						{
-							"personalWebsiteType": {S: aws.String("SkillsTools")},
-							"sortValue":           {S: aws.String("Programming Languages")},
-							"skillsToolsCategory": {S: aws.String("Tools")},
-							"skillsToolsType":     {S: aws.String("Programming Languages")},
-							"skillsToolsList":     {SS: aws.StringSlice([]string{"Go", "Python", "JavaScript", "Java", "Swift", "C#"})},
-						},
+						models.TestSkillsToolsItem,
 					},
 				}
 				return mockOutput, nil
@@ -68,23 +62,19 @@ func TestGetSkillsTools(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Len(t, result, 1)
 
-			for i, skillsToolsResult := range result {
-				assert.Equal(t, test.expectedResult[i].PersonalWebsiteType, skillsToolsResult.PersonalWebsiteType)
-				assert.Equal(t, test.expectedResult[i].SortValue, skillsToolsResult.SortValue)
-				assert.Equal(t, test.expectedResult[i].SkillsToolsCategory, skillsToolsResult.SkillsToolsCategory)
-				assert.Equal(t, test.expectedResult[i].SkillsToolsType, skillsToolsResult.SkillsToolsType)
-				assert.Equal(t, test.expectedResult[i].SkillsToolsList, skillsToolsResult.SkillsToolsList)
+			for i, skillsTools := range result {
+				assertSkillsTools(t, test.expectedResult[i], skillsTools)
 			}
 		})
 	}
 }
 
-var expectedSkillsTools = models.SkillsTools{
-	PersonalWebsiteType: "SkillsTools",
-	SortValue:           "Programming Languages",
-	SkillsToolsCategory: "Tools",
-	SkillsToolsType:     "Programming Languages",
-	SkillsToolsList:     []string{"Go", "Python", "JavaScript", "Java", "Swift", "C#"},
+func assertSkillsTools(t *testing.T, expectedSkillsTools models.SkillsTools, actualSkillsTools models.SkillsTools) {
+	assert.Equal(t, expectedSkillsTools.PersonalWebsiteType, actualSkillsTools.PersonalWebsiteType)
+	assert.Equal(t, expectedSkillsTools.SortValue, actualSkillsTools.SortValue)
+	assert.Equal(t, expectedSkillsTools.SkillsToolsCategory, actualSkillsTools.SkillsToolsCategory)
+	assert.Equal(t, expectedSkillsTools.SkillsToolsType, actualSkillsTools.SkillsToolsType)
+	assert.Equal(t, expectedSkillsTools.SkillsToolsList, actualSkillsTools.SkillsToolsList)
 }
 
 func TestPostSkillsTools(t *testing.T) {
@@ -99,28 +89,22 @@ func TestPostSkillsTools(t *testing.T) {
 	}{
 		{
 			label:          "valid query output",
-			newSkillsTools: expectedSkillsTools,
+			newSkillsTools: models.TestSkillsTools,
 			mockPutFunc: func(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
 				return nil, nil
 			},
 			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
 				mockOutput := &dynamodb.GetItemOutput{
-					Item: map[string]*dynamodb.AttributeValue{
-						"personalWebsiteType": {S: aws.String("SkillsTools")},
-						"sortValue":           {S: aws.String("Programming Languages")},
-						"skillsToolsCategory": {S: aws.String("Tools")},
-						"skillsToolsType":     {S: aws.String("Programming Languages")},
-						"skillsToolsList":     {SS: aws.StringSlice([]string{"Go", "Python", "JavaScript", "Java", "Swift", "C#"})},
-					},
+					Item: models.TestSkillsToolsItem,
 				}
 				return mockOutput, nil
 			},
-			expectedSkillsTools: expectedSkillsTools,
+			expectedSkillsTools: models.TestSkillsTools,
 			expectedError:       nil,
 		},
 		{
 			label:          "query error",
-			newSkillsTools: expectedSkillsTools,
+			newSkillsTools: models.TestSkillsTools,
 			mockPutFunc: func(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
 				return nil, nil
 			},
@@ -143,11 +127,7 @@ func TestPostSkillsTools(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
-			assert.Equal(t, test.expectedSkillsTools.PersonalWebsiteType, result.PersonalWebsiteType)
-			assert.Equal(t, test.expectedSkillsTools.SortValue, result.SortValue)
-			assert.Equal(t, test.expectedSkillsTools.SkillsToolsCategory, result.SkillsToolsCategory)
-			assert.Equal(t, test.expectedSkillsTools.SkillsToolsType, result.SkillsToolsType)
-			assert.Equal(t, test.expectedSkillsTools.SkillsToolsList, result.SkillsToolsList)
+			assertSkillsTools(t, test.expectedSkillsTools, result)
 		})
 	}
 }
@@ -164,7 +144,7 @@ func TestUpdateSkillsTools(t *testing.T) {
 	}{
 		{
 			label:          "valid query output",
-			newSkillsTools: expectedSkillsTools,
+			newSkillsTools: models.TestSkillsTools,
 			mockUpdateFunc: func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
 				return nil, nil
 			},
@@ -180,12 +160,12 @@ func TestUpdateSkillsTools(t *testing.T) {
 				}
 				return mockOutput, nil
 			},
-			expectedSkillsTools: expectedSkillsTools,
+			expectedSkillsTools: models.TestSkillsTools,
 			expectedError:       nil,
 		},
 		{
 			label:          "query error",
-			newSkillsTools: expectedSkillsTools,
+			newSkillsTools: models.TestSkillsTools,
 			mockUpdateFunc: func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
 				return nil, nil
 			},
@@ -208,11 +188,7 @@ func TestUpdateSkillsTools(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
-			assert.Equal(t, test.expectedSkillsTools.PersonalWebsiteType, result.PersonalWebsiteType)
-			assert.Equal(t, test.expectedSkillsTools.SortValue, result.SortValue)
-			assert.Equal(t, test.expectedSkillsTools.SkillsToolsCategory, result.SkillsToolsCategory)
-			assert.Equal(t, test.expectedSkillsTools.SkillsToolsType, result.SkillsToolsType)
-			assert.Equal(t, test.expectedSkillsTools.SkillsToolsList, result.SkillsToolsList)
+			assertSkillsTools(t, test.expectedSkillsTools, result)
 		})
 	}
 }
