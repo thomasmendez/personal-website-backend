@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"reflect"
 	"testing"
 
 	"github.com/thomasmendez/personal-website-backend/api/models"
@@ -14,35 +15,71 @@ import (
 func TestWorkApi(t *testing.T) {
 	integrationTest(t)
 
-	var postWorkResponse models.Work
+	var latestWorkResponse models.Work
 	for _, test := range []struct {
 		label       string
 		route       string
 		method      string
 		reqBodyWork func() *models.Work
+		assertFunc  func(expectedStruct interface{}, resBody []byte)
 	}{
 		{
-			label:  "post Work",
+			label:  "Post Work",
 			route:  "/api/v1/work",
 			method: http.MethodPost,
 			reqBodyWork: func() *models.Work {
 				return &tests.TestWork
 			},
+			assertFunc: func(expectedStruct interface{}, resBody []byte) {
+				var work models.Work
+				err := json.Unmarshal(resBody, &work)
+				if err != nil {
+					t.Fatalf("error in unmarshal: %v", err)
+				}
+				tests.AssertWork(t, expectedStruct.(models.Work), work)
+				latestWorkResponse = work
+			},
 		},
 		{
-			label:  "update Work",
+			label:  "Update Work",
 			route:  "/api/v1/work",
 			method: http.MethodPut,
 			reqBodyWork: func() *models.Work {
-				postWorkResponse.JobTitle = "Senior Software Engineer"
-				postWorkResponse.Company = "New ABC Inc"
-				postWorkResponse.Location.City = "San Francisco"
-				postWorkResponse.Location.State = "CA"
-				postWorkResponse.StartDate = "2020-01-01"
-				postWorkResponse.EndDate = "2021-12-31"
-				postWorkResponse.JobRole = "Frontend Developer"
-				postWorkResponse.JobDescription = []string{"Created UI Themes", "Developed SPA Applications"}
-				return &postWorkResponse
+				// modify previous response for update
+				latestWorkResponse.JobTitle = "Senior Software Engineer"
+				latestWorkResponse.Company = "New ABC Inc"
+				latestWorkResponse.Location.City = "San Francisco"
+				latestWorkResponse.Location.State = "CA"
+				latestWorkResponse.StartDate = "2020-01-01"
+				latestWorkResponse.EndDate = "2021-12-31"
+				latestWorkResponse.JobRole = "Frontend Developer"
+				latestWorkResponse.JobDescription = []string{"Created UI Themes", "Developed SPA Applications"}
+				return &latestWorkResponse
+			},
+			assertFunc: func(expectedStruct interface{}, resBody []byte) {
+				var work models.Work
+				err := json.Unmarshal(resBody, &work)
+				if err != nil {
+					t.Fatalf("error in unmarshal: %v", err)
+				}
+				tests.AssertWork(t, expectedStruct.(models.Work), work)
+				latestWorkResponse = work
+			},
+		},
+		{
+			label:       "Get Work list",
+			route:       "/api/v1/work",
+			method:      http.MethodGet,
+			reqBodyWork: nil,
+			assertFunc: func(expectedStruct interface{}, resBody []byte) {
+				var work []models.Work
+				err := json.Unmarshal(resBody, &work)
+				if err != nil {
+					t.Fatalf("error in unmarshal: %v", err)
+				}
+				for i, result := range work {
+					tests.AssertWork(t, expectedStruct.([]models.Work)[i], result)
+				}
 			},
 		},
 	} {
@@ -81,20 +118,31 @@ func TestWorkApi(t *testing.T) {
 				t.Fatalf("error status code: %v", res.StatusCode)
 			}
 
-			// assert
-			var work models.Work
-			err = json.Unmarshal(body, &work)
-			if err != nil {
-				t.Fatalf("error in unmarshal: %v", err)
+			// check if it is an array
+			var data interface{}
+			if err := json.Unmarshal(body, &data); err != nil {
+				t.Fatalf("Error: %v", err)
+				return
 			}
-			if test.method == http.MethodPost {
-				tests.AssertWork(t, *reqBodyWork, work)
+
+			// Get the reflect.Value of the unmarshalled data
+			value := reflect.ValueOf(data)
+
+			// Check if it's a slice or an array
+			switch value.Kind() {
+			case reflect.Slice:
+				t.Log("It's a slice")
+			case reflect.Array:
+				t.Log("It's an array")
+			default:
+				t.Log("It's neither a slice nor an array")
 			}
-			if test.method == http.MethodPut {
-				tests.AssertWork(t, *reqBodyWork, work)
-			}
-			if test.method == http.MethodPost {
-				postWorkResponse = work
+
+			// var work interface{}
+			if value.Kind() == reflect.Slice || value.Kind() == reflect.Array {
+				test.assertFunc([]models.Work{latestWorkResponse}, body)
+			} else {
+				test.assertFunc(*reqBodyWork, body)
 			}
 		})
 	}
