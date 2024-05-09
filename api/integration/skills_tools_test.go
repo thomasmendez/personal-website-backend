@@ -41,27 +41,27 @@ func TestSkillsToolsApi(t *testing.T) {
 				latestSkillsToolsResponse = skillsTools
 			},
 		},
-		// {
-		// 	label:  "Update SkillsTools",
-		// 	route:  "/api/v1/skillsTools",
-		// 	method: http.MethodPut,
-		// 	reqBodySkillsTools: func() *models.SkillsTools {
-		// 		// modify previous response for update
-		// 		latestSkillsToolsResponse.Category = "Tools"
-		// 		latestSkillsToolsResponse.Type = "Programming Languages"
-		// 		latestSkillsToolsResponse.List = []string{"C#", "Go", "Java", "JavaScript", "Python", "Swift"}
-		// 		return &latestSkillsToolsResponse
-		// 	},
-		// 	assertFunc: func(expectedStruct interface{}, resBody []byte) {
-		// 		var skillsTools models.SkillsTools
-		// 		err := json.Unmarshal(resBody, &skillsTools)
-		// 		if err != nil {
-		// 			t.Fatalf("error in unmarshal: %v", err)
-		// 		}
-		// 		tests.AssertSkillsTools(t, expectedStruct.(models.SkillsTools), skillsTools)
-		// 		latestSkillsToolsResponse = skillsTools
-		// 	},
-		// },
+		{
+			label:  "Update SkillsTools",
+			route:  "/api/v1/skillsTools",
+			method: http.MethodPut,
+			reqBodySkillsTools: func() *models.SkillsTools {
+				// modify previous response for update
+				latestSkillsToolsResponse.Category = "Tools"
+				latestSkillsToolsResponse.Type = "Cloud Services"
+				latestSkillsToolsResponse.List = []string{"AWS", "Azure", "GCP"}
+				return &latestSkillsToolsResponse
+			},
+			assertFunc: func(expectedStruct interface{}, resBody []byte) {
+				var skillsTools models.SkillsTools
+				err := json.Unmarshal(resBody, &skillsTools)
+				if err != nil {
+					t.Fatalf("error in unmarshal: %v", err)
+				}
+				tests.AssertSkillsTools(t, expectedStruct.(models.SkillsTools), skillsTools)
+				latestSkillsToolsResponse = skillsTools
+			},
+		},
 		// {
 		// 	label:              "Get SkillsTools list",
 		// 	route:              "/api/v1/skillsTools",

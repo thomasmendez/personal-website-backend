@@ -98,7 +98,7 @@ func (s *Service) updateWorkHandler(ctx context.Context, request events.APIGatew
 	workJson, err := json.Marshal(work)
 
 	return events.APIGatewayProxyResponse{
-		StatusCode: http.StatusCreated,
+		StatusCode: http.StatusOK,
 		Body:       string(workJson),
 	}, err
 }
@@ -188,7 +188,7 @@ func (s *Service) updateSkillsToolsHandler(ctx context.Context, request events.A
 	skillsToolsJson, err := json.Marshal(skillsTools)
 
 	return events.APIGatewayProxyResponse{
-		StatusCode: http.StatusCreated,
+		StatusCode: http.StatusOK,
 		Body:       string(skillsToolsJson),
 	}, err
 }
@@ -278,7 +278,7 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 	projectJson, err := json.Marshal(project)
 
 	return events.APIGatewayProxyResponse{
-		StatusCode: http.StatusCreated,
+		StatusCode: http.StatusOK,
 		Body:       string(projectJson),
 	}, err
 }
