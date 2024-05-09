@@ -32,7 +32,10 @@ jobs:
         cd api
         go test -v -coverprofile=coverage.out ./...
 
-    # - name: Run integration tests
-    #   run: |
-    #     cd api
-    #     INTEGRATION=1 go test ./...
+    - name: Run integration tests
+      uses: aws-actions/setup-sam@v2
+      run: |
+        docker compose up -d
+        sam.cmd local start-api --docker-network dynamodb-backend
+        cd api
+        INTEGRATION=1 go test ./...
