@@ -38,7 +38,7 @@ var TestWork = Work{
 	JobDescription: []string{"Developed backend systems", "Optimized database queries"},
 }
 
-// Work Item model used for test cases
+// Work Item model used for dynamodb
 var TestWorkItem = map[string]*dynamodb.AttributeValue{
 	"personalWebsiteType": {S: aws.String("Work")},
 	"sortValue":           {S: aws.String("2020-01-01")},
