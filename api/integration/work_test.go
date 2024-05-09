@@ -87,6 +87,7 @@ func TestWorkApi(t *testing.T) {
 			// arrange
 			httpClient := &http.Client{}
 			url := "http://127.0.0.1:3000" + test.route
+
 			var reqBodyWork *models.Work
 			if test.reqBodyWork != nil {
 				reqBodyWork = test.reqBodyWork()
@@ -118,27 +119,14 @@ func TestWorkApi(t *testing.T) {
 				t.Fatalf("error status code: %v", res.StatusCode)
 			}
 
-			// check if it is an array
+			// check if it is a slice or array and then assert
 			var data interface{}
 			if err := json.Unmarshal(body, &data); err != nil {
 				t.Fatalf("Error: %v", err)
 				return
 			}
 
-			// Get the reflect.Value of the unmarshalled data
 			value := reflect.ValueOf(data)
-
-			// Check if it's a slice or an array
-			switch value.Kind() {
-			case reflect.Slice:
-				t.Log("It's a slice")
-			case reflect.Array:
-				t.Log("It's an array")
-			default:
-				t.Log("It's neither a slice nor an array")
-			}
-
-			// var work interface{}
 			if value.Kind() == reflect.Slice || value.Kind() == reflect.Array {
 				test.assertFunc([]models.Work{latestWorkResponse}, body)
 			} else {
