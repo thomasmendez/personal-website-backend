@@ -1,0 +1,25 @@
+{
+    "TableName": "PersonalWebsiteTable",
+    "Item": {
+        "personalWebsiteType": {"S": "Projects"},
+        "sortValue": {"S": "Personal Website"},
+        "category": {"S": "Software Engineering"},
+        "name": {"S": "Personal Website"},
+        "description": {"S": "My personal website created in the cloud"},
+        "featuresDescription": {"S": "User is able to view my work"},
+        "role": {"S": "Project Lead"},
+        "tasks": {"SS": ["Develop backend microservices"]},
+        "teamSize": {"S": "2"},
+        "teamRoles": {"SS": ["Frontend Developer","Backend Developer"]},
+        "cloudServices":{"SS": ["AWS"]},
+        "tools": {"SS": ["React","Go"]},
+        "duration": {"S": "6 Months"},
+        "startDate": {"S": "Jan 2024"},
+        "endDate": {"S": "Dec 2024"},
+        "notes": {"S": "Site is still in development stages"},
+        "link": {"S": "http://my-url"},
+        "linkType": {"S": "YouTube"},
+        "mediaLink": {"S": "http://link-to-media-file"}
+    }
+  }
+    
