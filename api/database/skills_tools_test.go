@@ -185,3 +185,56 @@ func TestUpdateSkillsTools(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteSkillsTools(t *testing.T) {
+	mockDB := &mockDynamoDB{}
+	for _, test := range []struct {
+		label               string
+		deleteSkillsTools   models.SkillsTools
+		mockDeleteFunc      func(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error)
+		mockGetFunc         func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
+		expectedSkillsTools models.SkillsTools
+		expectedError       error
+	}{
+		{
+			label:             "valid query output",
+			deleteSkillsTools: tests.TestSkillsTools,
+			mockDeleteFunc: func(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
+				return nil, nil
+			},
+			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
+				mockOutput := &dynamodb.GetItemOutput{
+					Item: tests.TestSkillsToolsItem,
+				}
+				return mockOutput, nil
+			},
+			expectedSkillsTools: tests.TestSkillsTools,
+			expectedError:       nil,
+		},
+		{
+			label:             "query error",
+			deleteSkillsTools: tests.TestSkillsTools,
+			mockDeleteFunc: func(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
+				return nil, nil
+			},
+			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
+				return nil, errors.New("error deleting item from database")
+			},
+		},
+	} {
+		t.Run(test.label, func(t *testing.T) {
+			mockDB.DeleteFunc = test.mockDeleteFunc
+			mockDB.GetFunc = test.mockGetFunc
+
+			err := DeleteItem(mockDB, test.deleteSkillsTools.PersonalWebsiteType, test.deleteSkillsTools.SortValue)
+
+			if err != nil {
+				assert.Error(t, err)
+				assert.Equal(t, "error deleting item from database", err.Error())
+				return
+			}
+
+			assert.NoError(t, err)
+		})
+	}
+}

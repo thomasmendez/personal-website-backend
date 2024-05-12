@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"reflect"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/thomasmendez/personal-website-backend/api/database"
@@ -99,5 +100,47 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 	return events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
 		Body:       string(projectJson),
+	}, err
+}
+
+func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	var deleteProject models.Project
+	err := json.Unmarshal([]byte(request.Body), &deleteProject)
+	if err != nil {
+		log.Printf("err: %v", err)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusBadRequest,
+			Body:       "Bad Request: Invalid JSON",
+		}, nil
+	}
+
+	var existingProject models.Project
+	err = database.GetItem(s.DB, deleteProject.PersonalWebsiteType, deleteProject.SortValue, &existingProject)
+
+	if !reflect.DeepEqual(deleteProject, existingProject) {
+		log.Printf("err: %v", err)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusNotFound,
+			Body:       "Resource not found",
+		}, err
+	}
+
+	err = database.DeleteItem(s.DB, deleteProject.PersonalWebsiteType, deleteProject.SortValue)
+
+	if err != nil {
+		log.Print(err.Error())
+		errRes := ErrorResponse{
+			Message: fmt.Sprintf("There was an error in deleting project with sortValue of: %s", deleteProject.SortValue),
+		}
+		res, _ := json.Marshal(errRes)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusInternalServerError,
+			Body:       string(res),
+		}, err
+	}
+
+	return events.APIGatewayProxyResponse{
+		StatusCode: http.StatusOK,
+		Body:       "Resource was successfully deleted",
 	}, err
 }

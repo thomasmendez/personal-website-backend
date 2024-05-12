@@ -172,3 +172,56 @@ func TestUpdateProject(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteProject(t *testing.T) {
+	mockDB := &mockDynamoDB{}
+	for _, test := range []struct {
+		label           string
+		deleteProject   models.Project
+		mockDeleteFunc  func(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error)
+		mockGetFunc     func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
+		expectedProject models.Project
+		expectedError   error
+	}{
+		{
+			label:         "valid query output",
+			deleteProject: tests.TestProject,
+			mockDeleteFunc: func(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
+				return nil, nil
+			},
+			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
+				mockOutput := &dynamodb.GetItemOutput{
+					Item: tests.TestProjectItem,
+				}
+				return mockOutput, nil
+			},
+			expectedProject: tests.TestProject,
+			expectedError:   nil,
+		},
+		{
+			label:         "query error",
+			deleteProject: tests.TestProject,
+			mockDeleteFunc: func(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
+				return nil, nil
+			},
+			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
+				return nil, errors.New("error deleting item from database")
+			},
+		},
+	} {
+		t.Run(test.label, func(t *testing.T) {
+			mockDB.DeleteFunc = test.mockDeleteFunc
+			mockDB.GetFunc = test.mockGetFunc
+
+			err := DeleteItem(mockDB, test.deleteProject.PersonalWebsiteType, test.deleteProject.SortValue)
+
+			if err != nil {
+				assert.Error(t, err)
+				assert.Equal(t, "error deleting item from database", err.Error())
+				return
+			}
+
+			assert.NoError(t, err)
+		})
+	}
+}

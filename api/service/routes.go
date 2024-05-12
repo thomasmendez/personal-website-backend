@@ -59,5 +59,10 @@ func addRoutes(s *Service) *[]RouteHandler {
 			Method:  http.MethodPut,
 			Handler: s.updateProjectsHandler,
 		},
+		{
+			Route:   "/api/v1/projects",
+			Method:  http.MethodDelete,
+			Handler: s.deleteProjectHandler,
+		},
 	}
 }
