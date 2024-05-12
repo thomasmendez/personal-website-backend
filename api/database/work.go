@@ -65,7 +65,7 @@ func PostWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.W
 	}
 	_, err = svc.PutItem(input)
 	if err != nil {
-		log.Print(err)
+		log.Printf("error in DynamoDB PutItem func: %v", err)
 		return work, err
 	}
 	err = GetItem(svc, newWork.PersonalWebsiteType, newWork.SortValue, &work)
@@ -107,7 +107,7 @@ func UpdateWork(svc dynamodbiface.DynamoDBAPI, updateWork models.Work) (work mod
 	}
 	_, err = svc.UpdateItem(updateInput)
 	if err != nil {
-		log.Print(err)
+		log.Printf("error in DynamoDB UpdateItem func: %v", err)
 		return work, err
 	}
 	err = GetItem(svc, updateWork.PersonalWebsiteType, updateWork.SortValue, &work)

@@ -44,7 +44,7 @@ func (s *Service) postSkillsToolsHandler(ctx context.Context, request events.API
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Body:       resError(http.StatusBadRequest),
-		}, nil
+		}, err
 	}
 
 	skillsTools, err := database.PostSkillsTools(s.DB, newSkillsTools)
@@ -78,7 +78,7 @@ func (s *Service) updateSkillsToolsHandler(ctx context.Context, request events.A
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Body:       resError(http.StatusBadRequest),
-		}, nil
+		}, err
 	}
 
 	skillsTools, err := database.UpdateSkillsTools(s.DB, updateSkillsTools)
@@ -111,7 +111,7 @@ func (s *Service) deleteSkillsToolsHandler(ctx context.Context, request events.A
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Body:       resError(http.StatusBadRequest),
-		}, nil
+		}, err
 	}
 
 	var existingSkillsTools models.SkillsTools

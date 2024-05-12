@@ -30,6 +30,18 @@ func (s *Service) getProjectsHandler(ctx context.Context, request events.APIGate
 
 	projectsJson, err := json.Marshal(projects)
 
+	if err != nil {
+		log.Print(err.Error())
+		errRes := ErrorResponse{
+			Message: "There was an error deserializing projects",
+		}
+		res, _ := json.Marshal(errRes)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusInternalServerError,
+			Body:       string(res),
+		}, err
+	}
+
 	return events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
 		Body:       string(projectsJson),
@@ -39,13 +51,14 @@ func (s *Service) getProjectsHandler(ctx context.Context, request events.APIGate
 func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	var newProject models.Project
+	log.Printf("reqBody: %v", request.Body)
 	err := json.Unmarshal([]byte(request.Body), &newProject)
 	if err != nil {
-		log.Printf("err: %v", err)
+		log.Printf("error in serializing json: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Body:       resError(http.StatusBadRequest),
-		}, nil
+		}, err
 	}
 
 	project, err := database.PostProject(s.DB, newProject)
@@ -64,6 +77,18 @@ func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGat
 
 	projectJson, err := json.Marshal(project)
 
+	if err != nil {
+		log.Print(err.Error())
+		errRes := ErrorResponse{
+			Message: fmt.Sprintf("There was an error deserializing project with sortValue: %s", newProject.SortValue),
+		}
+		res, _ := json.Marshal(errRes)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusInternalServerError,
+			Body:       string(res),
+		}, err
+	}
+
 	return events.APIGatewayProxyResponse{
 		StatusCode: http.StatusCreated,
 		Body:       string(projectJson),
@@ -78,7 +103,7 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Body:       resError(http.StatusBadRequest),
-		}, nil
+		}, err
 	}
 
 	project, err := database.UpdateProject(s.DB, updateProject)
@@ -97,6 +122,18 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 
 	projectJson, err := json.Marshal(project)
 
+	if err != nil {
+		log.Print(err.Error())
+		errRes := ErrorResponse{
+			Message: fmt.Sprintf("There was an error deserializing project with sortValue: %s", project.SortValue),
+		}
+		res, _ := json.Marshal(errRes)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusInternalServerError,
+			Body:       string(res),
+		}, err
+	}
+
 	return events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
 		Body:       string(projectJson),
@@ -111,7 +148,7 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Body:       resError(http.StatusBadRequest),
-		}, nil
+		}, err
 	}
 
 	var existingProject models.Project

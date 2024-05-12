@@ -45,7 +45,7 @@ func (s *Service) postWorkHandler(ctx context.Context, request events.APIGateway
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Body:       resError(http.StatusBadRequest),
-		}, nil
+		}, err
 	}
 
 	work, err := database.PostWork(s.DB, newWork)
@@ -79,7 +79,7 @@ func (s *Service) updateWorkHandler(ctx context.Context, request events.APIGatew
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Body:       resError(http.StatusBadRequest),
-		}, nil
+		}, err
 	}
 
 	work, err := database.PostWork(s.DB, updateWork)
@@ -112,7 +112,7 @@ func (s *Service) deleteWorkHandler(ctx context.Context, request events.APIGatew
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Body:       resError(http.StatusBadRequest),
-		}, nil
+		}, err
 	}
 
 	var existingWork models.Work

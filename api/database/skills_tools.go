@@ -52,7 +52,7 @@ func PostSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.Skills
 	}
 	_, err = svc.PutItem(input)
 	if err != nil {
-		log.Print(err)
+		log.Printf("error in DynamoDB PutItem func: %v", err)
 		return skillsTools, err
 	}
 	err = GetItem(svc, newSkillsTools.PersonalWebsiteType, newSkillsTools.SortValue, &skillsTools)
@@ -83,7 +83,7 @@ func UpdateSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.Skil
 	}
 	_, err = svc.UpdateItem(updateInput)
 	if err != nil {
-		log.Print(err)
+		log.Printf("error in DynamoDB UpdateItem func: %v", err)
 		return skillsTools, err
 	}
 	err = GetItem(svc, newSkillsTools.PersonalWebsiteType, newSkillsTools.SortValue, &skillsTools)

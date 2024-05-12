@@ -46,7 +46,7 @@ func PostProject(svc dynamodbiface.DynamoDBAPI, newProject models.Project) (proj
 	}
 	_, err = svc.PutItem(input)
 	if err != nil {
-		log.Print(err)
+		log.Printf("error in DynamoDB PutItem func: %v", err)
 		return project, err
 	}
 	err = GetItem(svc, newProject.PersonalWebsiteType, newProject.SortValue, &project)
@@ -54,6 +54,7 @@ func PostProject(svc dynamodbiface.DynamoDBAPI, newProject models.Project) (proj
 }
 
 func projectItem(project models.Project) (item map[string]*dynamodb.AttributeValue) {
+	log.Print("projectItem")
 	item = map[string]*dynamodb.AttributeValue{
 		"personalWebsiteType": {S: aws.String(project.PersonalWebsiteType)},
 		"sortValue":           {S: aws.String(project.SortValue)},
@@ -83,22 +84,22 @@ func projectItem(project models.Project) (item map[string]*dynamodb.AttributeVal
 	} else {
 		item["cloudServices"] = &dynamodb.AttributeValue{NULL: aws.Bool(true)}
 	}
-	if project.CloudServices != nil {
+	if project.Notes != nil {
 		item["notes"] = &dynamodb.AttributeValue{S: aws.String(*project.Notes)}
 	} else {
 		item["notes"] = &dynamodb.AttributeValue{NULL: aws.Bool(true)}
 	}
-	if project.CloudServices != nil {
+	if project.Link != nil {
 		item["link"] = &dynamodb.AttributeValue{S: aws.String(*project.Link)}
 	} else {
 		item["link"] = &dynamodb.AttributeValue{NULL: aws.Bool(true)}
 	}
-	if project.CloudServices != nil {
+	if project.LinkType != nil {
 		item["linkType"] = &dynamodb.AttributeValue{S: aws.String(*project.LinkType)}
 	} else {
 		item["linkType"] = &dynamodb.AttributeValue{NULL: aws.Bool(true)}
 	}
-	if project.CloudServices != nil {
+	if project.MediaLink != nil {
 		item["mediaLink"] = &dynamodb.AttributeValue{S: aws.String(*project.MediaLink)}
 	} else {
 		item["mediaLink"] = &dynamodb.AttributeValue{NULL: aws.Bool(true)}
@@ -160,7 +161,7 @@ func UpdateProject(svc dynamodbiface.DynamoDBAPI, newProject models.Project) (pr
 	}
 	_, err = svc.UpdateItem(updateInput)
 	if err != nil {
-		log.Print(err)
+		log.Printf("error in DynamoDB UpdateItem func: %v", err)
 		return project, err
 	}
 	err = GetItem(svc, newProject.PersonalWebsiteType, newProject.SortValue, &project)
