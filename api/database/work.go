@@ -5,7 +5,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/thomasmendez/personal-website-backend/api/models"
 )
@@ -32,16 +31,8 @@ func GetWork(svc dynamodbiface.DynamoDBAPI) (work []models.Work, err error) {
 		log.Printf("error in DynamoDB Query func: %v", err)
 		return work, err
 	}
-	for _, item := range queryOutput.Items {
-		var workItem models.Work
-		err := dynamodbattribute.UnmarshalMap(item, &workItem)
-		if err != nil {
-			log.Printf("error in DynamoDB UnmarshalMap func: %v", err)
-			return work, err
-		}
-		work = append(work, workItem)
-	}
-	return work, nil
+	err = unmarshalDynamodbMapSlice(*queryOutput, &work)
+	return work, err
 }
 
 func PostWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.Work, err error) {

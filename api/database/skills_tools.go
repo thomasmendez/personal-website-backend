@@ -5,7 +5,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/thomasmendez/personal-website-backend/api/models"
 )
@@ -28,16 +27,8 @@ func GetSkillsTools(svc dynamodbiface.DynamoDBAPI) (skillsTools []models.SkillsT
 		log.Printf("error in DynamoDB Query func: %v", err)
 		return skillsTools, err
 	}
-	for _, item := range queryOutput.Items {
-		var skillsToolsItem models.SkillsTools
-		err := dynamodbattribute.UnmarshalMap(item, &skillsToolsItem)
-		if err != nil {
-			log.Printf("error in DynamoDB UnmarshalMap func: %v", err)
-			return skillsTools, err
-		}
-		skillsTools = append(skillsTools, skillsToolsItem)
-	}
-	return skillsTools, nil
+	err = unmarshalDynamodbMapSlice(*queryOutput, &skillsTools)
+	return skillsTools, err
 }
 
 func PostSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.SkillsTools) (skillsTools models.SkillsTools, err error) {

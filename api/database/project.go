@@ -5,7 +5,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/thomasmendez/personal-website-backend/api/models"
 )
@@ -28,16 +27,8 @@ func GetProjects(svc dynamodbiface.DynamoDBAPI) (projects []models.Project, err 
 		log.Printf("error in DynamoDB Query func: %v", err)
 		return projects, err
 	}
-	for _, item := range queryOutput.Items {
-		var projectsItem models.Project
-		err := dynamodbattribute.UnmarshalMap(item, &projectsItem)
-		if err != nil {
-			log.Printf("error in DynamoDB UnmarshalMap func: %v", err)
-			return projects, err
-		}
-		projects = append(projects, projectsItem)
-	}
-	return projects, nil
+	err = unmarshalDynamodbMapSlice(*queryOutput, &projects)
+	return projects, err
 }
 
 func PostProject(svc dynamodbiface.DynamoDBAPI, newProject models.Project) (project models.Project, err error) {

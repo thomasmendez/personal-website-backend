@@ -2,6 +2,7 @@ package database
 
 import (
 	"log"
+	"reflect"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -18,6 +19,22 @@ type Database struct {
 
 func NewDatabase(awsSession *session.Session) (database *Database) {
 	return &Database{dynamodb.New(awsSession)}
+}
+
+func unmarshalDynamodbMapSlice(queryOutput dynamodb.QueryOutput, slicePtr interface{}) error {
+	items := queryOutput.Items
+	sliceValue := reflect.ValueOf(slicePtr).Elem()
+	elementType := sliceValue.Type().Elem()
+
+	for _, item := range items {
+		newItem := reflect.New(elementType).Interface()
+		if err := dynamodbattribute.UnmarshalMap(item, newItem); err != nil {
+			return err
+		}
+		sliceValue.Set(reflect.Append(sliceValue, reflect.ValueOf(newItem).Elem()))
+	}
+
+	return nil
 }
 
 func GetItem(svc dynamodbiface.DynamoDBAPI, personalWebsiteType string, sortValue string, item interface{}) (err error) {
