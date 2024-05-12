@@ -1,0 +1,7 @@
+{
+  "TableName": "PersonalWebsiteTable",
+  "Key": {
+      "personalWebsiteType": {"S": "Projects"},
+      "sortValue": {"S": "Personal Website"}
+  }
+}

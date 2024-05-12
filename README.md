@@ -76,6 +76,12 @@ aws dynamodb scan --table-name PersonalWebsiteTable --endpoint-url http://localh
 aws dynamodb query --cli-input-json file://json/work/query-recent-items.json --endpoint-url http://localhost:8000
 ```
 
+**Delete DynamoDb Data**
+
+```bash
+aws dynamodb delete-item --cli-input-json file://json/work/delete-item.json --endpoint-url http://localhost:8000
+```
+
 **Invoking function locally through local API Gateway**
 
 ```bash

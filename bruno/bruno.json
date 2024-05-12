@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "name": "personalWebsite",
+  "name": "personalWebsiteLocal",
   "type": "collection",
   "ignore": [
     "node_modules",
