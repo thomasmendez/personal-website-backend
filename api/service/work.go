@@ -44,7 +44,7 @@ func (s *Service) postWorkHandler(ctx context.Context, request events.APIGateway
 		log.Printf("err: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
-			Body:       "Bad Request: Invalid JSON",
+			Body:       resError(http.StatusBadRequest),
 		}, nil
 	}
 
@@ -78,7 +78,7 @@ func (s *Service) updateWorkHandler(ctx context.Context, request events.APIGatew
 		log.Printf("err: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
-			Body:       "Bad Request: Invalid JSON",
+			Body:       resError(http.StatusBadRequest),
 		}, nil
 	}
 
@@ -111,7 +111,7 @@ func (s *Service) deleteWorkHandler(ctx context.Context, request events.APIGatew
 		log.Printf("err: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
-			Body:       "Bad Request: Invalid JSON",
+			Body:       resError(http.StatusBadRequest),
 		}, nil
 	}
 
@@ -122,7 +122,7 @@ func (s *Service) deleteWorkHandler(ctx context.Context, request events.APIGatew
 		log.Printf("err: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusNotFound,
-			Body:       "Resource not found",
+			Body:       resError(http.StatusNotFound),
 		}, err
 	}
 

@@ -44,7 +44,7 @@ func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGat
 		log.Printf("err: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
-			Body:       "Bad Request: Invalid JSON",
+			Body:       resError(http.StatusBadRequest),
 		}, nil
 	}
 
@@ -77,7 +77,7 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 		log.Printf("err: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
-			Body:       "Bad Request: Invalid JSON",
+			Body:       resError(http.StatusBadRequest),
 		}, nil
 	}
 
@@ -110,7 +110,7 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 		log.Printf("err: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
-			Body:       "Bad Request: Invalid JSON",
+			Body:       resError(http.StatusBadRequest),
 		}, nil
 	}
 
@@ -121,7 +121,7 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 		log.Printf("err: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusNotFound,
-			Body:       "Resource not found",
+			Body:       resError(http.StatusNotFound),
 		}, err
 	}
 

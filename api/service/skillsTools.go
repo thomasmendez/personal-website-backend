@@ -43,7 +43,7 @@ func (s *Service) postSkillsToolsHandler(ctx context.Context, request events.API
 		log.Printf("err: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
-			Body:       "Bad Request: Invalid JSON",
+			Body:       resError(http.StatusBadRequest),
 		}, nil
 	}
 
@@ -77,7 +77,7 @@ func (s *Service) updateSkillsToolsHandler(ctx context.Context, request events.A
 		log.Printf("err: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
-			Body:       "Bad Request: Invalid JSON",
+			Body:       resError(http.StatusBadRequest),
 		}, nil
 	}
 
@@ -110,7 +110,7 @@ func (s *Service) deleteSkillsToolsHandler(ctx context.Context, request events.A
 		log.Printf("err: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
-			Body:       "Bad Request: Invalid JSON",
+			Body:       resError(http.StatusBadRequest),
 		}, nil
 	}
 
@@ -121,7 +121,7 @@ func (s *Service) deleteSkillsToolsHandler(ctx context.Context, request events.A
 		log.Printf("err: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusNotFound,
-			Body:       "Resource not found",
+			Body:       resError(http.StatusNotFound),
 		}, err
 	}
 

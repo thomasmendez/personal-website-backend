@@ -22,10 +22,6 @@ type RouteHandler struct {
 	Handler func(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error)
 }
 
-type ErrorResponse struct {
-	Message string `json:"message"`
-}
-
 func NewService() *Service {
 	awsSession := session.Must(session.NewSessionWithOptions(session.Options{
 		Config: aws.Config{
