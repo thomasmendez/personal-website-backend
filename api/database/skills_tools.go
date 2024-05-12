@@ -25,12 +25,14 @@ func GetSkillsTools(svc dynamodbiface.DynamoDBAPI) (skillsTools []models.SkillsT
 	}
 	queryOutput, err := svc.Query(input)
 	if err != nil {
+		log.Printf("error in DynamoDB Query func: %v", err)
 		return skillsTools, err
 	}
 	for _, item := range queryOutput.Items {
 		var skillsToolsItem models.SkillsTools
 		err := dynamodbattribute.UnmarshalMap(item, &skillsToolsItem)
 		if err != nil {
+			log.Printf("error in DynamoDB UnmarshalMap func: %v", err)
 			return skillsTools, err
 		}
 		skillsTools = append(skillsTools, skillsToolsItem)

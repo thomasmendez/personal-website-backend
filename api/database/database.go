@@ -30,15 +30,15 @@ func GetItem(svc dynamodbiface.DynamoDBAPI, personalWebsiteType string, sortValu
 	}
 	result, err := svc.GetItem(inputGet)
 	if err != nil {
-		log.Print(err)
+		log.Printf("error in DynamoDB GetItem func: %v", err)
 		return err
 	}
 	err = dynamodbattribute.UnmarshalMap(result.Item, item)
 	if err != nil {
-		log.Print(err)
+		log.Printf("error in DynamoDB UnmarshalMap func: %v", err)
 		return err
 	}
-	return err
+	return nil
 }
 
 func DeleteItem(svc dynamodbiface.DynamoDBAPI, personalWebsiteType string, sortValue string) (err error) {
@@ -52,7 +52,7 @@ func DeleteItem(svc dynamodbiface.DynamoDBAPI, personalWebsiteType string, sortV
 	}
 	_, err = svc.DeleteItem(input)
 	if err != nil {
-		log.Print(err)
+		log.Printf("error in DynamoDB UnmarshalMap func: %v", err)
 		return err
 	}
 	return nil

@@ -29,12 +29,14 @@ func GetWork(svc dynamodbiface.DynamoDBAPI) (work []models.Work, err error) {
 	}
 	queryOutput, err := svc.Query(input)
 	if err != nil {
+		log.Printf("error in DynamoDB Query func: %v", err)
 		return work, err
 	}
 	for _, item := range queryOutput.Items {
 		var workItem models.Work
 		err := dynamodbattribute.UnmarshalMap(item, &workItem)
 		if err != nil {
+			log.Printf("error in DynamoDB UnmarshalMap func: %v", err)
 			return work, err
 		}
 		work = append(work, workItem)

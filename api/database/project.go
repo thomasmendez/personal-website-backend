@@ -25,12 +25,14 @@ func GetProjects(svc dynamodbiface.DynamoDBAPI) (projects []models.Project, err 
 	}
 	queryOutput, err := svc.Query(input)
 	if err != nil {
+		log.Printf("error in DynamoDB Query func: %v", err)
 		return projects, err
 	}
 	for _, item := range queryOutput.Items {
 		var projectsItem models.Project
 		err := dynamodbattribute.UnmarshalMap(item, &projectsItem)
 		if err != nil {
+			log.Printf("error in DynamoDB UnmarshalMap func: %v", err)
 			return projects, err
 		}
 		projects = append(projects, projectsItem)
