@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/aws/aws-lambda-go/lambda"
-	service "github.com/thomasmendez/personal-website-backend/api/service"
+	"github.com/thomasmendez/personal-website-backend/api/service"
 )
 
 func main() {
