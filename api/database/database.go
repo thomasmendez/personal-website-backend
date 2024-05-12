@@ -33,7 +33,6 @@ func unmarshalDynamodbMapSlice(queryOutput dynamodb.QueryOutput, slicePtr interf
 		}
 		sliceValue.Set(reflect.Append(sliceValue, reflect.ValueOf(newItem).Elem()))
 	}
-
 	return nil
 }
 

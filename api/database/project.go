@@ -47,7 +47,6 @@ func PostProject(svc dynamodbiface.DynamoDBAPI, newProject models.Project) (proj
 }
 
 func projectItem(project models.Project) (item map[string]*dynamodb.AttributeValue) {
-	log.Print("projectItem")
 	item = map[string]*dynamodb.AttributeValue{
 		"personalWebsiteType": {S: aws.String(project.PersonalWebsiteType)},
 		"sortValue":           {S: aws.String(project.SortValue)},
