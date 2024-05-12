@@ -75,6 +75,11 @@ func NewService() *Service {
 			Handler: s.updateSkillsToolsHandler,
 		},
 		{
+			Route:   "/api/v1/skillsTools",
+			Method:  http.MethodDelete,
+			Handler: s.deleteSkillsToolsHandler,
+		},
+		{
 			Route:   "/api/v1/projects",
 			Method:  http.MethodGet,
 			Handler: s.getProjectsHandler,

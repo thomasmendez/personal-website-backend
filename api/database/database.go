@@ -40,3 +40,20 @@ func GetItem(svc dynamodbiface.DynamoDBAPI, personalWebsiteType string, sortValu
 	}
 	return err
 }
+
+func DeleteItem(svc dynamodbiface.DynamoDBAPI, personalWebsiteType string, sortValue string) (err error) {
+	key := map[string]*dynamodb.AttributeValue{
+		"personalWebsiteType": {S: aws.String(personalWebsiteType)},
+		"sortValue":           {S: aws.String(sortValue)},
+	}
+	input := &dynamodb.DeleteItemInput{
+		TableName: aws.String(tableName),
+		Key:       key,
+	}
+	_, err = svc.DeleteItem(input)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	return nil
+}

@@ -126,7 +126,7 @@ func (s *Service) deleteWorkHandler(ctx context.Context, request events.APIGatew
 		}, err
 	}
 
-	err = database.DeleteWork(s.DB, deleteWork.SortValue)
+	err = database.DeleteItem(s.DB, deleteWork.PersonalWebsiteType, deleteWork.SortValue)
 
 	if err != nil {
 		log.Print(err.Error())
@@ -233,6 +233,48 @@ func (s *Service) updateSkillsToolsHandler(ctx context.Context, request events.A
 	return events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
 		Body:       string(skillsToolsJson),
+	}, err
+}
+
+func (s *Service) deleteSkillsToolsHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	var deleteSkillsTools models.SkillsTools
+	err := json.Unmarshal([]byte(request.Body), &deleteSkillsTools)
+	if err != nil {
+		log.Printf("err: %v", err)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusBadRequest,
+			Body:       "Bad Request: Invalid JSON",
+		}, nil
+	}
+
+	var existingSkillsTools models.SkillsTools
+	err = database.GetItem(s.DB, deleteSkillsTools.PersonalWebsiteType, deleteSkillsTools.SortValue, &existingSkillsTools)
+
+	if !reflect.DeepEqual(deleteSkillsTools, existingSkillsTools) {
+		log.Printf("err: %v", err)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusNotFound,
+			Body:       "Resource not found",
+		}, err
+	}
+
+	err = database.DeleteItem(s.DB, deleteSkillsTools.PersonalWebsiteType, deleteSkillsTools.SortValue)
+
+	if err != nil {
+		log.Print(err.Error())
+		errRes := ErrorResponse{
+			Message: fmt.Sprintf("There was an error in deleting skillsTools with sortValue of: %s", deleteSkillsTools.SortValue),
+		}
+		res, _ := json.Marshal(errRes)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusInternalServerError,
+			Body:       string(res),
+		}, err
+	}
+
+	return events.APIGatewayProxyResponse{
+		StatusCode: http.StatusOK,
+		Body:       "Resource was successfully deleted",
 	}, err
 }
 

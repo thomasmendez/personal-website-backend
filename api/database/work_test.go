@@ -211,7 +211,7 @@ func TestDeleteWork(t *testing.T) {
 			mockDB.DeleteFunc = test.mockDeleteFunc
 			mockDB.GetFunc = test.mockGetFunc
 
-			err := DeleteWork(mockDB, test.deleteWork.SortValue)
+			err := DeleteItem(mockDB, test.deleteWork.PersonalWebsiteType, test.deleteWork.SortValue)
 
 			if err != nil {
 				assert.Error(t, err)
