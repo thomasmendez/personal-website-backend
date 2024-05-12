@@ -13,6 +13,7 @@ type mockDynamoDB struct {
 	PutFunc    func(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error)
 	GetFunc    func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
 	UpdateFunc func(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error)
+	DeleteFunc func(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error)
 }
 
 func (m *mockDynamoDB) Query(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
@@ -38,4 +39,10 @@ func (m *mockDynamoDB) UpdateItem(input *dynamodb.UpdateItemInput) (*dynamodb.Up
 		return m.UpdateFunc(input)
 	}
 	return nil, errors.New("UpdateItem not implemented")
+}
+func (m *mockDynamoDB) DeleteItem(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
+	if m.DeleteFunc != nil {
+		return m.DeleteFunc(input)
+	}
+	return nil, errors.New("DeleteItem not implemented")
 }

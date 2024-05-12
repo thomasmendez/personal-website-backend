@@ -113,3 +113,20 @@ func UpdateWork(svc dynamodbiface.DynamoDBAPI, updateWork models.Work) (work mod
 	err = GetItem(svc, updateWork.PersonalWebsiteType, updateWork.SortValue, &work)
 	return work, err
 }
+
+func DeleteWork(svc dynamodbiface.DynamoDBAPI, sortValue string) (err error) {
+	key := map[string]*dynamodb.AttributeValue{
+		"personalWebsiteType": {S: aws.String(partitionKeyWork)},
+		"sortValue":           {S: aws.String(sortValue)},
+	}
+	input := &dynamodb.DeleteItemInput{
+		TableName: aws.String(tableName),
+		Key:       key,
+	}
+	_, err = svc.DeleteItem(input)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	return nil
+}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"reflect"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/thomasmendez/personal-website-backend/api/database"
@@ -52,7 +53,7 @@ func (s *Service) postWorkHandler(ctx context.Context, request events.APIGateway
 	if err != nil {
 		log.Print(err.Error())
 		errRes := ErrorResponse{
-			Message: fmt.Sprintf("There was an error in inserting work with startDate of: %s", newWork.StartDate),
+			Message: fmt.Sprintf("There was an error in inserting work with sortValue of: %s", newWork.SortValue),
 		}
 		res, _ := json.Marshal(errRes)
 		return events.APIGatewayProxyResponse{
@@ -86,7 +87,7 @@ func (s *Service) updateWorkHandler(ctx context.Context, request events.APIGatew
 	if err != nil {
 		log.Print(err.Error())
 		errRes := ErrorResponse{
-			Message: fmt.Sprintf("There was an error in updating work with startDate of: %s", updateWork.StartDate),
+			Message: fmt.Sprintf("There was an error in updating work with sortValue of: %s", updateWork.SortValue),
 		}
 		res, _ := json.Marshal(errRes)
 		return events.APIGatewayProxyResponse{
@@ -100,6 +101,48 @@ func (s *Service) updateWorkHandler(ctx context.Context, request events.APIGatew
 	return events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
 		Body:       string(workJson),
+	}, err
+}
+
+func (s *Service) deleteWorkHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	var deleteWork models.Work
+	err := json.Unmarshal([]byte(request.Body), &deleteWork)
+	if err != nil {
+		log.Printf("err: %v", err)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusBadRequest,
+			Body:       "Bad Request: Invalid JSON",
+		}, nil
+	}
+
+	var existingWork models.Work
+	err = database.GetItem(s.DB, deleteWork.PersonalWebsiteType, deleteWork.SortValue, &existingWork)
+
+	if !reflect.DeepEqual(deleteWork, existingWork) {
+		log.Printf("err: %v", err)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusNotFound,
+			Body:       "Resource not found",
+		}, err
+	}
+
+	err = database.DeleteWork(s.DB, deleteWork.SortValue)
+
+	if err != nil {
+		log.Print(err.Error())
+		errRes := ErrorResponse{
+			Message: fmt.Sprintf("There was an error in deleting work with sortValue of: %s", deleteWork.SortValue),
+		}
+		res, _ := json.Marshal(errRes)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusInternalServerError,
+			Body:       string(res),
+		}, err
+	}
+
+	return events.APIGatewayProxyResponse{
+		StatusCode: http.StatusOK,
+		Body:       "Resource was successfully deleted",
 	}, err
 }
 
@@ -266,7 +309,7 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 	if err != nil {
 		log.Print(err.Error())
 		errRes := ErrorResponse{
-			Message: fmt.Sprintf("There was an error in updating project with startDate of: %s", updateProject.StartDate),
+			Message: fmt.Sprintf("There was an error in updating project with sortValue of: %s", updateProject.SortValue),
 		}
 		res, _ := json.Marshal(errRes)
 		return events.APIGatewayProxyResponse{
