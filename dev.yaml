@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  SAM Template for personal-website-backend-stg
+  SAM Template for personal-website-backend-dev
 
 Globals:
   Function:
@@ -11,12 +11,14 @@ Globals:
       LogFormat: JSON
   Api:
     Cors:
-      AllowMethods: "'OPTIONS, POST, GET, PUT, DELETE'"
-      AllowOrigin: "'https://thomasamendez-admin-stg.com'"
+      AllowMethods: "'*'"
+      AllowHeaders: "'*'"
+      AllowOrigin: "'*'"
 Resources:
-  PersonalWebsiteTableStg:
+  PersonalWebsiteTableDev:
     Type: AWS::DynamoDB::Table
     Properties:
+      TableName: PersonalWebsiteTableDev
       AttributeDefinitions:
         - AttributeName: personalWebsiteType
           AttributeType: S
@@ -30,8 +32,12 @@ Resources:
       ProvisionedThroughput: 
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
-      TableName: PersonalWebsiteTableStg
-  PersonalWebsiteFunctionStg:
+  PersonalWebsiteApiGatewayDev:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: PersonalWebsiteApiGatewayDev
+      StageName: Dev
+  PersonalWebsiteFunctionDev:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: api/
@@ -46,20 +52,20 @@ Resources:
             Method: ANY
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref PersonalWebsiteTableStg
+            TableName: !Ref PersonalWebsiteTableDev
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
-          ENV: Stg
+          ENV: Dev
           REGION: us-east-2
-          TABLE_NAME: !Ref PersonalWebsiteTableStg
+          TABLE_NAME: !Ref PersonalWebsiteTableDev
 
 Outputs:
-  PersonalWebsiteAPIStg:
-    Description: API Gateway endpoint URL for Stg environment for First Function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Stg/api"
-  PersonalWebsiteFunctionStg:
+  PersonalWebsiteAPIDev:
+    Description: API Gateway endpoint URL for Dev environment for First Function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Dev/api"
+  PersonalWebsiteFunctionDev:
     Description: First Lambda Function ARN
-    Value: !GetAtt PersonalWebsiteFunctionStg.Arn
-  PersonalWebsiteFunctionStgIamRole:
+    Value: !GetAtt PersonalWebsiteFunctionDev.Arn
+  PersonalWebsiteFunctionDevIamRole:
     Description: Implicit IAM Role created for Hello World function
-    Value: !GetAtt PersonalWebsiteFunctionStgRole.Arn
+    Value: !GetAtt PersonalWebsiteFunctionDevRole.Arn

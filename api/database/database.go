@@ -14,10 +14,11 @@ import (
 
 type Database struct {
 	*dynamodb.DynamoDB
+	TableName string
 }
 
 func NewDatabase(awsSession *session.Session, tableName string) (database *Database) {
-	return &Database{dynamodb.New(awsSession)}
+	return &Database{dynamodb.New(awsSession), tableName}
 }
 
 // unmarshalMapSlice unmarshals the items in a DynamoDB QueryOutput into a slice of structs.

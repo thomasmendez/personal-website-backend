@@ -14,7 +14,7 @@ import (
 )
 
 func (s *Service) getSkillsToolsHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	skillsTools, err := database.GetSkillsTools(s.DB, s.TableName)
+	skillsTools, err := database.GetSkillsTools(s.DB, s.DB.TableName)
 
 	if err != nil {
 		log.Print(err.Error())
@@ -47,7 +47,7 @@ func (s *Service) postSkillsToolsHandler(ctx context.Context, request events.API
 		}, err
 	}
 
-	skillsTools, err := database.PostSkillsTools(s.DB, s.TableName, newSkillsTools)
+	skillsTools, err := database.PostSkillsTools(s.DB, s.DB.TableName, newSkillsTools)
 
 	if err != nil {
 		log.Print(err.Error())
@@ -81,7 +81,7 @@ func (s *Service) updateSkillsToolsHandler(ctx context.Context, request events.A
 		}, err
 	}
 
-	skillsTools, err := database.UpdateSkillsTools(s.DB, s.TableName, updateSkillsTools)
+	skillsTools, err := database.UpdateSkillsTools(s.DB, s.DB.TableName, updateSkillsTools)
 
 	if err != nil {
 		log.Print(err.Error())
@@ -115,7 +115,7 @@ func (s *Service) deleteSkillsToolsHandler(ctx context.Context, request events.A
 	}
 
 	var existingSkillsTools models.SkillsTools
-	err = database.GetItem(s.DB, s.TableName, deleteSkillsTools.PersonalWebsiteType, deleteSkillsTools.SortValue, &existingSkillsTools)
+	err = database.GetItem(s.DB, s.DB.TableName, deleteSkillsTools.PersonalWebsiteType, deleteSkillsTools.SortValue, &existingSkillsTools)
 
 	if !reflect.DeepEqual(deleteSkillsTools, existingSkillsTools) {
 		log.Printf("err: %v", err)
@@ -125,7 +125,7 @@ func (s *Service) deleteSkillsToolsHandler(ctx context.Context, request events.A
 		}, err
 	}
 
-	err = database.DeleteItem(s.DB, s.TableName, deleteSkillsTools.PersonalWebsiteType, deleteSkillsTools.SortValue)
+	err = database.DeleteItem(s.DB, s.DB.TableName, deleteSkillsTools.PersonalWebsiteType, deleteSkillsTools.SortValue)
 
 	if err != nil {
 		log.Print(err.Error())

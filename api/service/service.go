@@ -26,31 +26,23 @@ type RouteHandler struct {
 }
 
 func NewService() *Service {
-	// var tableName = "PersonalWebsiteTableStg"
-	// var region = "us-east-2"
-
-	var tableName string
-	var region string
-
 	var awsSession *session.Session
+	var tableName string
 
 	env := os.Getenv("ENV")
 
-	if os.Getenv("TABLE_NAME") == "" {
+	tableName = os.Getenv("TABLE_NAME")
+	if tableName == "" {
 		log.Fatal("error in configuration: TABLE_NAME env not provided")
 	}
-	tableName = os.Getenv("TABLE_NAME")
-	log.Print(tableName)
 
 	if env != "Dev" {
-		if os.Getenv("REGION") == "" {
-			log.Fatal("error in configuration: REGION env not provided")
-		}
 		awsSession = session.Must(session.NewSessionWithOptions(session.Options{
 			SharedConfigState: session.SharedConfigEnable,
 		}))
 	} else {
-		if os.Getenv("REGION") == "" {
+		region := os.Getenv("REGION")
+		if region == "" {
 			log.Fatal("error in configuration: REGION env not provided")
 		}
 		awsSession = session.Must(session.NewSessionWithOptions(session.Options{
@@ -63,8 +55,7 @@ func NewService() *Service {
 	}
 
 	s := &Service{
-		DB:        database.NewDatabase(awsSession, tableName),
-		TableName: tableName,
+		DB: database.NewDatabase(awsSession, tableName),
 	}
 
 	s.Routes = addRoutes(s)
@@ -76,7 +67,7 @@ func (s *Service) HandleRoute(ctx context.Context, request events.APIGatewayProx
 	for _, route := range *s.Routes {
 		if request.Path == route.Route && request.HTTPMethod == route.Method {
 			proxyResponse, err := route.Handler(ctx, request)
-			proxyResponse.Headers = s.addProxyHeaders("dev")
+			// proxyResponse.Headers = s.addProxyHeaders("dev")
 			return proxyResponse, err
 		}
 	}
@@ -87,25 +78,25 @@ func (s *Service) HandleRoute(ctx context.Context, request events.APIGatewayProx
 	res, _ := json.Marshal(errRes)
 
 	return events.APIGatewayProxyResponse{
-		Headers:    s.addProxyHeaders("dev"),
+		// Headers:    s.addProxyHeaders("dev"),
 		StatusCode: http.StatusNotFound,
 		Body:       string(res),
 	}, nil
 }
 
-func (s *Service) addProxyHeaders(env string) map[string]string {
-	switch env {
-	case "dev":
-		return map[string]string{
-			"Access-Control-Allow-Origin":  "*",
-			"Access-Control-Allow-Headers": "*",
-			"Access-Control-Allow-Methods": "*",
-		}
-	default:
-		return map[string]string{
-			"Access-Control-Allow-Origin":  "*",
-			"Access-Control-Allow-Headers": "*",
-			"Access-Control-Allow-Methods": "*",
-		}
-	}
-}
+// func (s *Service) addProxyHeaders(env string) map[string]string {
+// 	switch env {
+// 	case "dev":
+// 		return map[string]string{
+// 			"Access-Control-Allow-Origin":  "*",
+// 			"Access-Control-Allow-Headers": "*",
+// 			"Access-Control-Allow-Methods": "*",
+// 		}
+// 	default:
+// 		return map[string]string{
+// 			"Access-Control-Allow-Origin":  "*",
+// 			"Access-Control-Allow-Headers": "*",
+// 			"Access-Control-Allow-Methods": "*",
+// 		}
+// 	}
+// }
