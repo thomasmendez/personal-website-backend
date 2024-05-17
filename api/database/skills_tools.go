@@ -11,7 +11,7 @@ import (
 
 const partitionKeySkillsTools = "SkillsTools"
 
-func GetSkillsTools(svc dynamodbiface.DynamoDBAPI) (skillsTools []models.SkillsTools, err error) {
+func GetSkillsTools(svc dynamodbiface.DynamoDBAPI, tableName string) (skillsTools []models.SkillsTools, err error) {
 	skillsTools = make([]models.SkillsTools, 0)
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(tableName),
@@ -31,7 +31,7 @@ func GetSkillsTools(svc dynamodbiface.DynamoDBAPI) (skillsTools []models.SkillsT
 	return skillsTools, err
 }
 
-func PostSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.SkillsTools) (skillsTools models.SkillsTools, err error) {
+func PostSkillsTools(svc dynamodbiface.DynamoDBAPI, tableName string, newSkillsTools models.SkillsTools) (skillsTools models.SkillsTools, err error) {
 	item := map[string]*dynamodb.AttributeValue{
 		"personalWebsiteType": {S: aws.String(partitionKeySkillsTools)},
 		"sortValue":           {S: aws.String(newSkillsTools.SortValue)},
@@ -48,11 +48,11 @@ func PostSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.Skills
 		log.Printf("error in DynamoDB PutItem func: %v", err)
 		return skillsTools, err
 	}
-	err = GetItem(svc, newSkillsTools.PersonalWebsiteType, newSkillsTools.SortValue, &skillsTools)
+	err = GetItem(svc, tableName, newSkillsTools.PersonalWebsiteType, newSkillsTools.SortValue, &skillsTools)
 	return skillsTools, err
 }
 
-func UpdateSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.SkillsTools) (skillsTools models.SkillsTools, err error) {
+func UpdateSkillsTools(svc dynamodbiface.DynamoDBAPI, tableName string, newSkillsTools models.SkillsTools) (skillsTools models.SkillsTools, err error) {
 	updateExpression := "SET #category = :categoryVal, #type = :typeVal, #list = :listVal"
 	expressionAttributeNames := map[string]*string{
 		"#category": aws.String("category"),
@@ -79,6 +79,6 @@ func UpdateSkillsTools(svc dynamodbiface.DynamoDBAPI, newSkillsTools models.Skil
 		log.Printf("error in DynamoDB UpdateItem func: %v", err)
 		return skillsTools, err
 	}
-	err = GetItem(svc, newSkillsTools.PersonalWebsiteType, newSkillsTools.SortValue, &skillsTools)
+	err = GetItem(svc, tableName, newSkillsTools.PersonalWebsiteType, newSkillsTools.SortValue, &skillsTools)
 	return skillsTools, err
 }

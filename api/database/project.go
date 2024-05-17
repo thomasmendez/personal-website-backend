@@ -11,7 +11,7 @@ import (
 
 const partitionKeyProjects = "Projects"
 
-func GetProjects(svc dynamodbiface.DynamoDBAPI) (projects []models.Project, err error) {
+func GetProjects(svc dynamodbiface.DynamoDBAPI, tableName string) (projects []models.Project, err error) {
 	projects = make([]models.Project, 0)
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(tableName),
@@ -31,7 +31,7 @@ func GetProjects(svc dynamodbiface.DynamoDBAPI) (projects []models.Project, err 
 	return projects, err
 }
 
-func PostProject(svc dynamodbiface.DynamoDBAPI, newProject models.Project) (project models.Project, err error) {
+func PostProject(svc dynamodbiface.DynamoDBAPI, tableName string, newProject models.Project) (project models.Project, err error) {
 	item := projectItem(newProject)
 	input := &dynamodb.PutItemInput{
 		Item:      item,
@@ -42,7 +42,7 @@ func PostProject(svc dynamodbiface.DynamoDBAPI, newProject models.Project) (proj
 		log.Printf("error in DynamoDB PutItem func: %v", err)
 		return project, err
 	}
-	err = GetItem(svc, newProject.PersonalWebsiteType, newProject.SortValue, &project)
+	err = GetItem(svc, tableName, newProject.PersonalWebsiteType, newProject.SortValue, &project)
 	return project, err
 }
 
@@ -99,7 +99,7 @@ func projectItem(project models.Project) (item map[string]*dynamodb.AttributeVal
 	return item
 }
 
-func UpdateProject(svc dynamodbiface.DynamoDBAPI, newProject models.Project) (project models.Project, err error) {
+func UpdateProject(svc dynamodbiface.DynamoDBAPI, tableName string, newProject models.Project) (project models.Project, err error) {
 	item := projectItem(newProject)
 
 	updateExpression := "SET #category = :categoryVal, #name = :nameVal, #description = :descriptionVal, #featuresDescription = :featuresDescriptionVal, #role = :roleVal, #tasks = :tasksVal, #teamSize = :teamSizeVal, #teamRoles = :teamRolesVal, #cloudServices = :cloudServicesVal, #tools = :toolsVal, #duration = :durationVal, #startDate = :startDateVal, #endDate = :endDateVal, #notes = :notesVal, #link = :linkVal, #linkType = :linkTypeVal, #mediaLink = :mediaLinkVal"
@@ -156,6 +156,6 @@ func UpdateProject(svc dynamodbiface.DynamoDBAPI, newProject models.Project) (pr
 		log.Printf("error in DynamoDB UpdateItem func: %v", err)
 		return project, err
 	}
-	err = GetItem(svc, newProject.PersonalWebsiteType, newProject.SortValue, &project)
+	err = GetItem(svc, tableName, newProject.PersonalWebsiteType, newProject.SortValue, &project)
 	return project, err
 }

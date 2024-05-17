@@ -51,7 +51,7 @@ func TestGetSkillsTools(t *testing.T) {
 		t.Run(test.label, func(t *testing.T) {
 			mockDB.QueryFunc = test.mockQueryFunc
 
-			result, err := GetSkillsTools(mockDB)
+			result, err := GetSkillsTools(mockDB, "personalWebsiteTableDev")
 
 			if err != nil {
 				assert.Error(t, err)
@@ -110,7 +110,7 @@ func TestPostSkillsTools(t *testing.T) {
 			mockDB.PutFunc = test.mockPutFunc
 			mockDB.GetFunc = test.mockGetFunc
 
-			result, err := PostSkillsTools(mockDB, test.newSkillsTools)
+			result, err := PostSkillsTools(mockDB, "personalWebsiteTableDev", test.newSkillsTools)
 
 			if err != nil {
 				assert.Error(t, err)
@@ -171,7 +171,7 @@ func TestUpdateSkillsTools(t *testing.T) {
 			mockDB.UpdateFunc = test.mockUpdateFunc
 			mockDB.GetFunc = test.mockGetFunc
 
-			result, err := UpdateSkillsTools(mockDB, test.newSkillsTools)
+			result, err := UpdateSkillsTools(mockDB, "personalWebsiteTableDev", test.newSkillsTools)
 
 			if err != nil {
 				assert.Error(t, err)
@@ -226,7 +226,7 @@ func TestDeleteSkillsTools(t *testing.T) {
 			mockDB.DeleteFunc = test.mockDeleteFunc
 			mockDB.GetFunc = test.mockGetFunc
 
-			err := DeleteItem(mockDB, test.deleteSkillsTools.PersonalWebsiteType, test.deleteSkillsTools.SortValue)
+			err := DeleteItem(mockDB, "personalWebsiteTableDev", test.deleteSkillsTools.PersonalWebsiteType, test.deleteSkillsTools.SortValue)
 
 			if err != nil {
 				assert.Error(t, err)

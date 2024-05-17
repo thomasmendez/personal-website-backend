@@ -11,7 +11,7 @@ import (
 
 const partitionKeyWork = "Work"
 
-func GetWork(svc dynamodbiface.DynamoDBAPI) (work []models.Work, err error) {
+func GetWork(svc dynamodbiface.DynamoDBAPI, tableName string) (work []models.Work, err error) {
 	work = make([]models.Work, 0)
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(tableName),
@@ -35,7 +35,7 @@ func GetWork(svc dynamodbiface.DynamoDBAPI) (work []models.Work, err error) {
 	return work, err
 }
 
-func PostWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.Work, err error) {
+func PostWork(svc dynamodbiface.DynamoDBAPI, tableName string, newWork models.Work) (work models.Work, err error) {
 	item := map[string]*dynamodb.AttributeValue{
 		"personalWebsiteType": {S: aws.String(partitionKeyWork)},
 		"sortValue":           {S: aws.String(newWork.SortValue)},
@@ -61,11 +61,11 @@ func PostWork(svc dynamodbiface.DynamoDBAPI, newWork models.Work) (work models.W
 		log.Printf("error in DynamoDB PutItem func: %v", err)
 		return work, err
 	}
-	err = GetItem(svc, newWork.PersonalWebsiteType, newWork.SortValue, &work)
+	err = GetItem(svc, tableName, newWork.PersonalWebsiteType, newWork.SortValue, &work)
 	return work, err
 }
 
-func UpdateWork(svc dynamodbiface.DynamoDBAPI, updateWork models.Work) (work models.Work, err error) {
+func UpdateWork(svc dynamodbiface.DynamoDBAPI, tableName string, updateWork models.Work) (work models.Work, err error) {
 	updateExpression := "SET #jobTitle = :jobTitleVal, #company = :companyVal, #location = :locationVal, #startDate = :startDateVal, #endDate = :endDateVal, #jobRole = :jobRoleVal, #jobDescription = :jobDescriptionVal"
 	expressionAttributeNames := map[string]*string{
 		"#jobTitle":       aws.String("jobTitle"),
@@ -103,6 +103,6 @@ func UpdateWork(svc dynamodbiface.DynamoDBAPI, updateWork models.Work) (work mod
 		log.Printf("error in DynamoDB UpdateItem func: %v", err)
 		return work, err
 	}
-	err = GetItem(svc, updateWork.PersonalWebsiteType, updateWork.SortValue, &work)
+	err = GetItem(svc, tableName, updateWork.PersonalWebsiteType, updateWork.SortValue, &work)
 	return work, err
 }

@@ -108,6 +108,14 @@ go test ./...
 INTEGRATION=1 go test ./...
 ```
 
+**Deployment**
+
+1. Build the go executable for the [lambda linux environment](https://docs.aws.amazon.com/lambda/latest/dg/golang-package.html) `GOARCH=arm64 GOOS=linux go build -o bootstrap main.go` in the `./api` folder, since the `go1.x` runtime is [deprecated](https://docs.aws.amazon.com/lambda/latest/dg/lambda-golang.html)
+
+2. Zip project `C:\Users\owner\go\bin\build-lambda-zip.exe -o lambda-handler.zip bootstrap` using the provided `build-lambda-zip` package. If needed, you can install with `go install github.com/aws/aws-lambda-go/cmd/build-lambda-zip@latest`. See [To create a .zip deployment package (Windows)](https://docs.aws.amazon.com/lambda/latest/dg/golang-package.html)
+
+3. Deploy CloudFromation stack template `sam.cmd deploy --guided --template-file=environment.yaml`
+
 If the previous command ran successfully you should now be able to hit the following local endpoint to invoke your function `http://localhost:3000/hello`
 
 **SAM CLI** is used to emulate both Lambda and API Gateway locally and uses our `template.yaml` to understand how to bootstrap this environment (runtime, where the source code is, etc.) - The following excerpt is what the CLI will read in order to initialize an API and its routes:

@@ -12,13 +12,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 )
 
-const tableName = "PersonalWebsiteTable"
-
 type Database struct {
 	*dynamodb.DynamoDB
 }
 
-func NewDatabase(awsSession *session.Session) (database *Database) {
+func NewDatabase(awsSession *session.Session, tableName string) (database *Database) {
 	return &Database{dynamodb.New(awsSession)}
 }
 
@@ -60,7 +58,7 @@ func unmarshalDynamodbMapSlice(queryOutput dynamodb.QueryOutput, slicePtr interf
 //	if err != nil {
 //	    log.Printf("error retrieving item: %v", err)
 //	}
-func GetItem(svc dynamodbiface.DynamoDBAPI, personalWebsiteType string, sortValue string, itemPtr interface{}) (err error) {
+func GetItem(svc dynamodbiface.DynamoDBAPI, tableName string, personalWebsiteType string, sortValue string, itemPtr interface{}) (err error) {
 	inputGet := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
 			"personalWebsiteType": {S: aws.String(personalWebsiteType)},
@@ -81,7 +79,7 @@ func GetItem(svc dynamodbiface.DynamoDBAPI, personalWebsiteType string, sortValu
 	return nil
 }
 
-func DeleteItem(svc dynamodbiface.DynamoDBAPI, personalWebsiteType string, sortValue string) (err error) {
+func DeleteItem(svc dynamodbiface.DynamoDBAPI, tableName string, personalWebsiteType string, sortValue string) (err error) {
 	key := map[string]*dynamodb.AttributeValue{
 		"personalWebsiteType": {S: aws.String(personalWebsiteType)},
 		"sortValue":           {S: aws.String(sortValue)},

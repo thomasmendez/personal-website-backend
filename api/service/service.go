@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
@@ -12,8 +14,9 @@ import (
 )
 
 type Service struct {
-	DB     *database.Database
-	Routes *[]RouteHandler
+	DB        *database.Database
+	TableName string
+	Routes    *[]RouteHandler
 }
 
 type RouteHandler struct {
@@ -23,15 +26,45 @@ type RouteHandler struct {
 }
 
 func NewService() *Service {
-	awsSession := session.Must(session.NewSessionWithOptions(session.Options{
-		Config: aws.Config{
-			Endpoint: aws.String("http://dynamodb:8000"),
-			Region:   aws.String("us-west-2"),
-		},
-	}))
+	// var tableName = "PersonalWebsiteTableStg"
+	// var region = "us-east-2"
+
+	var tableName string
+	var region string
+
+	var awsSession *session.Session
+
+	env := os.Getenv("ENV")
+
+	if os.Getenv("TABLE_NAME") == "" {
+		log.Fatal("error in configuration: TABLE_NAME env not provided")
+	}
+	tableName = os.Getenv("TABLE_NAME")
+	log.Print(tableName)
+
+	if env != "Dev" {
+		if os.Getenv("REGION") == "" {
+			log.Fatal("error in configuration: REGION env not provided")
+		}
+		awsSession = session.Must(session.NewSessionWithOptions(session.Options{
+			SharedConfigState: session.SharedConfigEnable,
+		}))
+	} else {
+		if os.Getenv("REGION") == "" {
+			log.Fatal("error in configuration: REGION env not provided")
+		}
+		awsSession = session.Must(session.NewSessionWithOptions(session.Options{
+			Config: aws.Config{
+				Endpoint: aws.String("http://dynamodb:8000"),
+				Region:   aws.String(region),
+			},
+			SharedConfigState: session.SharedConfigEnable,
+		}))
+	}
 
 	s := &Service{
-		DB: database.NewDatabase(awsSession),
+		DB:        database.NewDatabase(awsSession, tableName),
+		TableName: tableName,
 	}
 
 	s.Routes = addRoutes(s)

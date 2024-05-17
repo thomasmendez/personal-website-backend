@@ -12,5 +12,7 @@ db-add-items-project:
 	aws dynamodb batch-write-item --cli-input-json file://json/project/add-items.json --endpoint-url http://localhost:8000
 build:
 	sam build
+build-lambda-windows:
+	/c/Users/owner/go/bin/build-lambda-zip.exe -o ./api/lambda-handler.zip ./api/bootstrap
 start:
 	sam.cmd local start-api --docker-network dynamodb-backend

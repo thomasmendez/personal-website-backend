@@ -43,7 +43,7 @@ func TestWorkGet(t *testing.T) {
 		t.Run(test.label, func(t *testing.T) {
 			mockDB.QueryFunc = test.mockQueryFunc
 
-			result, err := GetWork(mockDB)
+			result, err := GetWork(mockDB, "personalWebsiteTableDev")
 
 			if err != nil {
 				assert.Error(t, err)
@@ -101,7 +101,7 @@ func TestPostWork(t *testing.T) {
 			mockDB.PutFunc = test.mockPutFunc
 			mockDB.GetFunc = test.mockGetFunc
 
-			result, err := PostWork(mockDB, test.newWork)
+			result, err := PostWork(mockDB, "personalWebsiteTableDev", test.newWork)
 
 			if err != nil {
 				assert.Error(t, err)
@@ -156,7 +156,7 @@ func TestUpdateWork(t *testing.T) {
 			mockDB.UpdateFunc = test.mockUpdateFunc
 			mockDB.GetFunc = test.mockGetFunc
 
-			result, err := UpdateWork(mockDB, test.updateWork)
+			result, err := UpdateWork(mockDB, "personalWebsiteTableDev", test.updateWork)
 
 			if err != nil {
 				assert.Error(t, err)
@@ -211,7 +211,7 @@ func TestDeleteWork(t *testing.T) {
 			mockDB.DeleteFunc = test.mockDeleteFunc
 			mockDB.GetFunc = test.mockGetFunc
 
-			err := DeleteItem(mockDB, test.deleteWork.PersonalWebsiteType, test.deleteWork.SortValue)
+			err := DeleteItem(mockDB, "personalWebsiteTableDev", test.deleteWork.PersonalWebsiteType, test.deleteWork.SortValue)
 
 			if err != nil {
 				assert.Error(t, err)

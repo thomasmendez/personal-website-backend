@@ -14,7 +14,7 @@ import (
 )
 
 func (s *Service) getProjectsHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	projects, err := database.GetProjects(s.DB)
+	projects, err := database.GetProjects(s.DB, s.TableName)
 
 	if err != nil {
 		log.Print(err.Error())
@@ -61,7 +61,7 @@ func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGat
 		}, err
 	}
 
-	project, err := database.PostProject(s.DB, newProject)
+	project, err := database.PostProject(s.DB, s.TableName, newProject)
 
 	if err != nil {
 		log.Print(err.Error())
@@ -106,7 +106,7 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 		}, err
 	}
 
-	project, err := database.UpdateProject(s.DB, updateProject)
+	project, err := database.UpdateProject(s.DB, s.TableName, updateProject)
 
 	if err != nil {
 		log.Print(err.Error())
@@ -152,7 +152,7 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 	}
 
 	var existingProject models.Project
-	err = database.GetItem(s.DB, deleteProject.PersonalWebsiteType, deleteProject.SortValue, &existingProject)
+	err = database.GetItem(s.DB, s.TableName, deleteProject.PersonalWebsiteType, deleteProject.SortValue, &existingProject)
 
 	if !reflect.DeepEqual(deleteProject, existingProject) {
 		log.Printf("err: %v", err)
@@ -162,7 +162,7 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 		}, err
 	}
 
-	err = database.DeleteItem(s.DB, deleteProject.PersonalWebsiteType, deleteProject.SortValue)
+	err = database.DeleteItem(s.DB, s.TableName, deleteProject.PersonalWebsiteType, deleteProject.SortValue)
 
 	if err != nil {
 		log.Print(err.Error())

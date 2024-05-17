@@ -44,7 +44,7 @@ func TestGetProjects(t *testing.T) {
 		t.Run(test.label, func(t *testing.T) {
 			mockDB.QueryFunc = test.mockQueryFunc
 
-			result, err := GetProjects(mockDB)
+			result, err := GetProjects(mockDB, "personalWebsiteTableDev")
 
 			if err != nil {
 				assert.Error(t, err)
@@ -103,7 +103,7 @@ func TestPostProject(t *testing.T) {
 			mockDB.PutFunc = test.mockPutFunc
 			mockDB.GetFunc = test.mockGetFunc
 
-			result, err := PostProject(mockDB, test.newProject)
+			result, err := PostProject(mockDB, "personalWebsiteTableDev", test.newProject)
 
 			if err != nil {
 				assert.Error(t, err)
@@ -158,7 +158,7 @@ func TestUpdateProject(t *testing.T) {
 			mockDB.UpdateFunc = test.mockUpdateFunc
 			mockDB.GetFunc = test.mockGetFunc
 
-			result, err := UpdateProject(mockDB, test.updateProject)
+			result, err := UpdateProject(mockDB, "personalWebsiteTableDev", test.updateProject)
 
 			if err != nil {
 				assert.Error(t, err)
@@ -213,7 +213,7 @@ func TestDeleteProject(t *testing.T) {
 			mockDB.DeleteFunc = test.mockDeleteFunc
 			mockDB.GetFunc = test.mockGetFunc
 
-			err := DeleteItem(mockDB, test.deleteProject.PersonalWebsiteType, test.deleteProject.SortValue)
+			err := DeleteItem(mockDB, "personalWebsiteTableDev", test.deleteProject.PersonalWebsiteType, test.deleteProject.SortValue)
 
 			if err != nil {
 				assert.Error(t, err)
