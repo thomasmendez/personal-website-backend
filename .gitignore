@@ -25,3 +25,4 @@ samconfig.toml
 
 bootstrap
 lambda-handler.zip
+coverage.html

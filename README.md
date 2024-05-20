@@ -108,6 +108,13 @@ go test ./...
 INTEGRATION=1 go test ./...
 ```
 
+**Testing - Coverage Report**
+
+```bash
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out -o coverage.html
+```
+
 **Deployment**
 
 1. Build the go executable for the [lambda linux environment](https://docs.aws.amazon.com/lambda/latest/dg/golang-package.html) `GOARCH=arm64 GOOS=linux go build -o bootstrap main.go` in the `./api` folder, since the `go1.x` runtime is [deprecated](https://docs.aws.amazon.com/lambda/latest/dg/lambda-golang.html)
