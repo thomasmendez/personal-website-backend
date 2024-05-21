@@ -1,119 +1,49 @@
 # personal-website-backend
 
-This is a sample template for sam-app - Below is a brief explanation of what we have generated for you:
-
-```bash
-.
-├── Makefile                    <-- Make to automate build
-├── README.md                   <-- This instructions file
-├── api                 <-- Source code for a lambda function
-│   ├── main.go                 <-- Lambda function code
-│   └── main_test.go            <-- Unit tests
-└── template.yaml
-```
+Backend for updating details for personal website. Backend is a deployed Go Lambda function that updates a DynamoDB table.
 
 ## Requirements
 
 * AWS CLI already configured with Administrator permission
 * [Docker installed](https://www.docker.com/community-edition)
-* [Golang](https://golang.org)
 * SAM CLI - [Install the SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
+* [Golang](https://golang.org) - Currently using v.1.22 (can use [Chocolatey](https://community.chocolatey.org/packages/golang) or [Homebrew](https://formulae.brew.sh/formula/go))
+* [Bruno](https://www.usebruno.com/) (Optional) - Open source API client. Similar to Postman, but is offline-only and will never require an account. 
+* [Make](https://www.gnu.org/software/make/) (Optional) - To run makefile commands 
 
-## Setup process
+## Local development
 
-### Installing dependencies & building the target 
+1. **Start DynamoDb Docker Container**
+    ```shell
+    docker compose up -d 
+    ```
 
-In this example we use the built-in `sam build` to automatically download all the dependencies and package our build target.   
-Read more about [SAM Build here](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-cli-command-reference-sam-build.html) 
+2. **Create DynamoDb Tables**
+    ```shell
+    aws dynamodb create-table --cli-input-json file://json/create-table.json --endpoint-url http://localhost:8000
+    ```
 
-The `sam build` command is wrapped inside of the `Makefile`. To execute this simply run
- 
-```shell
-make
-```
+3. **Invoke function locally through local API Gateway**
+    ```shell
+    sam.cmd local start-api --docker-network dynamodb-backend --template-file=template.yaml
+    ```
 
-### Local development
+    *Note: Use `sam.cmd` when running AWS SAM on windows*
 
-**DynamoDb Docker Container**
+    To rebuild and apply local changes, use `sam.cmd build` 
 
-```bash
-docker run -p 8000:8000 amazon/dynamodb-local
-```
+4. **Run CRUD Integration Tests**
+    ```shell
+    cd api && INTEGRATION=1 go test ./...
+    ```
 
-**Viewing DynamoDb Tables**
+    *Note: Integration test will take about a minute to complete*
 
-```bash
-aws dynamodb list-tables --endpoint-url http://localhost:8000
-```
+5. **(Optional) Run CRUD Requests Individually**
+    
+    Can also run CRUD API requests by importing `/bruno` collection
 
-**Creating DynamoDb Tables**
-
-```bash
-aws dynamodb create-table --cli-input-json file://json/create-table.json --endpoint-url http://localhost:8000
-```
-
-**Add DynamoDb Data**
-
-To write one item
-```bash
-aws dynamodb put-item --cli-input-json file://json/work/add-item.json --endpoint-url http://localhost:8000
-```
-
-To write multiple
-```bash
-aws dynamodb batch-write-item --cli-input-json file://json/work/add-items.json --endpoint-url http://localhost:8000
-```
-
-**View DynamoDb Data**
-
-```bash
-aws dynamodb scan --table-name PersonalWebsiteTable --endpoint-url http://localhost:8000
-```
-
-**Query DynamoDb Data - Recent to Oldest**
-
-```bash
-aws dynamodb query --cli-input-json file://json/work/query-recent-items.json --endpoint-url http://localhost:8000
-```
-
-**Delete DynamoDb Data**
-
-```bash
-aws dynamodb delete-item --cli-input-json file://json/work/delete-item.json --endpoint-url http://localhost:8000
-```
-
-**Invoking function locally through local API Gateway**
-
-```bash
-sam.cmd local start-api --docker-network dynamodb-backend
-```
-
-**Rebuild function locally through local API Gateway**
-
-```bash
-sam.cmd build
-```
-
-**Testing - Unit Tests**
-
-`cd api` to run tests
-
-```bash
-go test ./...
-```
-
-**Testing - Integration Tests**
-
-```bash
-INTEGRATION=1 go test ./...
-```
-
-**Testing - Coverage Report**
-
-```bash
-go test -coverprofile=coverage.out ./...
-go tool cover -html=coverage.out -o coverage.html
-```
+## Deployment
 
 **Deployment**
 
@@ -123,102 +53,58 @@ go tool cover -html=coverage.out -o coverage.html
 
 3. Deploy CloudFromation stack template `sam.cmd deploy --guided --template-file=environment.yaml`
 
-If the previous command ran successfully you should now be able to hit the following local endpoint to invoke your function `http://localhost:3000/hello`
+## Helpful Commands
 
-**SAM CLI** is used to emulate both Lambda and API Gateway locally and uses our `template.yaml` to understand how to bootstrap this environment (runtime, where the source code is, etc.) - The following excerpt is what the CLI will read in order to initialize an API and its routes:
+### DynamoDB Commands
 
-```yaml
-...
-Events:
-    HelloWorld:
-        Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
-        Properties:
-            Path: /hello
-            Method: get
+**View DynamoDb Tables**
+```shell
+aws dynamodb list-tables --endpoint-url http://localhost:8000
 ```
 
-## Packaging and deployment
+**Add DynamoDb Data**
 
-AWS Lambda Golang runtime requires a flat folder with the executable generated on build step. SAM will use `CodeUri` property to know where to look up for the application:
-
-```yaml
-...
-    FirstFunction:
-        Type: AWS::Serverless::Function
-        Properties:
-            CodeUri: hello_world/
-            ...
+To write one item
+```shell
+aws dynamodb put-item --cli-input-json file://json/work/add-item.json --endpoint-url http://localhost:8000
+```
+To write multiple
+```shell
+aws dynamodb batch-write-item --cli-input-json file://json/work/add-items.json --endpoint-url http://localhost:8000
 ```
 
-To deploy your application for the first time, run the following in your shell:
-
-```bash
-sam deploy --guided
+**View DynamoDb Data**
+```shell
+aws dynamodb scan --table-name PersonalWebsiteTable --endpoint-url http://localhost:8000
 ```
 
-The command will package and deploy your application to AWS, with a series of prompts:
+**Query DynamoDb Data (Recent to Oldest)**
+```shell
+aws dynamodb query --cli-input-json file://json/work/query-recent-items.json --endpoint-url http://localhost:8000
+```
 
-* **Stack Name**: The name of the stack to deploy to CloudFormation. This should be unique to your account and region, and a good starting point would be something matching your project name.
-* **AWS Region**: The AWS region you want to deploy your app to.
-* **Confirm changes before deploy**: If set to yes, any change sets will be shown to you before execution for manual review. If set to no, the AWS SAM CLI will automatically deploy application changes.
-* **Allow SAM CLI IAM role creation**: Many AWS SAM templates, including this example, create AWS IAM roles required for the AWS Lambda function(s) included to access AWS services. By default, these are scoped down to minimum required permissions. To deploy an AWS CloudFormation stack which creates or modifies IAM roles, the `CAPABILITY_IAM` value for `capabilities` must be provided. If permission isn't provided through this prompt, to deploy this example you must explicitly pass `--capabilities CAPABILITY_IAM` to the `sam deploy` command.
-* **Save arguments to samconfig.toml**: If set to yes, your choices will be saved to a configuration file inside the project, so that in the future you can just re-run `sam deploy` without parameters to deploy changes to your application.
+**Delete DynamoDb Data**
+```shell
+aws dynamodb delete-item --cli-input-json file://json/work/delete-item.json --endpoint-url http://localhost:8000
+```
 
-You can find your API Gateway Endpoint URL in the output values displayed after deployment.
+### Testing Commands
 
-### Testing
+Go to `api` directory to run tests
 
-We use `testing` package that is built-in in Golang and you can simply run the following command to run our tests:
+**Unit Tests**
+```shell
+go test ./...
+```
+
+**Coverage Report**
 
 ```shell
-cd ./api/
-go test -v .
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out -o coverage.html
 ```
-# Appendix
 
-### Golang installation
-
-Please ensure Go 1.x (where 'x' is the latest version) is installed as per the instructions on the official golang website: https://golang.org/doc/install
-
-A quickstart way would be to use Homebrew, chocolatey or your linux package manager.
-
-#### Homebrew (Mac)
-
-Issue the following command from the terminal:
-
+**Integration Tests**
 ```shell
-brew install golang
+INTEGRATION=1 go test ./...
 ```
-
-If it's already installed, run the following command to ensure it's the latest version:
-
-```shell
-brew update
-brew upgrade golang
-```
-
-#### Chocolatey (Windows)
-
-Issue the following command from the powershell:
-
-```shell
-choco install golang
-```
-
-If it's already installed, run the following command to ensure it's the latest version:
-
-```shell
-choco upgrade golang
-```
-
-## Bringing to the next level
-
-Here are a few ideas that you can use to get more acquainted as to how this overall process works:
-
-* Create an additional API resource (e.g. /hello/{proxy+}) and return the name requested through this new path
-* Update unit test to capture that
-* Package & Deploy
-
-Next, you can use the following resources to know more about beyond hello world samples and how others structure their Serverless applications:
-
-* [AWS Serverless Application Repository](https://aws.amazon.com/serverless/serverlessrepo/)

@@ -4,15 +4,18 @@ db:
 	docker compose up
 db-create-table:
 	aws dynamodb create-table --cli-input-json file://json/create-table.json --endpoint-url http://localhost:8000
-db-add-items-work:
-	aws dynamodb batch-write-item --cli-input-json file://json/work/add-items.json --endpoint-url http://localhost:8000
-db-add-items-skills-tools:
-	aws dynamodb batch-write-item --cli-input-json file://json/skills-tools/add-items.json --endpoint-url http://localhost:8000
-db-add-items-project:
-	aws dynamodb batch-write-item --cli-input-json file://json/project/add-items.json --endpoint-url http://localhost:8000
-build:
-	sam build
-build-lambda-windows:
-	/c/Users/owner/go/bin/build-lambda-zip.exe -o ./api/lambda-handler.zip ./api/bootstrap
 start:
 	sam.cmd local start-api --docker-network dynamodb-backend
+build:
+	sam.cmd build
+test:
+	cd api && go test ./...
+test-coverage:
+	cd api && go test -coverprofile=coverage.out ./...
+	cd api && go tool cover -html=coverage.out -o coverage.html
+test-integration:
+	cd api && INTEGRATION=1 go test ./...
+build-go:
+	cd api && GOARCH=arm64 GOOS=linux go build -o bootstrap main.go
+build-lambda-windows:
+	/c/Users/owner/go/bin/build-lambda-zip.exe -o ./api/lambda-handler.zip ./api/bootstrap
