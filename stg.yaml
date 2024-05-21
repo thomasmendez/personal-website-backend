@@ -11,8 +11,9 @@ Globals:
       LogFormat: JSON
   Api:
     Cors:
-      AllowMethods: "'OPTIONS, POST, GET, PUT, DELETE'"
-      AllowOrigin: "'https://thomasamendez-admin-stg.com'"
+      AllowMethods: "'*'"
+      AllowHeaders: "'*'"
+      AllowOrigin: "'*'"
 Resources:
   PersonalWebsiteTableStg:
     Type: AWS::DynamoDB::Table
