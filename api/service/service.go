@@ -55,7 +55,8 @@ func NewService() *Service {
 	}
 
 	s := &Service{
-		DB: database.NewDatabase(awsSession, tableName),
+		DB:        database.NewDatabase(awsSession),
+		TableName: tableName,
 	}
 
 	s.Routes = addRoutes(s)

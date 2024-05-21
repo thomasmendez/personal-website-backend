@@ -1,8 +1,0 @@
-{
-  "path": "/",
-  "httpMethod": "POST",
-  "body": "{\"id\": 1, \"name\": \"TestItem\"}",
-  "headers": {
-    "Content-Type": "application/json"
-  }
-}

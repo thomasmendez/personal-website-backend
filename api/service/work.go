@@ -14,7 +14,7 @@ import (
 )
 
 func (s *Service) getWorkHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	work, err := database.GetWork(s.DB, s.DB.TableName)
+	work, err := database.GetWork(s.DB, s.TableName)
 
 	if err != nil {
 		log.Print(err.Error())
@@ -48,7 +48,7 @@ func (s *Service) postWorkHandler(ctx context.Context, request events.APIGateway
 		}, err
 	}
 
-	work, err := database.PostWork(s.DB, s.DB.TableName, newWork)
+	work, err := database.PostWork(s.DB, s.TableName, newWork)
 
 	if err != nil {
 		log.Print(err.Error())
@@ -82,7 +82,7 @@ func (s *Service) updateWorkHandler(ctx context.Context, request events.APIGatew
 		}, err
 	}
 
-	work, err := database.PostWork(s.DB, s.DB.TableName, updateWork)
+	work, err := database.PostWork(s.DB, s.TableName, updateWork)
 
 	if err != nil {
 		log.Print(err.Error())
@@ -116,7 +116,7 @@ func (s *Service) deleteWorkHandler(ctx context.Context, request events.APIGatew
 	}
 
 	var existingWork models.Work
-	err = database.GetItem(s.DB, s.DB.TableName, deleteWork.PersonalWebsiteType, deleteWork.SortValue, &existingWork)
+	err = database.GetItem(s.DB, s.TableName, deleteWork.PersonalWebsiteType, deleteWork.SortValue, &existingWork)
 
 	if !reflect.DeepEqual(deleteWork, existingWork) {
 		log.Printf("err: %v", err)
@@ -126,7 +126,7 @@ func (s *Service) deleteWorkHandler(ctx context.Context, request events.APIGatew
 		}, err
 	}
 
-	err = database.DeleteItem(s.DB, s.DB.TableName, deleteWork.PersonalWebsiteType, deleteWork.SortValue)
+	err = database.DeleteItem(s.DB, s.TableName, deleteWork.PersonalWebsiteType, deleteWork.SortValue)
 
 	if err != nil {
 		log.Print(err.Error())
