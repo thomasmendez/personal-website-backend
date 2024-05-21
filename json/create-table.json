@@ -1,0 +1,30 @@
+{
+  "TableName": "PersonalWebsiteTable",
+  "KeySchema": [
+    { "AttributeName": "personalWebsiteType", "KeyType": "HASH" },
+    { "AttributeName": "sortValue", "KeyType": "RANGE" }
+  ],
+  "AttributeDefinitions": [
+    { "AttributeName": "personalWebsiteType", "AttributeType": "S" },
+    { "AttributeName": "sortValue", "AttributeType": "S" }
+  ],
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "startDateIndex",
+      "KeySchema": [
+        { "AttributeName": "sortValue", "KeyType": "HASH" }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      },
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 5,
+        "WriteCapacityUnits": 5
+      }
+    }
+  ],
+  "ProvisionedThroughput": {
+    "ReadCapacityUnits": 5,
+    "WriteCapacityUnits": 5
+  }
+}

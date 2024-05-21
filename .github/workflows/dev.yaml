@@ -1,0 +1,41 @@
+name: Go Test and Coverage
+
+on:
+  push:
+    branches-ignore:
+      - main
+  pull_request:
+    branches-ignore:
+      - main
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: 1.22
+
+    - name: Install dependencies
+      run: |
+        cd api
+        go mod download
+
+    - name: Run unit tests
+      run: |
+        cd api
+        go test -v -coverprofile=coverage.out ./...
+
+    # Cannot run sam local in detached mode
+    # - name: Run integration tests
+    #   uses: aws-actions/setup-sam@v2
+    # - run: docker compose up -d
+    # - run: sam local start-api --docker-network dynamodb-backend
+    # - run: cd api
+    # - run: INTEGRATION=1 go test ./...

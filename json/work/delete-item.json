@@ -1,0 +1,7 @@
+{
+  "TableName": "PersonalWebsiteTable",
+  "Key": {
+    "personalWebsiteType": { "S": "Work" },
+    "sortValue": { "S": "2020-01-01" }
+  }
+}

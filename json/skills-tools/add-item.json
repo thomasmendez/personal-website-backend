@@ -1,0 +1,11 @@
+{
+  "TableName": "PersonalWebsiteTable",
+  "Item": {
+    "personalWebsiteType": {"S": "SkillsTools"},
+    "sortValue": {"S": "Programming Languages"},
+    "category": {"S": "Tools"},
+    "type": {"S": "Programming Languages"},
+    "list": {"SS": ["C#", "Go", "Java", "JavaScript", "Python", "Swift"]}
+  }
+}
+  

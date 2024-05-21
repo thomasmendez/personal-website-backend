@@ -1,0 +1,21 @@
+meta {
+  name: postSkillsTools
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://127.0.0.1:3000/api/v1/skillsTools
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "personalWebsiteType": "SkillsTools",
+    "sortValue": "Programming Languages",
+    "category": "Tools",
+    "type": "Programming Languages",
+    "list": ["C#", "Go", "Java", "JavaScript", "Python", "Swift"]
+  }
+}

@@ -20,4 +20,9 @@
 # Go workspace file
 go.work
 
+samconfig.toml
 .aws-sam
+
+bootstrap
+lambda-handler.zip
+coverage.html
