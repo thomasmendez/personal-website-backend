@@ -32,7 +32,7 @@ Resources:
       ProvisionedThroughput: 
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
-  PersonalWebsiteAPIDeployment:
+  PersonalWebsiteAPIDeploymentDev:
     Type: AWS::Serverless::Api
     Properties:
       StageName: Dev
@@ -49,7 +49,7 @@ Resources:
           Properties:
             Path: "/api/{proxy+}"
             Method: ANY
-            RestApiId: !Ref PersonalWebsiteAPIDeployment
+            RestApiId: !Ref PersonalWebsiteAPIDeploymentDev
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref PersonalWebsiteTableDev
@@ -62,7 +62,7 @@ Resources:
 Outputs:
   PersonalWebsiteAPIDev:
     Description: API Gateway endpoint URL for Dev environment for First Function
-    Value: !Sub "https://${PersonalWebsiteAPIDeployment}.execute-api.${AWS::Region}.amazonaws.com/${PersonalWebsiteAPIDeployment.Stage}/"
+    Value: !Sub "https://${PersonalWebsiteAPIDeploymentDev}.execute-api.${AWS::Region}.amazonaws.com/${PersonalWebsiteAPIDeploymentDev.Stage}/"
   PersonalWebsiteFunctionDev:
     Description: First Lambda Function ARN
     Value: !GetAtt PersonalWebsiteFunctionDev.Arn
