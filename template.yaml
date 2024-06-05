@@ -48,6 +48,6 @@ Resources:
             Method: ANY
       Environment:
         Variables:
-          ENV: Dev
+          ENV: Local
           REGION: us-east-2
           TABLE_NAME: PersonalWebsiteTable

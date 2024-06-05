@@ -36,7 +36,7 @@ func NewService() *Service {
 		log.Fatal("error in configuration: TABLE_NAME env not provided")
 	}
 
-	if env != "Dev" {
+	if env != "Local" {
 		awsSession = session.Must(session.NewSessionWithOptions(session.Options{
 			SharedConfigState: session.SharedConfigEnable,
 		}))
