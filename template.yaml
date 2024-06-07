@@ -36,10 +36,9 @@ Resources:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: api/
-      Handler: api
-      Runtime: go1.x
-      Architectures:
-      - x86_64
+      Handler: bootstrap
+      Runtime: provided.al2023
+      Architectures: [arm64]
       Events:
         CatchAll:
           Type: Api

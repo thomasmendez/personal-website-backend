@@ -23,35 +23,52 @@ Backend for updating details for personal website. Backend is a deployed Go Lamb
     aws dynamodb create-table --cli-input-json file://json/create-table.json --endpoint-url http://localhost:8000
     ```
 
-3. **Invoke function locally through local API Gateway**
+3. **Build the go executable for the [lambda linux environment](https://docs.aws.amazon.com/lambda/latest/dg/golang-package.html)**
+    ```shell
+    GOARCH=arm64 GOOS=linux go build -o bootstrap main.go
+    ```
+
+4. **Zip project (windows)**
+
+    `C:\Users\owner\go\bin\build-lambda-zip.exe -o lambda-handler.zip bootstrap` using the provided `build-lambda-zip` package. If needed, you can install with `go install github.com/aws/aws-lambda-go/cmd/build-lambda-zip@latest`. See [To create a .zip deployment package (Windows)](https://docs.aws.amazon.com/lambda/latest/dg/golang-package.html)
+
+5. **Invoke function locally through local API Gateway**
     ```shell
     sam.cmd local start-api --docker-network dynamodb-backend --template-file=template.yaml
     ```
 
     *Note: Use `sam.cmd` when running AWS SAM on windows*
 
-    To rebuild and apply local changes, use `sam.cmd build` 
+    To rebuild and apply local changes, use `sam.cmd build --use-container` 
 
-4. **Run CRUD Integration Tests**
+6. **Run CRUD Integration Tests**
     ```shell
     cd api && INTEGRATION=1 go test ./...
     ```
 
     *Note: Integration test will take about a minute to complete*
 
-5. **(Optional) Run CRUD Requests Individually**
+7. **(Optional) Run CRUD Requests Individually**
     
-    Can also run CRUD API requests by importing `/bruno` collection
+    Can also run CRUD API requests by importing the `/bruno` collection
 
 ## Deployment
 
-**Deployment**
+Ensure you follow the same steps you did to build the executable and zipping the project
 
-1. Build the go executable for the [lambda linux environment](https://docs.aws.amazon.com/lambda/latest/dg/golang-package.html) `GOARCH=arm64 GOOS=linux go build -o bootstrap main.go` in the `./api` folder, since the `go1.x` runtime is [deprecated](https://docs.aws.amazon.com/lambda/latest/dg/lambda-golang.html)
+1. **Build the go executable for the [lambda linux environment](https://docs.aws.amazon.com/lambda/latest/dg/golang-package.html)**
+    ```shell
+    GOARCH=arm64 GOOS=linux go build -o bootstrap main.go
+    ```
 
-2. Zip project `C:\Users\owner\go\bin\build-lambda-zip.exe -o lambda-handler.zip bootstrap` using the provided `build-lambda-zip` package. If needed, you can install with `go install github.com/aws/aws-lambda-go/cmd/build-lambda-zip@latest`. See [To create a .zip deployment package (Windows)](https://docs.aws.amazon.com/lambda/latest/dg/golang-package.html)
+2. **Zip project (windows)**
 
-3. Deploy CloudFromation stack template `sam.cmd deploy --guided --template-file=environment.yaml`
+    `C:\Users\owner\go\bin\build-lambda-zip.exe -o lambda-handler.zip bootstrap` using the provided `build-lambda-zip` package. If needed, you can install with `go install github.com/aws/aws-lambda-go/cmd/build-lambda-zip@latest`. See [To create a .zip deployment package (Windows)](https://docs.aws.amazon.com/lambda/latest/dg/golang-package.html)
+
+3. **Deploy CloudFromation stack template**
+    ```shell
+    sam.cmd deploy --guided --template-file=template.yaml
+    ```
 
 ## Helpful Commands
 
