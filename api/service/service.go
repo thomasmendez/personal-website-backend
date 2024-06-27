@@ -40,6 +40,17 @@ func NewService() *Service {
 		if env != "Dev" && env != "Stg" && env != "Prd" {
 			log.Fatalf("error in configuration: ENV must be 'Dev', 'Stg', or 'Prd' \n Currently: %v", env)
 		}
+		if env == "Stg" {
+			if os.Getenv("ORIGIN") == "" {
+				log.Fatalf("error in configuration: ENV 'Stg' requires 'ORIGIN' variable")
+			}
+			if os.Getenv("HEADER") == "" {
+				log.Fatalf("error in configuration: ENV 'Stg' requires 'HEADER' variable")
+			}
+			if os.Getenv("METHODS") == "" {
+				log.Fatalf("error in configuration: ENV 'Stg' requires 'METHODS' variable")
+			}
+		}
 		awsSession = session.Must(session.NewSessionWithOptions(session.Options{
 			SharedConfigState: session.SharedConfigEnable,
 		}))
@@ -95,6 +106,12 @@ func (s *Service) addProxyHeaders(env string) map[string]string {
 			"Access-Control-Allow-Origin":  "http://localhost:5173",
 			"Access-Control-Allow-Headers": "*",
 			"Access-Control-Allow-Methods": "*",
+		}
+	case "Stg":
+		return map[string]string{
+			"Access-Control-Allow-Origin":  os.Getenv("ORIGIN"),
+			"Access-Control-Allow-Headers": os.Getenv("HEADERS"),
+			"Access-Control-Allow-Methods": os.Getenv("METHODS"),
 		}
 	default:
 		return map[string]string{

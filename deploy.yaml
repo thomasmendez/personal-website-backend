@@ -7,9 +7,15 @@ Parameters:
   Environment:
     Type: String
     Default: Dev
-  # Origin:
-  #   Type: String
-  #   Default: 'http://localhost:5173'
+  Methods:
+    Type: String
+    Default: "'*'"
+  Headers:
+    Type: String
+    Default: "'*'"
+  Origin:
+    Type: String
+    Default: "'*'"
 
 Globals:
   Function:
@@ -64,6 +70,9 @@ Resources:
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
           ENV: !Sub "${Environment}"
+          METHODS: !Sub "${Methods}"
+          HEADERS: !Sub "${Headers}"
+          ORIGIN: !Sub "${Origin}"
           REGION: us-east-2
           TABLE_NAME: !Ref PersonalWebsiteTable
   FunctionLogGroup:
