@@ -80,6 +80,7 @@ Resources:
     DeletionPolicy: Delete
     Properties:
       LogGroupName: !Sub /aws/lambda/${PersonalWebsiteFunction}
+      
 Outputs:
   PersonalWebsiteAPI:
     Description: API Gateway endpoint URL for Dev environment for First Function
