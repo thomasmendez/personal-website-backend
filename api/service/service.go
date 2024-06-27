@@ -40,12 +40,12 @@ func NewService() *Service {
 		if env != "Dev" && env != "Stg" && env != "Prd" {
 			log.Fatalf("error in configuration: ENV must be 'Dev', 'Stg', or 'Prd' \n Currently: %v", env)
 		}
-		if env == "Stg" {
+		if env == "Stg" || env == "Prd" {
 			if os.Getenv("ORIGIN") == "" {
 				log.Fatalf("error in configuration: ENV 'Stg' requires 'ORIGIN' variable")
 			}
-			if os.Getenv("HEADER") == "" {
-				log.Fatalf("error in configuration: ENV 'Stg' requires 'HEADER' variable")
+			if os.Getenv("HEADERS") == "" {
+				log.Fatalf("error in configuration: ENV 'Stg' requires 'HEADERS' variable")
 			}
 			if os.Getenv("METHODS") == "" {
 				log.Fatalf("error in configuration: ENV 'Stg' requires 'METHODS' variable")
@@ -108,6 +108,12 @@ func (s *Service) addProxyHeaders(env string) map[string]string {
 			"Access-Control-Allow-Methods": "*",
 		}
 	case "Stg":
+		return map[string]string{
+			"Access-Control-Allow-Origin":  os.Getenv("ORIGIN"),
+			"Access-Control-Allow-Headers": os.Getenv("HEADERS"),
+			"Access-Control-Allow-Methods": os.Getenv("METHODS"),
+		}
+	case "Prd":
 		return map[string]string{
 			"Access-Control-Allow-Origin":  os.Getenv("ORIGIN"),
 			"Access-Control-Allow-Headers": os.Getenv("HEADERS"),
