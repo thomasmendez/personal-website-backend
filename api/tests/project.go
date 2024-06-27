@@ -22,7 +22,7 @@ var TestProject = models.Project{
 	TeamSize:            &teamSize,
 	TeamRoles:           &teamRoles,
 	CloudServices:       &cloudServices,
-	Tools:               []string{"React", "Go"},
+	Tools:               []string{"Go", "React"},
 	Duration:            "6 Months",
 	StartDate:           "Jan 2024",
 	EndDate:             "Dec 2024",
@@ -33,7 +33,7 @@ var TestProject = models.Project{
 }
 
 var teamSize = "1"
-var teamRoles = []string{"Frontend Developer", "Backend Developer"}
+var teamRoles = []string{"Backend Developer", "Frontend Developer"}
 var cloudServices = []string{"AWS"}
 var notes = "Site is still in development stages"
 var link = "http://my-url"
@@ -51,9 +51,9 @@ var TestProjectItem = map[string]*dynamodb.AttributeValue{
 	"role":                {S: aws.String("Project Lead")},
 	"tasks":               {SS: aws.StringSlice([]string{"Develop backend microservices"})},
 	"teamSize":            {N: aws.String("1")},
-	"teamRoles":           {SS: aws.StringSlice([]string{"Frontend Developer", "Backend Developer"})},
+	"teamRoles":           {SS: aws.StringSlice([]string{"Backend Developer", "Frontend Developer"})},
 	"cloudServices":       {SS: aws.StringSlice([]string{"AWS"})},
-	"tools":               {SS: aws.StringSlice([]string{"React", "Go"})},
+	"tools":               {SS: aws.StringSlice([]string{"Go", "React"})},
 	"duration":            {S: aws.String("6 Months")},
 	"startDate":           {S: aws.String("Jan 2024")},
 	"endDate":             {S: aws.String("Dec 2024")},
@@ -76,7 +76,7 @@ var TestProjectNil = models.Project{
 	TeamSize:            nil,
 	TeamRoles:           nil,
 	CloudServices:       nil,
-	Tools:               []string{"React", "Go"},
+	Tools:               []string{"Go", "React"},
 	Duration:            "6 Months",
 	StartDate:           "Jan 2024",
 	EndDate:             "Dec 2024",
@@ -99,7 +99,7 @@ var TestProjectItemNil = map[string]*dynamodb.AttributeValue{
 	"teamSize":            {NULL: aws.Bool(true)},
 	"teamRoles":           {NULL: aws.Bool(true)},
 	"cloudServices":       {NULL: aws.Bool(true)},
-	"tools":               {SS: aws.StringSlice([]string{"React", "Go"})},
+	"tools":               {SS: aws.StringSlice([]string{"Go", "React"})},
 	"duration":            {S: aws.String("6 Months")},
 	"startDate":           {S: aws.String("Jan 2024")},
 	"endDate":             {S: aws.String("Dec 2024")},
