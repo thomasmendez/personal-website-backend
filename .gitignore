@@ -20,7 +20,7 @@
 # Go workspace file
 go.work
 
-samconfig.toml
+samconfig*.toml
 .aws-sam
 
 bootstrap
