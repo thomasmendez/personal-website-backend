@@ -15,7 +15,7 @@ Globals:
       AllowHeaders: "'*'"
       AllowOrigin: "'*'"
 Resources:
-  MyTable:
+  PersonalWebsiteTableLocal:
     Type: AWS::DynamoDB::Table
     Properties: 
       AttributeDefinitions: 
@@ -32,14 +32,13 @@ Resources:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
       TableName: PersonalWebsiteTable
-  RestApiFunctionStg:
+  RestApiFunctionLocal:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: api/
-      Handler: api
-      Runtime: go1.x
-      Architectures:
-      - x86_64
+      Handler: bootstrap
+      Runtime: provided.al2023
+      Architectures: [arm64]
       Events:
         CatchAll:
           Type: Api
@@ -48,6 +47,17 @@ Resources:
             Method: ANY
       Environment:
         Variables:
-          ENV: Dev
+          ENV: Local
           REGION: us-east-2
           TABLE_NAME: PersonalWebsiteTable
+
+Outputs:
+  PersonalWebsiteAPILocal:
+    Description: API Gateway endpoint URL for Dev environment for First Function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/${ServerlessRestApi.Stage}/"
+  RestApiFunctionLocal:
+    Description: First Lambda Function ARN
+    Value: !GetAtt RestApiFunctionLocal.Arn
+  RestApiFunctionLocalIamRole:
+    Description: Implicit IAM Role created for Hello World function
+    Value: !GetAtt RestApiFunctionLocalRole.Arn
