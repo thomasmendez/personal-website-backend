@@ -15,7 +15,7 @@ Backend for updating details for personal website. Backend is a deployed Go Lamb
 
 1. **Start DynamoDb Docker Container**
     ```shell
-    docker compose up -d 
+    docker compose up -d
     ```
 
 2. **Create DynamoDb Tables**
