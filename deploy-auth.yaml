@@ -1,0 +1,139 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  SAM Template for personal-website-backend
+
+Parameters:
+  Environment:
+    Type: String
+    Default: Dev
+  Methods:
+    Type: String
+    Default: "'*'"
+  Headers:
+    Type: String
+    Default: "'*'"
+  Origin:
+    Type: String
+    Default: "'*'"
+
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 128
+    LoggingConfig:
+      LogFormat: JSON
+  Api:
+    Cors:
+      AllowMethods: "'*'"
+      AllowHeaders: "'*'"
+      AllowOrigin: "'*'"
+Resources:
+  PersonalWebsiteTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "PersonalWebsiteTableAuth${Environment}"
+      AttributeDefinitions:
+        - AttributeName: personalWebsiteType
+          AttributeType: S
+        - AttributeName: sortValue
+          AttributeType: S
+      KeySchema:
+        - AttributeName: personalWebsiteType
+          KeyType: HASH
+        - AttributeName: sortValue
+          KeyType: RANGE
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+  PersonalWebsiteAPIDeployment:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Sub ${Environment}
+      Auth:
+        DefaultAuthorizer: CognitoTokenAuthorizer
+        Authorizers:
+          CognitoTokenAuthorizer:
+            UserPoolArn: !GetAtt UserPool.Arn
+        AddDefaultAuthorizerToCorsPreflight: false
+  PersonalWebsiteFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: api/
+      Handler: bootstrap
+      Runtime: provided.al2023
+      Architectures: [arm64]
+      Events:
+        CatchAll:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: "/api/{proxy+}"
+            Method: ANY
+            RestApiId: !Ref PersonalWebsiteAPIDeployment
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref PersonalWebsiteTable
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          ENV: !Sub "${Environment}"
+          METHODS: !Sub "${Methods}"
+          HEADERS: !Sub "${Headers}"
+          ORIGIN: !Sub "${Origin}"
+          REGION: us-east-2
+          TABLE_NAME: !Ref PersonalWebsiteTable
+  FunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${PersonalWebsiteFunction}
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub ${AWS::StackName}-userPool
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+  AppClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      AllowedOAuthFlows: 
+        - implicit
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - profile
+      AllowedOAuthFlowsUserPoolClient: true
+      ClientName: !Sub ${AWS::StackName}-client
+      CallbackURLs:
+        - https://jwt.io
+      ExplicitAuthFlows:
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
+      UserPoolId: !Ref UserPool
+      SupportedIdentityProviders:
+        - COGNITO 
+  HostedUI:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties: 
+      Domain: !Join
+        - '-'
+        - - !Ref PersonalWebsiteAPIDeployment
+          - !Ref AppClient
+      UserPoolId: !Ref UserPool
+
+Outputs:
+  PersonalWebsiteAPI:
+    Description: API Gateway endpoint URL for Dev environment for First Function
+    Value: !Sub "https://${PersonalWebsiteAPIDeployment}.execute-api.${AWS::Region}.amazonaws.com/${PersonalWebsiteAPIDeployment.Stage}/"
+  PersonalWebsiteFunction:
+    Description: First Lambda Function ARN
+    Value: !GetAtt PersonalWebsiteFunction.Arn
+  PersonalWebsiteFunctionIamRole:
+    Description: Implicit IAM Role created for Personal Website function
+    Value: !GetAtt PersonalWebsiteFunctionRole.Arn
+  LoginURL:
+    Value: !Sub https://${HostedUI}.auth.${AWS::Region}.amazoncognito.com/oauth2/authorize?client_id=${AppClient}&response_type=token&scope=email+openid+profile&redirect_uri=https://jwt.io
+    Description: Output is a URL for an Amazon Cognito hosted UI where clients can sign up and sign in to receive a JWT. After a client signs in, the client is redirected to jwt.io where the token details can be viewed.

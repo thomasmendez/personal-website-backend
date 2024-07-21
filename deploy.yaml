@@ -1,7 +1,21 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  SAM Template for personal-website-backend-dev
+  SAM Template for personal-website-backend
+
+Parameters:
+  Environment:
+    Type: String
+    Default: Dev
+  Methods:
+    Type: String
+    Default: "'*'"
+  Headers:
+    Type: String
+    Default: "'*'"
+  Origin:
+    Type: String
+    Default: "'*'"
 
 Globals:
   Function:
@@ -15,10 +29,10 @@ Globals:
       AllowHeaders: "'*'"
       AllowOrigin: "'*'"
 Resources:
-  PersonalWebsiteTableDev:
+  PersonalWebsiteTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: PersonalWebsiteTableDev
+      TableName: !Sub "PersonalWebsiteTable${Environment}"
       AttributeDefinitions:
         - AttributeName: personalWebsiteType
           AttributeType: S
@@ -32,11 +46,11 @@ Resources:
       ProvisionedThroughput: 
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
-  PersonalWebsiteAPIDeploymentDev:
+  PersonalWebsiteAPIDeployment:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: Dev
-  PersonalWebsiteFunctionDev:
+      StageName: !Sub ${Environment}
+  PersonalWebsiteFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: api/
@@ -49,23 +63,31 @@ Resources:
           Properties:
             Path: "/api/{proxy+}"
             Method: ANY
-            RestApiId: !Ref PersonalWebsiteAPIDeploymentDev
+            RestApiId: !Ref PersonalWebsiteAPIDeployment
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref PersonalWebsiteTableDev
+            TableName: !Ref PersonalWebsiteTable
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
-          ENV: Dev
+          ENV: !Sub "${Environment}"
+          METHODS: !Sub "${Methods}"
+          HEADERS: !Sub "${Headers}"
+          ORIGIN: !Sub "${Origin}"
           REGION: us-east-2
-          TABLE_NAME: !Ref PersonalWebsiteTableDev
-
+          TABLE_NAME: !Ref PersonalWebsiteTable
+  FunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${PersonalWebsiteFunction}
+      
 Outputs:
-  PersonalWebsiteAPIDev:
+  PersonalWebsiteAPI:
     Description: API Gateway endpoint URL for Dev environment for First Function
-    Value: !Sub "https://${PersonalWebsiteAPIDeploymentDev}.execute-api.${AWS::Region}.amazonaws.com/${PersonalWebsiteAPIDeploymentDev.Stage}/"
-  PersonalWebsiteFunctionDev:
+    Value: !Sub "https://${PersonalWebsiteAPIDeployment}.execute-api.${AWS::Region}.amazonaws.com/${PersonalWebsiteAPIDeployment.Stage}/"
+  PersonalWebsiteFunction:
     Description: First Lambda Function ARN
-    Value: !GetAtt PersonalWebsiteFunctionDev.Arn
-  PersonalWebsiteFunctionDevIamRole:
-    Description: Implicit IAM Role created for Hello World function
-    Value: !GetAtt PersonalWebsiteFunctionDevRole.Arn
+    Value: !GetAtt PersonalWebsiteFunction.Arn
+  PersonalWebsiteFunctionIamRole:
+    Description: Implicit IAM Role created for Personal Website function
+    Value: !GetAtt PersonalWebsiteFunctionRole.Arn

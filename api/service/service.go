@@ -37,6 +37,20 @@ func NewService() *Service {
 	}
 
 	if env != "Local" {
+		if env != "Dev" && env != "Stg" && env != "Prd" {
+			log.Fatalf("error in configuration: ENV must be 'Dev', 'Stg', or 'Prd' \n Currently: %v", env)
+		}
+		if env == "Stg" || env == "Prd" {
+			if os.Getenv("ORIGIN") == "" {
+				log.Fatalf("error in configuration: ENV 'Stg' requires 'ORIGIN' variable")
+			}
+			if os.Getenv("HEADERS") == "" {
+				log.Fatalf("error in configuration: ENV 'Stg' requires 'HEADERS' variable")
+			}
+			if os.Getenv("METHODS") == "" {
+				log.Fatalf("error in configuration: ENV 'Stg' requires 'METHODS' variable")
+			}
+		}
 		awsSession = session.Must(session.NewSessionWithOptions(session.Options{
 			SharedConfigState: session.SharedConfigEnable,
 		}))
@@ -68,7 +82,7 @@ func (s *Service) HandleRoute(ctx context.Context, request events.APIGatewayProx
 	for _, route := range *s.Routes {
 		if request.Path == route.Route && request.HTTPMethod == route.Method {
 			proxyResponse, err := route.Handler(ctx, request)
-			// proxyResponse.Headers = s.addProxyHeaders("dev")
+			proxyResponse.Headers = s.addProxyHeaders(os.Getenv("ENV"))
 			return proxyResponse, err
 		}
 	}
@@ -79,25 +93,37 @@ func (s *Service) HandleRoute(ctx context.Context, request events.APIGatewayProx
 	res, _ := json.Marshal(errRes)
 
 	return events.APIGatewayProxyResponse{
-		// Headers:    s.addProxyHeaders("dev"),
+		Headers:    s.addProxyHeaders(os.Getenv("ENV")),
 		StatusCode: http.StatusNotFound,
 		Body:       string(res),
 	}, nil
 }
 
-// func (s *Service) addProxyHeaders(env string) map[string]string {
-// 	switch env {
-// 	case "dev":
-// 		return map[string]string{
-// 			"Access-Control-Allow-Origin":  "*",
-// 			"Access-Control-Allow-Headers": "*",
-// 			"Access-Control-Allow-Methods": "*",
-// 		}
-// 	default:
-// 		return map[string]string{
-// 			"Access-Control-Allow-Origin":  "*",
-// 			"Access-Control-Allow-Headers": "*",
-// 			"Access-Control-Allow-Methods": "*",
-// 		}
-// 	}
-// }
+func (s *Service) addProxyHeaders(env string) map[string]string {
+	switch env {
+	case "Dev":
+		return map[string]string{
+			"Access-Control-Allow-Origin":  "http://localhost:5173",
+			"Access-Control-Allow-Headers": "*",
+			"Access-Control-Allow-Methods": "*",
+		}
+	case "Stg":
+		return map[string]string{
+			"Access-Control-Allow-Origin":  os.Getenv("ORIGIN"),
+			"Access-Control-Allow-Headers": os.Getenv("HEADERS"),
+			"Access-Control-Allow-Methods": os.Getenv("METHODS"),
+		}
+	case "Prd":
+		return map[string]string{
+			"Access-Control-Allow-Origin":  os.Getenv("ORIGIN"),
+			"Access-Control-Allow-Headers": os.Getenv("HEADERS"),
+			"Access-Control-Allow-Methods": os.Getenv("METHODS"),
+		}
+	default:
+		return map[string]string{
+			"Access-Control-Allow-Origin":  "*",
+			"Access-Control-Allow-Headers": "*",
+			"Access-Control-Allow-Methods": "*",
+		}
+	}
+}
