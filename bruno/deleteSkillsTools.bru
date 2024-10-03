@@ -5,7 +5,7 @@ meta {
 }
 
 delete {
-  url: http://127.0.0.1:3000/api/v1/work
+  url: http://127.0.0.1:3000/api/v1/skillsTools
   body: json
   auth: none
 }
@@ -13,9 +13,16 @@ delete {
 body:json {
   {
     "personalWebsiteType": "SkillsTools",
-    "sortValue": "Programming Languages",
-    "category": "Tools",
-    "type": "Programming Languages",
-    "list": ["C#", "Go", "Java", "JavaScript", "Python", "Swift"]
+    "sortValue": "Tools",
+    "categories": [
+      {
+        "category": "Programming Languages",
+        "list": ["C#", "Go", "Java", "JavaScript", "Python", "Swift"]
+      },
+      {
+        "category": "Cloud Services",
+        "list": ["AWS", "Azure", "GCP"]
+      }
+    ]
   }
 }

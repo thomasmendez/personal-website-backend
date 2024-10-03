@@ -12,25 +12,45 @@ import (
 // SkillsTools model used for test cases
 var TestSkillsTools = models.SkillsTools{
 	PersonalWebsiteType: "SkillsTools",
-	SortValue:           "Programming Languages",
-	Category:            "Tools",
-	Type:                "Programming Languages",
-	List:                []string{"C#", "Go", "Java", "JavaScript", "Python", "Swift"},
+	SortValue:           "Tools",
+	Categories: []models.Category{
+		{
+			Category: "Programming Languages",
+			List:     []string{"C#", "Go", "Java", "JavaScript", "Python", "Swift"},
+		},
+		{
+			Category: "Cloud Services",
+			List:     []string{"AWS", "Azure", "Google Cloud Platform", "Digital Ocean"},
+		},
+	},
 }
 
 // SkillsTools Item model used for dynamodb
+var categories = []*dynamodb.AttributeValue{
+	{
+		M: map[string]*dynamodb.AttributeValue{
+			"category": {S: aws.String("Programming Languages")},
+			"list":     {SS: aws.StringSlice([]string{"C#", "Go", "Java", "JavaScript", "Python", "Swift"})},
+		},
+	},
+	{
+		M: map[string]*dynamodb.AttributeValue{
+			"category": {S: aws.String("Cloud Services")},
+			"list":     {SS: aws.StringSlice([]string{"AWS", "Azure", "Google Cloud Platform", "Digital Ocean"})},
+		},
+	},
+}
+
 var TestSkillsToolsItem = map[string]*dynamodb.AttributeValue{
 	"personalWebsiteType": {S: aws.String("SkillsTools")},
-	"sortValue":           {S: aws.String("Programming Languages")},
-	"category":            {S: aws.String("Tools")},
-	"type":                {S: aws.String("Programming Languages")},
-	"list":                {SS: aws.StringSlice([]string{"C#", "Go", "Java", "JavaScript", "Python", "Swift"})},
+	"sortValue":           {S: aws.String("Tools")},
+	"categories": {
+		L: categories,
+	},
 }
 
 func AssertSkillsTools(t *testing.T, expectedSkillsTools models.SkillsTools, actualSkillsTools models.SkillsTools) {
 	assert.Equal(t, expectedSkillsTools.PersonalWebsiteType, actualSkillsTools.PersonalWebsiteType)
 	assert.Equal(t, expectedSkillsTools.SortValue, actualSkillsTools.SortValue)
-	assert.Equal(t, expectedSkillsTools.Category, actualSkillsTools.Category)
-	assert.Equal(t, expectedSkillsTools.Type, actualSkillsTools.Type)
-	assert.Equal(t, expectedSkillsTools.List, actualSkillsTools.List)
+	assert.Equal(t, expectedSkillsTools.Categories, actualSkillsTools.Categories)
 }
