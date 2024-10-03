@@ -70,6 +70,11 @@ Ensure you follow the same steps you did to build the executable and zipping the
     sam.cmd deploy --guided --template-file=template.yaml
     ```
 
+    With config file
+    ```shell
+    sam.cmd deploy --guided --template-file=template.yaml --config-file=config.toml
+    ```
+
 ## Helpful Commands
 
 ### DynamoDB Commands

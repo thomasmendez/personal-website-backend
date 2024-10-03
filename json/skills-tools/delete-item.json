@@ -2,7 +2,7 @@
   "TableName": "PersonalWebsiteTable",
   "Key": {
     "personalWebsiteType": {"S": "SkillsTools"},
-    "sortValue": {"S": "Programming Languages"}
+    "sortValue": {"S": "Tools"}
   }
 }
   

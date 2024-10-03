@@ -13,9 +13,16 @@ post {
 body:json {
   {
     "personalWebsiteType": "SkillsTools",
-    "sortValue": "Programming Languages",
-    "category": "Tools",
-    "type": "Programming Languages",
-    "list": ["C#", "Go", "Java", "JavaScript", "Python", "Swift"]
+    "sortValue": "Tools",
+    "categories": [
+      {
+        "category": "Programming Languages",
+        "list": ["C#", "Go", "Java", "JavaScript", "Python", "Swift"]
+      },
+      {
+        "category": "Cloud Services",
+        "list": ["AWS", "Azure", "GCP"]
+      }
+    ]
   }
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/thomasmendez/personal-website-backend/api/models"
 )
@@ -32,13 +33,12 @@ func GetSkillsTools(svc dynamodbiface.DynamoDBAPI, tableName string) (skillsTool
 }
 
 func PostSkillsTools(svc dynamodbiface.DynamoDBAPI, tableName string, newSkillsTools models.SkillsTools) (skillsTools models.SkillsTools, err error) {
-	item := map[string]*dynamodb.AttributeValue{
-		"personalWebsiteType": {S: aws.String(partitionKeySkillsTools)},
-		"sortValue":           {S: aws.String(newSkillsTools.SortValue)},
-		"category":            {S: aws.String(newSkillsTools.Category)},
-		"type":                {S: aws.String(newSkillsTools.Type)},
-		"list":                {SS: aws.StringSlice(newSkillsTools.List)},
+	item, err := dynamodbattribute.MarshalMap(newSkillsTools)
+	if err != nil {
+		log.Printf("error marshalling newSkillsTools: %v", err)
+		return skillsTools, err
 	}
+
 	input := &dynamodb.PutItemInput{
 		Item:      item,
 		TableName: aws.String(tableName),
@@ -53,17 +53,23 @@ func PostSkillsTools(svc dynamodbiface.DynamoDBAPI, tableName string, newSkillsT
 }
 
 func UpdateSkillsTools(svc dynamodbiface.DynamoDBAPI, tableName string, newSkillsTools models.SkillsTools) (skillsTools models.SkillsTools, err error) {
-	updateExpression := "SET #category = :categoryVal, #type = :typeVal, #list = :listVal"
+	// Marshal the Categories field into DynamoDB-compatible values
+	categoriesAttrVal, err := dynamodbattribute.Marshal(newSkillsTools.Categories)
+	if err != nil {
+		log.Printf("error marshalling Categories: %v", err)
+		return skillsTools, err
+	}
+	// Update expression for the fields you want to update
+	updateExpression := "SET #categories = :categoriesVal"
+	// Expression attribute names (used to avoid reserved keywords)
 	expressionAttributeNames := map[string]*string{
-		"#category": aws.String("category"),
-		"#type":     aws.String("type"),
-		"#list":     aws.String("list"),
+		"#categories": aws.String("categories"),
 	}
+	// Expression attribute values (setting the values to be updated)
 	expressionAttributeValues := map[string]*dynamodb.AttributeValue{
-		":categoryVal": {S: aws.String(newSkillsTools.Category)},
-		":typeVal":     {S: aws.String(newSkillsTools.Type)},
-		":listVal":     {SS: aws.StringSlice(newSkillsTools.List)},
+		":categoriesVal": categoriesAttrVal,
 	}
+	// Define the primary key (personalWebsiteType and sortValue)
 	updateInput := &dynamodb.UpdateItemInput{
 		TableName: aws.String(tableName),
 		Key: map[string]*dynamodb.AttributeValue{

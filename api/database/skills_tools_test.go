@@ -34,10 +34,17 @@ func TestGetSkillsTools(t *testing.T) {
 			expectedResult: []models.SkillsTools{
 				{
 					PersonalWebsiteType: "SkillsTools",
-					SortValue:           "Programming Languages",
-					Category:            "Tools",
-					Type:                "Programming Languages",
-					List:                []string{"C#", "Go", "Java", "JavaScript", "Python", "Swift"},
+					SortValue:           "Tools",
+					Categories: []models.Category{
+						{
+							Category: "Programming Languages",
+							List:     []string{"C#", "Go", "Java", "JavaScript", "Python", "Swift"},
+						},
+						{
+							Category: "Cloud Services",
+							List:     []string{"AWS", "Azure", "Google Cloud Platform", "Digital Ocean"},
+						},
+					},
 				},
 			},
 		},
@@ -142,13 +149,27 @@ func TestUpdateSkillsTools(t *testing.T) {
 				return nil, nil
 			},
 			mockGetFunc: func(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
+				categories := []*dynamodb.AttributeValue{
+					{
+						M: map[string]*dynamodb.AttributeValue{
+							"category": {S: aws.String("Programming Languages")},
+							"list":     {SS: aws.StringSlice([]string{"C#", "Go", "Java", "JavaScript", "Python", "Swift"})},
+						},
+					},
+					{
+						M: map[string]*dynamodb.AttributeValue{
+							"category": {S: aws.String("Cloud Services")},
+							"list":     {SS: aws.StringSlice([]string{"AWS", "Azure", "Google Cloud Platform", "Digital Ocean"})},
+						},
+					},
+				}
 				mockOutput := &dynamodb.GetItemOutput{
 					Item: map[string]*dynamodb.AttributeValue{
 						"personalWebsiteType": {S: aws.String("SkillsTools")},
-						"sortValue":           {S: aws.String("Programming Languages")},
-						"Category":            {S: aws.String("Tools")},
-						"Type":                {S: aws.String("Programming Languages")},
-						"List":                {SS: aws.StringSlice([]string{"C#", "Go", "Java", "JavaScript", "Python", "Swift"})},
+						"sortValue":           {S: aws.String("Tools")},
+						"categories": {
+							L: categories,
+						},
 					},
 				}
 				return mockOutput, nil

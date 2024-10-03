@@ -47,9 +47,8 @@ func TestSkillsToolsApi(t *testing.T) {
 			method: http.MethodPut,
 			reqBodySkillsTools: func() *models.SkillsTools {
 				// modify previous response for update
-				latestSkillsToolsResponse.Category = "Tools"
-				latestSkillsToolsResponse.Type = "Cloud Services"
-				latestSkillsToolsResponse.List = []string{"AWS", "Azure", "GCP"}
+				latestSkillsToolsResponse.Categories[0].Category = "Cloud Services"
+				latestSkillsToolsResponse.Categories[0].List = []string{"AWS", "Azure", "GCP"}
 				return &latestSkillsToolsResponse
 			},
 			assertFunc: func(expectedStruct interface{}, resBody []byte) {

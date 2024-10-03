@@ -8,19 +8,16 @@
                             "S": "SkillsTools"
                         },
                         "sortValue": {
-                            "S": "Trilingual"
-                        },
-                        "skillsToolsCategory": {
                             "S": "Skills"
                         },
-                        "skillsToolsType": {
-                            "S": "Trilingual"
-                        },
-                        "skillsToolsList": {
-                            "SS": [
-                                "English",
-                                "Spanish",
-                                "Portuguese"
+                        "categories": {
+                            "L": [
+                                {
+                                    "M": {
+                                      "category": {"S": "Trilingual"},
+                                      "list": {"SS": ["English", "Spanish", "Portuguese"]}
+                                    }
+                                }
                             ]
                         }
                     }
@@ -33,20 +30,16 @@
                             "S": "SkillsTools"
                         },
                         "sortValue": {
-                            "S": "Cloud Services"
-                        },
-                        "skillsToolsCategory": {
                             "S": "Tools"
                         },
-                        "skillsToolsType": {
-                            "S": "Cloud Services"
-                        },
-                        "skillsToolsList": {
-                            "SS": [
-                                "AWS",
-                                "Azure",
-                                "GCP",
-                                "Digital Ocean"
+                        "categories": {
+                            "L": [
+                                {
+                                    "M": {
+                                      "category": {"S": "Cloud Services"},
+                                      "list": {"SS": ["AWS", "Azure", "GCP"]}
+                                    }
+                                }
                             ]
                         }
                     }
