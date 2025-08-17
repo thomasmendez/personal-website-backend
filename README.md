@@ -4,9 +4,9 @@ Backend for updating details for personal website. Backend is a deployed Go Lamb
 
 ## Requirements
 
-* AWS CLI already configured with Administrator permission
+* [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) already configured with Administrator permission
 * [Docker installed](https://www.docker.com/community-edition)
-* SAM CLI - [Install the SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
+* [SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
 * [Golang](https://golang.org) - Currently using v.1.22 (can use [Chocolatey](https://community.chocolatey.org/packages/golang) or [Homebrew](https://formulae.brew.sh/formula/go))
 * [Bruno](https://www.usebruno.com/) (Optional) - Open source API client. Similar to Postman, but is offline-only and will never require an account. 
 * [Make](https://www.gnu.org/software/make/) (Optional) - To run makefile commands 
