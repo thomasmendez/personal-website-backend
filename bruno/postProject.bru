@@ -6,7 +6,7 @@ meta {
 
 post {
   url: http://127.0.0.1:3000/api/v1/projects
-  body: json
+  body: multipartForm
   auth: none
 }
 
@@ -42,4 +42,26 @@ body:json {
     "linkType": "YouTube",
     "mediaLink": "http://link-to-media-file"
   }
+}
+
+body:multipart-form {
+  personalWebsiteType: Projects
+  sortValue: Personal Website
+  category: Software Engineering
+  name: Personal Website
+  description: My personal website created
+  featuresDescription: User is able to view my work
+  role: Project Lead
+  tasks: ["Develop backend microservices"]
+  teamSize: 2
+  teamRoles: ["Frontend Developer", "Backend Developer"]
+  cloudServices: ["AWS"]
+  tools: ["React", "Go"]
+  duration: 6 Months
+  startDate: Jan 2024
+  endDate: Dec 2024
+  notes: Site is still in development stages
+  link: https://my-url
+  linkType: YouTube
+  mediaLink: 
 }

@@ -13,7 +13,7 @@ func resError(errorStatusCode int) (errRes string) {
 	var message string
 	switch errorStatusCode {
 	case http.StatusBadRequest:
-		message = "Bad Request: Invalid JSON"
+		message = "Bad Request: Invalid request"
 	case http.StatusNotFound:
 		message = "Resource not found"
 	default:

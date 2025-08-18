@@ -34,7 +34,7 @@ Backend for updating details for personal website. Backend is a deployed Go Lamb
 
 5. **Invoke function locally through local API Gateway**
     ```shell
-    sam.cmd local start-api --docker-network dynamodb-backend --template-file=template.yaml
+    sam.cmd local start-api --docker-network dynamodb-backend --template-file=template.yaml --env-vars env.json
     ```
 
     *Note: Use `sam.cmd` when running AWS SAM on windows*
