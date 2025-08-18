@@ -6,7 +6,7 @@ meta {
 
 put {
   url: http://127.0.0.1:3000/api/v1/projects
-  body: json
+  body: multipartForm
   auth: none
 }
 
@@ -29,6 +29,23 @@ body:json {
     "duration": "6 Months",
     "startDate": "Jan 2024",
     "endDate": "Dec 2024",
-    "notes": "Site is still in development stages"
+    "notes": "Site is still in development stages",
+    "val": "val"
   }
+}
+
+body:multipart-form {
+  personalWebsiteType: Projects
+  sortValue: Personal Website
+  category: Software Engineering
+  name: Personal Website
+  description: My personal website created in the cloud
+  featuresDescription: User is able to view my work
+  role: Project Lead
+  tasks: ["Develop backend microservices"]
+  tools: ["Go", "React"]
+  duration: 6 Months
+  startDate: Jan 2024
+  endDate: Dec 2024
+  notes: Site is still in development stages
 }
