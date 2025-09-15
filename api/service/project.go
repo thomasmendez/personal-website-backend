@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -64,25 +65,46 @@ func (s *Service) getProjectsHandler(ctx context.Context, request events.APIGate
 }
 
 func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	formData, imageFile, err := parseFormData(request)
-	if err != nil {
-		fmt.Println("Error parsing form data: %w", err)
+	var newProject *models.Project
+	var imageFile FileData
+	var err error
+	if request.IsBase64Encoded || strings.Contains(request.Headers["Content-Type"], "'multipart/form-data") {
+		newProject, imageFile, err = parseFormData[models.Project](request)
+		if err != nil {
+			fmt.Println("Error parsing form data: %w", err)
+			return events.APIGatewayProxyResponse{
+				StatusCode: http.StatusBadRequest,
+				Body:       resError(http.StatusBadRequest),
+			}, err
+		}
+	} else if !request.IsBase64Encoded && strings.Contains(request.Headers["Content-Type"], "application/json") {
+		err = json.Unmarshal([]byte(request.Body), &newProject)
+		if err != nil {
+			log.Printf("error in serializing json: %v", err)
+			return events.APIGatewayProxyResponse{
+				StatusCode: http.StatusBadRequest,
+				Body:       resError(http.StatusBadRequest),
+			}, err
+		}
+		if newProject.MediaLink != nil {
+			log.Printf("error: mediaLink has invalid content, please use multipart/form-data")
+			return events.APIGatewayProxyResponse{
+				StatusCode: http.StatusBadRequest,
+				Body:       resError(http.StatusBadRequest),
+			}, err
+		}
+	} else {
+		fmt.Println("Invalid request format")
+		log.Printf("request: %v", request)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Body:       resError(http.StatusBadRequest),
-		}, err
+		}, nil
 	}
 
-	newProject, err := createProjectFromFormData(formData)
-	if err != nil {
-		fmt.Println("Error creating project from form data: %w", err)
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       resError(http.StatusBadRequest),
-		}, err
-	}
+	log.Printf("newProject: %v after parse", newProject)
 
-	if imageFile.Filename != "" {
+	if imageFile.Filename != "" && imageFile.Content != nil && imageFile.ContentType != "" {
 		mediaLink, err := sendFileToS3(ctx, imageFile)
 		if err != nil {
 			fmt.Println("failed to upload to S3: %w", err)
@@ -91,11 +113,10 @@ func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGat
 				Body:       resError(http.StatusInternalServerError),
 			}, err
 		}
-
 		newProject.MediaLink = &mediaLink
 	}
 
-	project, err := database.PostProject(s.DB, s.TableName, newProject)
+	project, err := database.PostProject(s.DB, s.TableName, *newProject)
 
 	if err != nil {
 		fmt.Println("There was an error in inserting project with sortValue: %w", err)
@@ -130,25 +151,45 @@ func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGat
 }
 
 func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	formData, imageFile, err := parseFormData(request)
-	if err != nil {
-		fmt.Println("Error parsing form data: %w", err)
+	var updateProject *models.Project
+	var imageFile FileData
+	var err error
+	if request.IsBase64Encoded || strings.Contains(request.Headers["Content-Type"], "'multipart/form-data") {
+		updateProject, imageFile, err = parseFormData[models.Project](request)
+		if err != nil {
+			fmt.Println("Error parsing form data: %w", err)
+			return events.APIGatewayProxyResponse{
+				StatusCode: http.StatusBadRequest,
+				Body:       resError(http.StatusBadRequest),
+			}, err
+		}
+	} else if !request.IsBase64Encoded && strings.Contains(request.Headers["Content-Type"], "application/json") {
+		err = json.Unmarshal([]byte(request.Body), &updateProject)
+		if err != nil {
+			log.Printf("error in serializing json: %v", err)
+			return events.APIGatewayProxyResponse{
+				StatusCode: http.StatusBadRequest,
+				Body:       resError(http.StatusBadRequest),
+			}, err
+		}
+		if updateProject.MediaLink != nil {
+			if !strings.HasPrefix(*updateProject.MediaLink, "http") {
+				log.Printf("error: mediaLink has invalid content, please use multipart/form-data")
+				return events.APIGatewayProxyResponse{
+					StatusCode: http.StatusBadRequest,
+					Body:       resError(http.StatusBadRequest),
+				}, nil
+			}
+		}
+	} else {
+		fmt.Println("Invalid request format")
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Body:       resError(http.StatusBadRequest),
-		}, err
+		}, nil
 	}
 
-	updateProject, err := createProjectFromFormData(formData)
-	if err != nil {
-		fmt.Println("Error creating project from form data: %w", err)
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       resError(http.StatusBadRequest),
-		}, err
-	}
-
-	if imageFile.Filename != "" {
+	if imageFile.Filename != "" && imageFile.Content != nil && imageFile.ContentType != "" {
 		mediaLink, err := sendFileToS3(ctx, imageFile)
 		if err != nil {
 			fmt.Println("failed to upload to S3: %w", err)
@@ -157,11 +198,10 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 				Body:       resError(http.StatusInternalServerError),
 			}, err
 		}
-
 		updateProject.MediaLink = &mediaLink
 	}
 
-	project, err := database.UpdateProject(s.DB, s.TableName, updateProject)
+	project, err := database.UpdateProject(s.DB, s.TableName, *updateProject)
 
 	if err != nil {
 		fmt.Println("There was an error in updating project with sortValue: %w", err)
@@ -292,136 +332,8 @@ func sendFileToS3(ctx context.Context, file FileData) (string, error) {
 	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s", os.Getenv("BUCKET_NAME"), file.Filename), nil
 }
 
-// create project from form data
-func createProjectFromFormData(formData map[string][]byte) (models.Project, error) {
-	var tasks []string
-	var teamRoles *[]string
-	var cloudServices *[]string
-	var tools []string
-
-	if formData["tasks"] != nil {
-		parsedTasks, err := parseJSONArray(formData["tasks"])
-		if err != nil {
-			return models.Project{}, fmt.Errorf("error parsing tasks: %w", err)
-		} else {
-			tasks = parsedTasks
-		}
-	} else {
-		return models.Project{}, fmt.Errorf("missing tasks")
-	}
-
-	if formData["teamRoles"] != nil {
-		parsedRoles, err := parseJSONArray(formData["teamRoles"])
-		if err != nil {
-			return models.Project{}, fmt.Errorf("error parsing teamRoles: %w", err)
-		} else {
-			teamRoles = &parsedRoles
-		}
-	}
-
-	if formData["cloudServices"] != nil {
-		parsedServices, err := parseJSONArray(formData["cloudServices"])
-		if err != nil {
-			return models.Project{}, fmt.Errorf("error parsing cloudServices: %w", err)
-		} else {
-			cloudServices = &parsedServices
-		}
-	}
-
-	if formData["tools"] != nil {
-		parsedTools, err := parseJSONArray(formData["tools"])
-		if err != nil {
-			return models.Project{}, fmt.Errorf("error parsing tools: %w", err)
-		} else {
-			tools = parsedTools
-		}
-	} else {
-		return models.Project{}, fmt.Errorf("missing tools")
-	}
-
-	var teamSize *string
-	if formData["teamSize"] != nil {
-		sizePtr := string(formData["teamSize"])
-		teamSize = &sizePtr
-	}
-
-	var notes *string
-	if formData["notes"] != nil {
-		notesPtr := string(formData["notes"])
-		notes = &notesPtr
-	}
-
-	var link *string
-	if formData["link"] != nil {
-		linkPtr := string(formData["link"])
-		link = &linkPtr
-	}
-
-	var linkType *string
-	if formData["linkType"] != nil {
-		linkTypePtr := string(formData["linkType"])
-		linkType = &linkTypePtr
-	}
-
-	var mediaLink *string
-	if formData["mediaLink"] != nil {
-		mediaLinkPtr := string(formData["mediaLink"])
-		mediaLink = &mediaLinkPtr
-	}
-
-	if formData["personalWebsiteType"] == nil || formData["sortValue"] == nil || formData["category"] == nil || formData["name"] == nil || formData["description"] == nil || formData["featuresDescription"] == nil || formData["role"] == nil || formData["duration"] == nil || formData["startDate"] == nil || formData["endDate"] == nil {
-		return models.Project{}, fmt.Errorf("missing required fields")
-	}
-
-	newProject := models.Project{
-		PersonalWebsiteType: string(formData["personalWebsiteType"]),
-		SortValue:           string(formData["sortValue"]),
-		Category:            string(formData["category"]),
-		Name:                string(formData["name"]),
-		Description:         string(formData["description"]),
-		FeaturesDescription: string(formData["featuresDescription"]),
-		Role:                string(formData["role"]),
-		Tasks:               tasks,
-		TeamSize:            teamSize,
-		TeamRoles:           teamRoles,
-		CloudServices:       cloudServices,
-		Tools:               tools,
-		Duration:            string(formData["duration"]),
-		StartDate:           string(formData["startDate"]),
-		EndDate:             string(formData["endDate"]),
-		Notes:               notes,
-		Link:                link,
-		LinkType:            linkType,
-		MediaLink:           mediaLink,
-	}
-	return newProject, nil
-}
-
-// parse JSON array from multipart form data
-func parseJSONArray(data []byte) ([]string, error) {
-	if data == nil {
-		return []string{}, nil
-	}
-
-	var result []string
-	if err := json.Unmarshal(data, &result); err != nil {
-		// If JSON parsing fails, fall back to comma-separated parsing
-		// This handles cases where data might be sent as comma-separated values
-		str := strings.TrimSpace(string(data))
-		if str == "" {
-			return []string{}, nil
-		}
-		return strings.Split(str, ","), nil
-	}
-	return result, nil
-}
-
 // parse form data from request body
-func parseFormData(request events.APIGatewayProxyRequest) (map[string][]byte, FileData, error) {
-	if !request.IsBase64Encoded && !strings.Contains(request.Headers["Content-Type"], "'multipart/form-data") {
-		return nil, FileData{}, fmt.Errorf("request is not base64 encoded and does not contain 'multipart/form-data' in 'Content-Type'")
-	}
-
+func parseFormData[T any](request events.APIGatewayProxyRequest) (*T, FileData, error) {
 	var bodyBytes []byte
 	bodyBytes, err := base64.StdEncoding.DecodeString(request.Body)
 	if err != nil {
@@ -440,8 +352,8 @@ func parseFormData(request events.APIGatewayProxyRequest) (map[string][]byte, Fi
 
 	reader := multipart.NewReader(strings.NewReader(string(bodyBytes)), boundary)
 
-	formData := make(map[string][]byte)
-	files := make(map[string]FileData)
+	var result T
+	file := FileData{}
 
 	for {
 		part, err := reader.NextPart()
@@ -469,26 +381,278 @@ func parseFormData(request events.APIGatewayProxyRequest) (map[string][]byte, Fi
 			if err != nil {
 				return nil, FileData{}, fmt.Errorf("failed to detect content type: %w", err)
 			}
-			files[fieldName] = FileData{
+			file = FileData{
 				Filename:    filename,
 				Content:     content,
 				ContentType: contentType,
 			}
+			fmt.Printf("file: %s, filename: %s, contentType: %s\n", fieldName, filename, contentType)
 		} else {
-			formData[fieldName] = content
+			log.Printf("fieldName: %s", fieldName)
+			log.Printf("content: %v", content)
+
+			// if filename is empty set the map of the result to nil
+			v := reflect.ValueOf(&result).Elem()
+			structName := strings.ToUpper(fieldName[:1]) + fieldName[1:]
+			field := v.FieldByName(structName)
+			if !field.CanSet() {
+				log.Printf("invalid or non-settable field: %s", fieldName)
+				continue // Skip invalid or non-settable fields
+			}
+			if err := setFieldValue(field, content); err != nil {
+				return nil, FileData{}, fmt.Errorf("failed to set field value: %w", err)
+			}
 		}
 
 		part.Close()
 	}
+	return &result, file, nil
+}
 
-	imageFile, exist := files["mediaLink"]
-	if exist {
-		if imageFile.Content == nil {
-			return nil, FileData{}, fmt.Errorf("'mediaLink' file content is nil")
+func setFieldValue(field reflect.Value, value []byte) error {
+	log.Printf("field kind: %v", field.Kind())
+	log.Printf("field type: %v", field.Type())
+	log.Printf("value: %v", value)
+
+	switch field.Kind() {
+	case reflect.String:
+		log.Printf("setting string field: %s", string(value))
+		field.SetString(string(value))
+	case reflect.Slice:
+		log.Printf("setting slice field: %v", value)
+		return setSliceFromBytes(field, value)
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		if intVal, err := strconv.ParseInt(string(value), 10, 64); err == nil {
+			field.SetInt(intVal)
+		} else {
+			return err
+		}
+	case reflect.Float32, reflect.Float64:
+		if floatVal, err := strconv.ParseFloat(string(value), 64); err == nil {
+			field.SetFloat(floatVal)
+		} else {
+			return err
+		}
+	case reflect.Bool:
+		if boolVal, err := strconv.ParseBool(string(value)); err == nil {
+			field.SetBool(boolVal)
+		} else {
+			return err
+		}
+	case reflect.Ptr:
+		if field.Type() == reflect.TypeOf((*string)(nil)) {
+			if value == nil {
+				field.Set(reflect.New(field.Type().Elem()))
+				return nil
+			}
+			valuePtr := string(value)
+			field.Set(reflect.ValueOf(&valuePtr))
+		}
+		if field.Type() == reflect.TypeOf((*[]string)(nil)) {
+			if value == nil {
+				field.Set(reflect.New(field.Type().Elem()))
+				return nil
+			}
+			log.Printf("setting *[]string slice field: %v", value)
+			return setPointerSliceFromBytes(field, value)
+		}
+	default:
+		return fmt.Errorf("unsupported type: %v", field.Kind())
+	}
+	return nil
+}
+
+// Handle setting pointer slices from byte data
+func setPointerSliceFromBytes(field reflect.Value, value []byte) error {
+	// Check if field is a pointer
+	if field.Type().Kind() != reflect.Ptr {
+		return fmt.Errorf("field is not a pointer: %v", field.Type().Kind())
+	}
+
+	// Get the element type the pointer points to (should be a slice)
+	sliceType := field.Type().Elem()
+	if sliceType.Kind() != reflect.Slice {
+		return fmt.Errorf("pointer does not point to a slice: %v", sliceType.Kind())
+	}
+
+	// Get the slice element type
+	elemType := sliceType.Elem()
+
+	// Handle *[]byte directly
+	if elemType.Kind() == reflect.Uint8 {
+		slice := reflect.New(sliceType).Elem()
+		slice.SetBytes(value)
+		field.Set(slice.Addr())
+		return nil
+	}
+
+	str := string(value)
+	log.Printf("str: %v", str)
+
+	// Handle empty/null cases
+	if str == "" || str == "null" {
+		field.Set(reflect.Zero(field.Type())) // Set to nil
+		return nil
+	}
+
+	var parts []string
+
+	// Try to parse as JSON array first
+	str = strings.TrimSpace(str)
+	if strings.HasPrefix(str, "[") && strings.HasSuffix(str, "]") {
+		var jsonArray []string
+		if err := json.Unmarshal(value, &jsonArray); err == nil {
+			parts = jsonArray
+		} else {
+			// If JSON parsing fails, fall back to comma-separated parsing
+			parts = strings.Split(str, ",")
+			for i := range parts {
+				parts[i] = strings.TrimSpace(parts[i])
+			}
+		}
+	} else {
+		// Parse as comma-separated values
+		parts = strings.Split(str, ",")
+		for i := range parts {
+			parts[i] = strings.TrimSpace(parts[i])
 		}
 	}
 
-	return formData, imageFile, nil
+	// Create a new addressable slice by allocating memory for it
+	slicePtr := reflect.New(sliceType)
+	slice := slicePtr.Elem()
+	slice.Set(reflect.MakeSlice(sliceType, len(parts), len(parts)))
+
+	log.Printf("parts: %v", parts)
+	log.Printf("slice: %v", slice)
+
+	for i, part := range parts {
+		part = strings.TrimSpace(part)
+		elem := slice.Index(i)
+
+		switch elemType.Kind() {
+		case reflect.String:
+			log.Printf("setting string slice field: %s", part)
+			elem.SetString(part)
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			if intVal, err := strconv.ParseInt(part, 10, 64); err == nil {
+				elem.SetInt(intVal)
+			} else {
+				return fmt.Errorf("cannot convert '%s' to int: %v", part, err)
+			}
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			if uintVal, err := strconv.ParseUint(part, 10, 64); err == nil {
+				elem.SetUint(uintVal)
+			} else {
+				return fmt.Errorf("cannot convert '%s' to uint: %v", part, err)
+			}
+		case reflect.Float32, reflect.Float64:
+			if floatVal, err := strconv.ParseFloat(part, 64); err == nil {
+				elem.SetFloat(floatVal)
+			} else {
+				return fmt.Errorf("cannot convert '%s' to float: %v", part, err)
+			}
+		case reflect.Bool:
+			if boolVal, err := strconv.ParseBool(part); err == nil {
+				elem.SetBool(boolVal)
+			} else {
+				return fmt.Errorf("cannot convert '%s' to bool: %v", part, err)
+			}
+		default:
+			return fmt.Errorf("unsupported slice element type: %v", elemType.Kind())
+		}
+	}
+
+	// Set the field to point to the slice
+	field.Set(slicePtr)
+	return nil
+}
+
+// Handle setting slices from byte data
+func setSliceFromBytes(field reflect.Value, value []byte) error {
+	elemType := field.Type().Elem()
+
+	// Handle []byte directly
+	if elemType.Kind() == reflect.Uint8 {
+		field.SetBytes(value)
+		return nil
+	}
+
+	// Parse as comma-separated values for other slice types
+	str := string(value)
+	log.Printf("str: %v", str)
+	if str == "" {
+		field.Set(reflect.MakeSlice(field.Type(), 0, 0))
+		return nil
+	}
+
+	var parts []string
+
+	// Try to parse as JSON array first
+	str = strings.TrimSpace(str)
+	if strings.HasPrefix(str, "[") && strings.HasSuffix(str, "]") {
+		var jsonArray []string
+		if err := json.Unmarshal(value, &jsonArray); err == nil {
+			parts = jsonArray
+		} else {
+			// If JSON parsing fails, fall back to comma-separated parsing
+			parts = strings.Split(str, ",")
+			for i := range parts {
+				parts[i] = strings.TrimSpace(parts[i])
+			}
+		}
+	} else {
+		// Parse as comma-separated values
+		parts = strings.Split(str, ",")
+		for i := range parts {
+			parts[i] = strings.TrimSpace(parts[i])
+		}
+	}
+
+	slice := reflect.MakeSlice(field.Type(), len(parts), len(parts))
+
+	log.Printf("parts: %v", parts)
+	log.Printf("slice: %v", slice)
+
+	for i, part := range parts {
+		part = strings.TrimSpace(part)
+		elem := slice.Index(i)
+
+		switch elemType.Kind() {
+		case reflect.String:
+			log.Printf("setting string slice field: %s", part)
+			elem.SetString(part)
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			if intVal, err := strconv.ParseInt(part, 10, 64); err == nil {
+				elem.SetInt(intVal)
+			} else {
+				return fmt.Errorf("cannot convert '%s' to int: %v", part, err)
+			}
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			if uintVal, err := strconv.ParseUint(part, 10, 64); err == nil {
+				elem.SetUint(uintVal)
+			} else {
+				return fmt.Errorf("cannot convert '%s' to uint: %v", part, err)
+			}
+		case reflect.Float32, reflect.Float64:
+			if floatVal, err := strconv.ParseFloat(part, 64); err == nil {
+				elem.SetFloat(floatVal)
+			} else {
+				return fmt.Errorf("cannot convert '%s' to float: %v", part, err)
+			}
+		case reflect.Bool:
+			if boolVal, err := strconv.ParseBool(part); err == nil {
+				elem.SetBool(boolVal)
+			} else {
+				return fmt.Errorf("cannot convert '%s' to bool: %v", part, err)
+			}
+		default:
+			return fmt.Errorf("unsupported slice element type: %v", elemType.Kind())
+		}
+	}
+
+	field.Set(slice)
+	return nil
 }
 
 func detectContentType(data []byte) (string, error) {
