@@ -20,7 +20,12 @@ Globals:
       AllowHeaders: "'*'"
       AllowOrigin: "'*'"
     BinaryMediaTypes:
+      - image/png
+      - image/jpeg
+      - image/gif
+      - application/octet-stream
       - "multipart/form-data"
+      - "multipart/*"
 Resources:
   PersonalWebsiteTableLocal:
     Type: AWS::DynamoDB::Table
