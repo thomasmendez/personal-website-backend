@@ -10,10 +10,13 @@ import (
 	"mime"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -44,6 +47,78 @@ func (s *Service) getProjectsHandler(ctx context.Context, request events.APIGate
 		}, err
 	}
 
+	// TODO: Generate presigned URL for mediaLink
+	for i, project := range projects {
+		if project.MediaLink != nil {
+			if strings.Contains(*project.MediaLink, ".s3.amazonaws.com") {
+				cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(os.Getenv("AWS_REGION")))
+				if err != nil {
+					log.Print(err.Error())
+					errRes := ErrorResponse{
+						Message: "There was an error in getting presigned URL for projects",
+					}
+					res, _ := json.Marshal(errRes)
+					return events.APIGatewayProxyResponse{
+						StatusCode: http.StatusInternalServerError,
+						Body:       string(res),
+					}, err
+				}
+
+				s3Client := s3.NewFromConfig(cfg)
+
+				parsedURL, err := url.Parse(*project.MediaLink)
+				if err != nil {
+					log.Print(err.Error())
+					errRes := ErrorResponse{
+						Message: "There was an error in parsing url for MediaLink",
+					}
+					res, _ := json.Marshal(errRes)
+					return events.APIGatewayProxyResponse{
+						StatusCode: http.StatusInternalServerError,
+						Body:       string(res),
+					}, err
+				}
+
+				filename := path.Base(parsedURL.Path)
+
+				// Check if we actually got a filename (not empty or just "/")
+				if filename == "." || filename == "/" || filename == "" {
+					errRes := ErrorResponse{
+						Message: "no filename found in MediaLink",
+					}
+					res, _ := json.Marshal(errRes)
+					return events.APIGatewayProxyResponse{
+						StatusCode: http.StatusInternalServerError,
+						Body:       string(res),
+					}, err
+				}
+				// Generate pre-signed URL
+				presignClient := s3.NewPresignClient(s3Client)
+				presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
+					Bucket: aws.String(os.Getenv("BUCKET_NAME")),
+					Key:    aws.String(filename),
+				}, func(opts *s3.PresignOptions) {
+					opts.Expires = time.Duration(60 * time.Minute) // URL expires in 1 hour
+				})
+
+				if err != nil {
+					log.Print(err.Error())
+					errRes := ErrorResponse{
+						Message: "failed to generate presigned URL",
+					}
+					res, _ := json.Marshal(errRes)
+					return events.APIGatewayProxyResponse{
+						StatusCode: http.StatusInternalServerError,
+						Body:       string(res),
+					}, err
+				}
+				projects[i].MediaLink = &presignedReq.URL
+			} else {
+				log.Printf("mediaLink is not a valid S3 link, return as is")
+			}
+		}
+	}
+
 	projectsJson, err := json.Marshal(projects)
 
 	if err != nil {
@@ -68,7 +143,9 @@ func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGat
 	var newProject *models.Project
 	var imageFile FileData
 	var err error
-	if request.IsBase64Encoded || strings.Contains(request.Headers["Content-Type"], "'multipart/form-data") {
+
+	fmt.Printf("request: %v", request)
+	if request.IsBase64Encoded || strings.Contains(getContentType(request.Headers), "'multipart/form-data") {
 		newProject, imageFile, err = parseFormData[models.Project](request)
 		if err != nil {
 			fmt.Println("Error parsing form data: %w", err)
@@ -77,7 +154,7 @@ func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGat
 				Body:       resError(http.StatusBadRequest),
 			}, err
 		}
-	} else if !request.IsBase64Encoded && strings.Contains(request.Headers["Content-Type"], "application/json") {
+	} else if !request.IsBase64Encoded && strings.Contains(getContentType(request.Headers), "application/json") {
 		err = json.Unmarshal([]byte(request.Body), &newProject)
 		if err != nil {
 			log.Printf("error in serializing json: %v", err)
@@ -154,7 +231,7 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 	var updateProject *models.Project
 	var imageFile FileData
 	var err error
-	if request.IsBase64Encoded || strings.Contains(request.Headers["Content-Type"], "'multipart/form-data") {
+	if request.IsBase64Encoded || strings.Contains(getContentType(request.Headers), "'multipart/form-data") {
 		updateProject, imageFile, err = parseFormData[models.Project](request)
 		if err != nil {
 			fmt.Println("Error parsing form data: %w", err)
@@ -163,7 +240,7 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 				Body:       resError(http.StatusBadRequest),
 			}, err
 		}
-	} else if !request.IsBase64Encoded && strings.Contains(request.Headers["Content-Type"], "application/json") {
+	} else if !request.IsBase64Encoded && strings.Contains(getContentType(request.Headers), "application/json") {
 		err = json.Unmarshal([]byte(request.Body), &updateProject)
 		if err != nil {
 			log.Printf("error in serializing json: %v", err)
@@ -332,6 +409,20 @@ func sendFileToS3(ctx context.Context, file FileData) (string, error) {
 	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s", os.Getenv("BUCKET_NAME"), file.Filename), nil
 }
 
+func getContentType(headers map[string]string) string {
+	// Try different case variations
+	if ct := headers["Content-Type"]; ct != "" {
+		return ct
+	}
+	if ct := headers["content-type"]; ct != "" { // this is dumb
+		return ct
+	}
+	if ct := headers["Content-type"]; ct != "" { // also dumb
+		return ct
+	}
+	return ""
+}
+
 // parse form data from request body
 func parseFormData[T any](request events.APIGatewayProxyRequest) (*T, FileData, error) {
 	var bodyBytes []byte
@@ -340,7 +431,7 @@ func parseFormData[T any](request events.APIGatewayProxyRequest) (*T, FileData, 
 		return nil, FileData{}, fmt.Errorf("failed to decode base64 body: %w", err)
 	}
 
-	_, params, err := mime.ParseMediaType(request.Headers["Content-Type"])
+	_, params, err := mime.ParseMediaType(getContentType(request.Headers))
 	if err != nil {
 		return nil, FileData{}, fmt.Errorf("failed to parse content type: %w", err)
 	}

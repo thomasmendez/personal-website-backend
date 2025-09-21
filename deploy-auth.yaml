@@ -28,11 +28,34 @@ Globals:
       AllowMethods: "'*'"
       AllowHeaders: "'*'"
       AllowOrigin: "'*'"
+    BinaryMediaTypes:
+      - image/png
+      - image/jpeg
+      - image/gif
+      - application/octet-stream
+      - "multipart/form-data"
+      - "multipart/*"
 Resources:
+  # S3 Bucket for file storage
+  PersonalWebsiteFilesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-s3
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
   PersonalWebsiteTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub "PersonalWebsiteTableAuth${Environment}"
+      TableName: !Sub ${AWS::StackName}-Table
       AttributeDefinitions:
         - AttributeName: personalWebsiteType
           AttributeType: S
@@ -73,6 +96,24 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref PersonalWebsiteTable
+        # Add S3 permissions
+        - S3CrudPolicy:
+            BucketName: !Ref PersonalWebsiteFilesBucket
+        # Alternative: You can use a more specific policy
+        # - Version: "2012-10-17"
+        #   Statement:
+        #     - Effect: Allow
+        #       Action:
+        #         - s3:PutObject
+        #         - s3:PutObjectAcl
+        #         - s3:GetObject
+        #         - s3:GetObjectAcl
+        #         - s3:DeleteObject
+        #       Resource: !Sub "${PersonalWebsiteFilesBucket}/*"
+        #     - Effect: Allow
+        #       Action:
+        #         - s3:ListBucket
+        #       Resource: !Ref PersonalWebsiteFilesBucket
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
           ENV: !Sub "${Environment}"
@@ -81,6 +122,7 @@ Resources:
           ORIGIN: !Sub "${Origin}"
           REGION: us-east-2
           TABLE_NAME: !Ref PersonalWebsiteTable
+          BUCKET_NAME: !Ref PersonalWebsiteFilesBucket
   FunctionLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Delete
@@ -134,6 +176,11 @@ Outputs:
   PersonalWebsiteFunctionIamRole:
     Description: Implicit IAM Role created for Personal Website function
     Value: !GetAtt PersonalWebsiteFunctionRole.Arn
+  S3BucketName:
+    Description: Name of the S3 bucket for file storage
+    Value: !Ref PersonalWebsiteFilesBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-S3BucketName"
   LoginURL:
     Value: !Sub https://${HostedUI}.auth.${AWS::Region}.amazoncognito.com/oauth2/authorize?client_id=${AppClient}&response_type=token&scope=email+openid+profile&redirect_uri=https://jwt.io
     Description: Output is a URL for an Amazon Cognito hosted UI where clients can sign up and sign in to receive a JWT. After a client signs in, the client is redirected to jwt.io where the token details can be viewed.
