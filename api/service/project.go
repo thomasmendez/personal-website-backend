@@ -10,27 +10,15 @@ import (
 	"mime"
 	"mime/multipart"
 	"net/http"
-	"net/url"
-	"os"
-	"path"
 	"reflect"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go/aws"
+	"github.com/thomasmendez/personal-website-backend/api/bucket"
 	"github.com/thomasmendez/personal-website-backend/api/database"
 	"github.com/thomasmendez/personal-website-backend/api/models"
 )
-
-type FileData struct {
-	Filename    string
-	Content     []byte
-	ContentType string
-}
 
 func (s *Service) getProjectsHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	projects, err := database.GetProjects(s.DB, s.TableName)
@@ -47,74 +35,21 @@ func (s *Service) getProjectsHandler(ctx context.Context, request events.APIGate
 		}, err
 	}
 
-	// TODO: Generate presigned URL for mediaLink
+	// Generate presigned URL for mediaLink
 	for i, project := range projects {
 		if project.MediaLink != nil {
 			if strings.Contains(*project.MediaLink, ".s3.amazonaws.com") {
-				cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(os.Getenv("AWS_REGION")))
+				presignedReq, err := bucket.GeneratePresignedURL(ctx, s.S3.Client, s.BucketName, *project.MediaLink)
 				if err != nil {
-					log.Print(err.Error())
-					errRes := ErrorResponse{
-						Message: "There was an error in getting presigned URL for projects",
-					}
-					res, _ := json.Marshal(errRes)
+					log.Printf("error in generating presigned URL: %v", err)
 					return events.APIGatewayProxyResponse{
 						StatusCode: http.StatusInternalServerError,
-						Body:       string(res),
-					}, err
-				}
-
-				s3Client := s3.NewFromConfig(cfg)
-
-				parsedURL, err := url.Parse(*project.MediaLink)
-				if err != nil {
-					log.Print(err.Error())
-					errRes := ErrorResponse{
-						Message: "There was an error in parsing url for MediaLink",
-					}
-					res, _ := json.Marshal(errRes)
-					return events.APIGatewayProxyResponse{
-						StatusCode: http.StatusInternalServerError,
-						Body:       string(res),
-					}, err
-				}
-
-				filename := path.Base(parsedURL.Path)
-
-				// Check if we actually got a filename (not empty or just "/")
-				if filename == "." || filename == "/" || filename == "" {
-					errRes := ErrorResponse{
-						Message: "no filename found in MediaLink",
-					}
-					res, _ := json.Marshal(errRes)
-					return events.APIGatewayProxyResponse{
-						StatusCode: http.StatusInternalServerError,
-						Body:       string(res),
-					}, err
-				}
-				// Generate pre-signed URL
-				presignClient := s3.NewPresignClient(s3Client)
-				presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
-					Bucket: aws.String(os.Getenv("BUCKET_NAME")),
-					Key:    aws.String(filename),
-				}, func(opts *s3.PresignOptions) {
-					opts.Expires = time.Duration(60 * time.Minute) // URL expires in 1 hour
-				})
-
-				if err != nil {
-					log.Print(err.Error())
-					errRes := ErrorResponse{
-						Message: "failed to generate presigned URL",
-					}
-					res, _ := json.Marshal(errRes)
-					return events.APIGatewayProxyResponse{
-						StatusCode: http.StatusInternalServerError,
-						Body:       string(res),
+						Body:       resError(http.StatusInternalServerError),
 					}, err
 				}
 				projects[i].MediaLink = &presignedReq.URL
 			} else {
-				log.Printf("mediaLink is not a valid S3 link, return as is")
+				log.Printf("mediaLink for project %s is not a valid S3 link, return as is", project.SortValue)
 			}
 		}
 	}
@@ -141,7 +76,7 @@ func (s *Service) getProjectsHandler(ctx context.Context, request events.APIGate
 
 func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	var newProject *models.Project
-	var imageFile FileData
+	var imageFile models.FileData
 	var err error
 
 	fmt.Printf("request: %v", request)
@@ -182,7 +117,7 @@ func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGat
 	log.Printf("newProject: %v after parse", newProject)
 
 	if imageFile.Filename != "" && imageFile.Content != nil && imageFile.ContentType != "" {
-		mediaLink, err := sendFileToS3(ctx, imageFile)
+		mediaLink, err := bucket.SendFileToS3(ctx, s.S3.Client, s.BucketName, imageFile)
 		if err != nil {
 			fmt.Println("failed to upload to S3: %w", err)
 			return events.APIGatewayProxyResponse{
@@ -229,7 +164,7 @@ func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGat
 
 func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	var updateProject *models.Project
-	var imageFile FileData
+	var imageFile models.FileData
 	var err error
 	if request.IsBase64Encoded || strings.Contains(getContentType(request.Headers), "'multipart/form-data") {
 		updateProject, imageFile, err = parseFormData[models.Project](request)
@@ -267,7 +202,7 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 	}
 
 	if imageFile.Filename != "" && imageFile.Content != nil && imageFile.ContentType != "" {
-		mediaLink, err := sendFileToS3(ctx, imageFile)
+		mediaLink, err := bucket.SendFileToS3(ctx, s.S3.Client, s.BucketName, imageFile)
 		if err != nil {
 			fmt.Println("failed to upload to S3: %w", err)
 			return events.APIGatewayProxyResponse{
@@ -335,7 +270,7 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 	}
 
 	if existingProject.MediaLink != nil && *existingProject.MediaLink != "" {
-		err = deleteFileFromS3(ctx, *existingProject.MediaLink)
+		err = bucket.DeleteFileFromS3(ctx, s.S3.Client, s.BucketName, *existingProject.MediaLink)
 		if err != nil {
 			fmt.Println("There was an error in deleting file from S3: %w", err)
 			return events.APIGatewayProxyResponse{
@@ -365,50 +300,6 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 	}, err
 }
 
-// delete file from s3
-func deleteFileFromS3(ctx context.Context, mediaLink string) error {
-	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(os.Getenv("AWS_REGION")))
-	if err != nil {
-		return fmt.Errorf("failed to load AWS config: %w", err)
-	}
-
-	s3Client := s3.NewFromConfig(cfg)
-
-	fileName := strings.Split(mediaLink, "/")[len(strings.Split(mediaLink, "/"))-1]
-
-	_, err = s3Client.DeleteObject(ctx, &s3.DeleteObjectInput{
-		Bucket: aws.String(os.Getenv("BUCKET_NAME")),
-		Key:    aws.String(fileName),
-	})
-	if err != nil {
-		return fmt.Errorf("failed to delete file from S3: %w", err)
-	}
-
-	return nil
-}
-
-// send file to s3
-func sendFileToS3(ctx context.Context, file FileData) (string, error) {
-	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(os.Getenv("AWS_REGION")))
-	if err != nil {
-		return "", fmt.Errorf("failed to load AWS config: %w", err)
-	}
-
-	s3Client := s3.NewFromConfig(cfg)
-
-	_, err = s3Client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:      aws.String(os.Getenv("BUCKET_NAME")),
-		Key:         aws.String(file.Filename),
-		Body:        strings.NewReader(string(file.Content)),
-		ContentType: aws.String(file.ContentType),
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to upload to S3: %w", err)
-	}
-
-	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s", os.Getenv("BUCKET_NAME"), file.Filename), nil
-}
-
 func getContentType(headers map[string]string) string {
 	// Try different case variations
 	if ct := headers["Content-Type"]; ct != "" {
@@ -424,27 +315,27 @@ func getContentType(headers map[string]string) string {
 }
 
 // parse form data from request body
-func parseFormData[T any](request events.APIGatewayProxyRequest) (*T, FileData, error) {
+func parseFormData[T any](request events.APIGatewayProxyRequest) (*T, models.FileData, error) {
 	var bodyBytes []byte
 	bodyBytes, err := base64.StdEncoding.DecodeString(request.Body)
 	if err != nil {
-		return nil, FileData{}, fmt.Errorf("failed to decode base64 body: %w", err)
+		return nil, models.FileData{}, fmt.Errorf("failed to decode base64 body: %w", err)
 	}
 
 	_, params, err := mime.ParseMediaType(getContentType(request.Headers))
 	if err != nil {
-		return nil, FileData{}, fmt.Errorf("failed to parse content type: %w", err)
+		return nil, models.FileData{}, fmt.Errorf("failed to parse content type: %w", err)
 	}
 
 	boundary := params["boundary"]
 	if boundary == "" {
-		return nil, FileData{}, fmt.Errorf("no boundary found in content type")
+		return nil, models.FileData{}, fmt.Errorf("no boundary found in content type")
 	}
 
 	reader := multipart.NewReader(strings.NewReader(string(bodyBytes)), boundary)
 
 	var result T
-	file := FileData{}
+	file := models.FileData{}
 
 	for {
 		part, err := reader.NextPart()
@@ -452,13 +343,13 @@ func parseFormData[T any](request events.APIGatewayProxyRequest) (*T, FileData, 
 			break
 		}
 		if err != nil {
-			return nil, FileData{}, fmt.Errorf("failed to get next part: %w", err)
+			return nil, models.FileData{}, fmt.Errorf("failed to get next part: %w", err)
 		}
 
 		content, err := io.ReadAll(part)
 		if err != nil {
 			part.Close()
-			return nil, FileData{}, fmt.Errorf("failed to read part content: %w", err)
+			return nil, models.FileData{}, fmt.Errorf("failed to read part content: %w", err)
 		}
 
 		fieldName := part.FormName()
@@ -466,13 +357,13 @@ func parseFormData[T any](request events.APIGatewayProxyRequest) (*T, FileData, 
 
 		if filename != "" {
 			if content == nil {
-				return nil, FileData{}, fmt.Errorf("file content is nil")
+				return nil, models.FileData{}, fmt.Errorf("file content is nil")
 			}
 			contentType, err := detectContentType(content)
 			if err != nil {
-				return nil, FileData{}, fmt.Errorf("failed to detect content type: %w", err)
+				return nil, models.FileData{}, fmt.Errorf("failed to detect content type: %w", err)
 			}
-			file = FileData{
+			file = models.FileData{
 				Filename:    filename,
 				Content:     content,
 				ContentType: contentType,
@@ -491,7 +382,7 @@ func parseFormData[T any](request events.APIGatewayProxyRequest) (*T, FileData, 
 				continue // Skip invalid or non-settable fields
 			}
 			if err := setFieldValue(field, content); err != nil {
-				return nil, FileData{}, fmt.Errorf("failed to set field value: %w", err)
+				return nil, models.FileData{}, fmt.Errorf("failed to set field value: %w", err)
 			}
 		}
 
