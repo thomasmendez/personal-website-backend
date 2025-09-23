@@ -28,19 +28,18 @@ func (s *Service) getProjectsHandler(ctx context.Context, request events.APIGate
 
 	// Generate presigned URL for mediaLink
 	for i, project := range projects {
-		if project.MediaLink != nil {
-			if strings.Contains(*project.MediaLink, ".s3.amazonaws.com") {
-				presignedReq, err := s.S3.GeneratePresignedURL(ctx, *project.MediaLink)
+		if project.MediaLinkIsS3Bucket() {
+			if fileName, err := project.GetFileNameFromMediaLink(); fileName != "" {
+				presignedReq, err := s.S3.GeneratePresignedURL(ctx, fileName)
 				if err != nil {
 					fmt.Printf("error in generating presigned URL: %v", err)
-					return events.APIGatewayProxyResponse{
-						StatusCode: http.StatusInternalServerError,
-						Body:       resError(http.StatusInternalServerError),
-					}, err
+					fmt.Printf("skipping generation of presigned URL for project %s", project.SortValue)
+				} else {
+					projects[i].MediaLink = &presignedReq.URL
 				}
-				projects[i].MediaLink = &presignedReq.URL
 			} else {
-				fmt.Printf("mediaLink for project %s is not a valid S3 link, return as is", project.SortValue)
+				fmt.Printf("error in getting filename from mediaLink: %v", err)
+				fmt.Printf("skipping generation of presigned URL for project %s", project.SortValue)
 			}
 		}
 	}
@@ -269,31 +268,28 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 	}
 
 	if existingProject.MediaLinkIsS3Bucket() {
-		fileName, err := existingProject.GetFileNameFromMediaLink()
-		if err != nil {
-			fmt.Printf("error in getting filename from mediaLink: %v", err)
-			return events.APIGatewayProxyResponse{
-				StatusCode: http.StatusInternalServerError,
-				Body:       resError(http.StatusInternalServerError),
-			}, err
-		}
-		if exists, err := s.S3.FileExistsInS3(ctx, fileName); exists {
-			err = s.S3.DeleteFileFromS3(ctx, *existingProject.MediaLink)
-			if err != nil {
-				fmt.Printf("error in deleting file from S3: %v", err)
-				return events.APIGatewayProxyResponse{
-					StatusCode: http.StatusInternalServerError,
-					Body:       resError(http.StatusInternalServerError),
-				}, err
+		if fileName, err := existingProject.GetFileNameFromMediaLink(); fileName != "" {
+			if exists, err := s.S3.FileExistsInS3(ctx, fileName); exists {
+				err = s.S3.DeleteFileFromS3(ctx, *existingProject.MediaLink)
+				if err != nil {
+					fmt.Printf("error in deleting file from S3: %v", err)
+					return events.APIGatewayProxyResponse{
+						StatusCode: http.StatusInternalServerError,
+						Body:       resError(http.StatusInternalServerError),
+					}, err
+				}
+			} else {
+				if err != nil {
+					var nf *types.NoSuchKey
+					if errors.As(err, &nf) {
+						fmt.Printf("file %s does not exist in S3", *existingProject.MediaLink)
+					}
+					fmt.Printf("error in getting file from S3: %v", err)
+				}
 			}
 		} else {
-			if err != nil {
-				var nf *types.NoSuchKey
-				if errors.As(err, &nf) {
-					fmt.Printf("file %s does not exist in S3", *existingProject.MediaLink)
-				}
-				fmt.Printf("error in getting file from S3: %v", err)
-			}
+			fmt.Printf("error in getting filename from mediaLink: %v", err)
+			fmt.Printf("skipping deletion of file from S3")
 		}
 	}
 
