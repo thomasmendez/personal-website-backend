@@ -2,15 +2,15 @@ package bucket
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"net/url"
-	"path"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/thomasmendez/personal-website-backend/api/models"
 )
 
@@ -39,18 +39,29 @@ func (b *Bucket) SendFileToS3(ctx context.Context, file models.FileData) (string
 	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s", b.BucketName, file.Filename), nil
 }
 
-func (b *Bucket) DeleteFileFromS3(ctx context.Context, mediaLink string) error {
-	fileName, err := GetFileNameFromMediaLink(mediaLink)
+func (b *Bucket) FileExistsInS3(ctx context.Context, fileName string) (bool, error) {
+	_, err := b.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(b.BucketName),
+		Key:    aws.String(fileName),
+	})
 	if err != nil {
-		return fmt.Errorf("failed to get filename from mediaLink: %w", err)
+		// Check if it's a "not found" error
+		var nf *types.NoSuchKey
+		if errors.As(err, &nf) {
+			return false, nil // File doesn't exist, but no error
+		}
+		return false, err // Some other error occurred
 	}
+	return true, nil
+}
 
+func (b *Bucket) DeleteFileFromS3(ctx context.Context, fileName string) error {
 	inputDelete := &s3.DeleteObjectInput{
 		Bucket: aws.String(b.BucketName),
 		Key:    aws.String(fileName),
 	}
 
-	_, err = b.DeleteObject(ctx, inputDelete)
+	_, err := b.DeleteObject(ctx, inputDelete)
 	if err != nil {
 		return fmt.Errorf("failed to delete file from S3: %w", err)
 	}
@@ -58,12 +69,7 @@ func (b *Bucket) DeleteFileFromS3(ctx context.Context, mediaLink string) error {
 	return nil
 }
 
-func (b *Bucket) GeneratePresignedURL(ctx context.Context, mediaLink string) (*v4.PresignedHTTPRequest, error) {
-	fileName, err := GetFileNameFromMediaLink(mediaLink)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get filename from mediaLink: %w", err)
-	}
-
+func (b *Bucket) GeneratePresignedURL(ctx context.Context, fileName string) (*v4.PresignedHTTPRequest, error) {
 	inputGet := &s3.GetObjectInput{
 		Bucket: aws.String(b.BucketName),
 		Key:    aws.String(fileName),
@@ -78,20 +84,4 @@ func (b *Bucket) GeneratePresignedURL(ctx context.Context, mediaLink string) (*v
 	}
 
 	return presignedReq, nil
-}
-
-func GetFileNameFromMediaLink(mediaLink string) (string, error) {
-	parsedURL, err := url.Parse(mediaLink)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse url: %w", err)
-	}
-
-	filename := path.Base(parsedURL.Path)
-
-	// Check if we actually got a filename (not empty or just "/")
-	if filename == "." || filename == "/" || filename == "" {
-		return "", fmt.Errorf("no filename found in MediaLink")
-	}
-
-	return filename, nil
 }
