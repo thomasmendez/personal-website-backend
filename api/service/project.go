@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -113,6 +112,14 @@ func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGat
 			}, err
 		}
 		newProject.MediaLink = &mediaLink
+		// get presign url
+		presignedReq, err := s.S3.GeneratePresignedURL(ctx, imageFile.Filename)
+		if err != nil {
+			fmt.Printf("error in generating presigned URL: %v", err)
+			fmt.Printf("skipping generation of presigned URL for project %s", newProject.SortValue)
+		} else {
+			newProject.MediaLink = &presignedReq.URL
+		}
 	} else {
 		fmt.Printf("no valid image file provided in request")
 	}
@@ -244,12 +251,12 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 }
 
 func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	var deleteProject models.Project
+	var deleteProject *models.Project
 
 	fmt.Printf("DELETE project request: %v", request)
 	err := json.Unmarshal([]byte(request.Body), &deleteProject)
 	if err != nil {
-		fmt.Printf("error in deserializing project: %v", err)
+		fmt.Printf("error in deserializing json: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Body:       resError(http.StatusBadRequest),
@@ -259,8 +266,8 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 	var existingProject models.Project
 	err = database.GetItem(s.DB, s.TableName, deleteProject.PersonalWebsiteType, deleteProject.SortValue, &existingProject)
 
-	if !reflect.DeepEqual(deleteProject, existingProject) {
-		fmt.Printf("error in deleting project: %v", err)
+	if err != nil {
+		fmt.Printf("error in verifying project to delete: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusNotFound,
 			Body:       resError(http.StatusNotFound),
@@ -270,7 +277,7 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 	if existingProject.MediaLinkIsS3Bucket() {
 		if fileName, err := existingProject.GetFileNameFromMediaLink(); fileName != "" {
 			if exists, err := s.S3.FileExistsInS3(ctx, fileName); exists {
-				err = s.S3.DeleteFileFromS3(ctx, *existingProject.MediaLink)
+				err = s.S3.DeleteFileFromS3(ctx, fileName)
 				if err != nil {
 					fmt.Printf("error in deleting file from S3: %v", err)
 					return events.APIGatewayProxyResponse{
@@ -282,13 +289,13 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 				if err != nil {
 					var nf *types.NoSuchKey
 					if errors.As(err, &nf) {
-						fmt.Printf("file %s does not exist in S3", *existingProject.MediaLink)
+						fmt.Printf("file %s does not exist in S3", fileName)
 					}
 					fmt.Printf("error in getting file from S3: %v", err)
 				}
 			}
 		} else {
-			fmt.Printf("error in getting filename from mediaLink: %v", err)
+			fmt.Printf("error in getting filename from mediaLink %s: %v", *existingProject.MediaLink, err)
 			fmt.Printf("skipping deletion of file from S3")
 		}
 	}
@@ -299,7 +306,7 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 	if err != nil {
 		fmt.Printf("error in deleting project: %v", err)
 		errRes := ErrorResponse{
-			Message: fmt.Sprintf("error in deleting project with sortValue of: %s", deleteProject.SortValue),
+			Message: fmt.Sprintf("error in deleting project: %s", deleteProject.SortValue),
 		}
 		res, _ := json.Marshal(errRes)
 		return events.APIGatewayProxyResponse{
