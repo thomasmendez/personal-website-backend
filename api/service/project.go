@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"reflect"
 	"strings"
@@ -20,7 +19,7 @@ func (s *Service) getProjectsHandler(ctx context.Context, request events.APIGate
 	projects, err := database.GetProjects(s.DB, s.TableName)
 
 	if err != nil {
-		log.Printf("error in getting projects: %v", err)
+		fmt.Printf("error in getting projects: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusInternalServerError,
 			Body:       resError(http.StatusInternalServerError),
@@ -33,7 +32,7 @@ func (s *Service) getProjectsHandler(ctx context.Context, request events.APIGate
 			if strings.Contains(*project.MediaLink, ".s3.amazonaws.com") {
 				presignedReq, err := s.S3.GeneratePresignedURL(ctx, *project.MediaLink)
 				if err != nil {
-					log.Printf("error in generating presigned URL: %v", err)
+					fmt.Printf("error in generating presigned URL: %v", err)
 					return events.APIGatewayProxyResponse{
 						StatusCode: http.StatusInternalServerError,
 						Body:       resError(http.StatusInternalServerError),
@@ -41,7 +40,7 @@ func (s *Service) getProjectsHandler(ctx context.Context, request events.APIGate
 				}
 				projects[i].MediaLink = &presignedReq.URL
 			} else {
-				log.Printf("mediaLink for project %s is not a valid S3 link, return as is", project.SortValue)
+				fmt.Printf("mediaLink for project %s is not a valid S3 link, return as is", project.SortValue)
 			}
 		}
 	}
@@ -49,7 +48,7 @@ func (s *Service) getProjectsHandler(ctx context.Context, request events.APIGate
 	projectsJson, err := json.Marshal(projects)
 
 	if err != nil {
-		log.Printf("error in serializing projects: %v", err)
+		fmt.Printf("error in serializing projects: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusInternalServerError,
 			Body:       resError(http.StatusInternalServerError),
@@ -67,36 +66,36 @@ func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGat
 	var imageFile models.FileData
 	var err error
 
-	log.Printf("POST project request: %v", request)
+	fmt.Printf("POST project request: %v", request)
 	if request.IsBase64Encoded || strings.Contains(getContentType(request.Headers), "'multipart/form-data") {
-		log.Println("parsing form data")
+		fmt.Println("parsing form data")
 		newProject, imageFile, err = parseFormData[models.Project](request)
 		if err != nil {
-			log.Printf("error parsing form data: %v", err)
+			fmt.Printf("error parsing form data: %v", err)
 			return events.APIGatewayProxyResponse{
 				StatusCode: http.StatusBadRequest,
 				Body:       resError(http.StatusBadRequest),
 			}, err
 		}
 	} else if !request.IsBase64Encoded && strings.Contains(getContentType(request.Headers), "application/json") {
-		log.Println("parsing json")
+		fmt.Println("parsing json")
 		err = json.Unmarshal([]byte(request.Body), &newProject)
 		if err != nil {
-			log.Printf("error in deserializing json: %v", err)
+			fmt.Printf("error in deserializing json: %v", err)
 			return events.APIGatewayProxyResponse{
 				StatusCode: http.StatusBadRequest,
 				Body:       resError(http.StatusBadRequest),
 			}, err
 		}
 		if newProject.MediaLink != nil {
-			log.Printf("error: mediaLink has invalid content, please use multipart/form-data")
+			fmt.Printf("error: mediaLink has invalid content, please use multipart/form-data")
 			return events.APIGatewayProxyResponse{
 				StatusCode: http.StatusBadRequest,
 				Body:       resError(http.StatusBadRequest),
 			}, err
 		}
 	} else {
-		log.Println("POST project request format is invalid")
+		fmt.Println("POST project request format is invalid")
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Body:       resError(http.StatusBadRequest),
@@ -105,7 +104,7 @@ func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGat
 
 	// Upload image to S3 if it exists
 	if imageFile.Filename != "" && imageFile.Content != nil && imageFile.ContentType != "" {
-		log.Printf("uploading image file: %s to S3", imageFile.Filename)
+		fmt.Printf("uploading image file: %s to S3", imageFile.Filename)
 		mediaLink, err := s.S3.SendFileToS3(ctx, imageFile)
 		if err != nil {
 			fmt.Println("failed to upload to S3: %w", err)
@@ -116,14 +115,14 @@ func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGat
 		}
 		newProject.MediaLink = &mediaLink
 	} else {
-		log.Printf("no valid image file provided in request")
+		fmt.Printf("no valid image file provided in request")
 	}
 
-	log.Printf("adding new project: %v to database", newProject)
+	fmt.Printf("adding new project: %v to database", newProject)
 	project, err := database.PostProject(s.DB, s.TableName, *newProject)
 
 	if err != nil {
-		log.Printf("error in inserting project: %v", err)
+		fmt.Printf("error in inserting project: %v", err)
 		errRes := ErrorResponse{
 			Message: fmt.Sprintf("error in inserting project: %s", newProject.SortValue),
 		}
@@ -137,7 +136,7 @@ func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGat
 	projectJson, err := json.Marshal(project)
 
 	if err != nil {
-		log.Printf("error in serializing project: %v", err)
+		fmt.Printf("error in serializing project: %v", err)
 		errRes := ErrorResponse{
 			Message: fmt.Sprintf("error in project response for: %s", newProject.SortValue),
 		}
@@ -159,22 +158,22 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 	var imageFile models.FileData
 	var err error
 
-	log.Printf("UPDATE project request: %v", request)
+	fmt.Printf("UPDATE project request: %v", request)
 	if request.IsBase64Encoded || strings.Contains(getContentType(request.Headers), "'multipart/form-data") {
-		log.Printf("parsing form data")
+		fmt.Printf("parsing form data")
 		updateProject, imageFile, err = parseFormData[models.Project](request)
 		if err != nil {
-			log.Printf("error parsing form data: %v", err)
+			fmt.Printf("error parsing form data: %v", err)
 			return events.APIGatewayProxyResponse{
 				StatusCode: http.StatusBadRequest,
 				Body:       resError(http.StatusBadRequest),
 			}, err
 		}
 	} else if !request.IsBase64Encoded && strings.Contains(getContentType(request.Headers), "application/json") {
-		log.Printf("parsing json")
+		fmt.Printf("parsing json")
 		err = json.Unmarshal([]byte(request.Body), &updateProject)
 		if err != nil {
-			log.Printf("error in deserializing json: %v", err)
+			fmt.Printf("error in deserializing json: %v", err)
 			return events.APIGatewayProxyResponse{
 				StatusCode: http.StatusBadRequest,
 				Body:       resError(http.StatusBadRequest),
@@ -182,7 +181,7 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 		}
 		if updateProject.MediaLink != nil {
 			if !strings.HasPrefix(*updateProject.MediaLink, "http") {
-				log.Printf("error: mediaLink has invalid content, please use multipart/form-data")
+				fmt.Printf("error: mediaLink has invalid content, please use multipart/form-data")
 				return events.APIGatewayProxyResponse{
 					StatusCode: http.StatusBadRequest,
 					Body:       resError(http.StatusBadRequest),
@@ -190,7 +189,7 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 			}
 		}
 	} else {
-		log.Println("PUT project request format is invalid")
+		fmt.Println("PUT project request format is invalid")
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Body:       resError(http.StatusBadRequest),
@@ -198,10 +197,10 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 	}
 
 	if imageFile.Filename != "" && imageFile.Content != nil && imageFile.ContentType != "" {
-		log.Printf("uploading image file: %s to S3", imageFile.Filename)
+		fmt.Printf("uploading image file: %s to S3", imageFile.Filename)
 		mediaLink, err := s.S3.SendFileToS3(ctx, imageFile)
 		if err != nil {
-			log.Printf("failed to upload to S3: %v", err)
+			fmt.Printf("failed to upload to S3: %v", err)
 			return events.APIGatewayProxyResponse{
 				StatusCode: http.StatusInternalServerError,
 				Body:       resError(http.StatusInternalServerError),
@@ -210,11 +209,11 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 		updateProject.MediaLink = &mediaLink
 	}
 
-	log.Printf("updating project: %v", updateProject)
+	fmt.Printf("updating project: %v", updateProject)
 	project, err := database.UpdateProject(s.DB, s.TableName, *updateProject)
 
 	if err != nil {
-		log.Printf("error in updating project: %v", err)
+		fmt.Printf("error in updating project: %v", err)
 		errRes := ErrorResponse{
 			Message: fmt.Sprintf("error in updating project with sortValue of: %s", updateProject.SortValue),
 		}
@@ -228,7 +227,7 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 	projectJson, err := json.Marshal(project)
 
 	if err != nil {
-		log.Printf("error in serializing project: %v", err)
+		fmt.Printf("error in serializing project: %v", err)
 		errRes := ErrorResponse{
 			Message: fmt.Sprintf("error in updating project response with sortValue of: %s", updateProject.SortValue),
 		}
@@ -248,10 +247,10 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	var deleteProject models.Project
 
-	log.Printf("DELETE project request: %v", request)
+	fmt.Printf("DELETE project request: %v", request)
 	err := json.Unmarshal([]byte(request.Body), &deleteProject)
 	if err != nil {
-		log.Printf("error in deserializing project: %v", err)
+		fmt.Printf("error in deserializing project: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Body:       resError(http.StatusBadRequest),
@@ -262,7 +261,7 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 	err = database.GetItem(s.DB, s.TableName, deleteProject.PersonalWebsiteType, deleteProject.SortValue, &existingProject)
 
 	if !reflect.DeepEqual(deleteProject, existingProject) {
-		log.Printf("error in deleting project: %v", err)
+		fmt.Printf("error in deleting project: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusNotFound,
 			Body:       resError(http.StatusNotFound),
@@ -272,7 +271,7 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 	if existingProject.MediaLinkIsS3Bucket() {
 		fileName, err := existingProject.GetFileNameFromMediaLink()
 		if err != nil {
-			log.Printf("error in getting filename from mediaLink: %v", err)
+			fmt.Printf("error in getting filename from mediaLink: %v", err)
 			return events.APIGatewayProxyResponse{
 				StatusCode: http.StatusInternalServerError,
 				Body:       resError(http.StatusInternalServerError),
@@ -281,7 +280,7 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 		if exists, err := s.S3.FileExistsInS3(ctx, fileName); exists {
 			err = s.S3.DeleteFileFromS3(ctx, *existingProject.MediaLink)
 			if err != nil {
-				log.Printf("error in deleting file from S3: %v", err)
+				fmt.Printf("error in deleting file from S3: %v", err)
 				return events.APIGatewayProxyResponse{
 					StatusCode: http.StatusInternalServerError,
 					Body:       resError(http.StatusInternalServerError),
@@ -291,18 +290,18 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 			if err != nil {
 				var nf *types.NoSuchKey
 				if errors.As(err, &nf) {
-					log.Printf("file %s does not exist in S3", *existingProject.MediaLink)
+					fmt.Printf("file %s does not exist in S3", *existingProject.MediaLink)
 				}
-				log.Printf("error in getting file from S3: %v", err)
+				fmt.Printf("error in getting file from S3: %v", err)
 			}
 		}
 	}
 
-	log.Printf("deleting project: %v", deleteProject)
+	fmt.Printf("deleting project: %v", deleteProject)
 	err = database.DeleteItem(s.DB, s.TableName, deleteProject.PersonalWebsiteType, deleteProject.SortValue)
 
 	if err != nil {
-		log.Printf("error in deleting project: %v", err)
+		fmt.Printf("error in deleting project: %v", err)
 		errRes := ErrorResponse{
 			Message: fmt.Sprintf("error in deleting project with sortValue of: %s", deleteProject.SortValue),
 		}
