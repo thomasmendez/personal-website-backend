@@ -16,40 +16,41 @@ import (
 
 type Bucket struct {
 	*s3.Client
+	BucketName string
 }
 
-func NewBucket(cfg aws.Config) *Bucket {
-	return &Bucket{s3.NewFromConfig(cfg)}
+func NewBucket(cfg aws.Config, bucketName string) *Bucket {
+	return &Bucket{s3.NewFromConfig(cfg), bucketName}
 }
 
-func SendFileToS3(ctx context.Context, svc *s3.Client, bucketName string, file models.FileData) (string, error) {
+func (b *Bucket) SendFileToS3(ctx context.Context, file models.FileData) (string, error) {
 	inputPut := &s3.PutObjectInput{
-		Bucket:      aws.String(bucketName),
+		Bucket:      aws.String(b.BucketName),
 		Key:         aws.String(file.Filename),
 		Body:        strings.NewReader(string(file.Content)),
 		ContentType: aws.String(file.ContentType),
 	}
 
-	_, err := svc.PutObject(ctx, inputPut)
+	_, err := b.PutObject(ctx, inputPut)
 	if err != nil {
 		return "", fmt.Errorf("failed to upload to S3: %w", err)
 	}
 
-	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucketName, file.Filename), nil
+	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s", b.BucketName, file.Filename), nil
 }
 
-func DeleteFileFromS3(ctx context.Context, svc *s3.Client, bucketName string, mediaLink string) error {
+func (b *Bucket) DeleteFileFromS3(ctx context.Context, mediaLink string) error {
 	fileName, err := GetFileNameFromMediaLink(mediaLink)
 	if err != nil {
 		return fmt.Errorf("failed to get filename from mediaLink: %w", err)
 	}
 
 	inputDelete := &s3.DeleteObjectInput{
-		Bucket: aws.String(bucketName),
+		Bucket: aws.String(b.BucketName),
 		Key:    aws.String(fileName),
 	}
 
-	_, err = svc.DeleteObject(ctx, inputDelete)
+	_, err = b.DeleteObject(ctx, inputDelete)
 	if err != nil {
 		return fmt.Errorf("failed to delete file from S3: %w", err)
 	}
@@ -57,18 +58,18 @@ func DeleteFileFromS3(ctx context.Context, svc *s3.Client, bucketName string, me
 	return nil
 }
 
-func GeneratePresignedURL(ctx context.Context, svc *s3.Client, bucketName string, mediaLink string) (*v4.PresignedHTTPRequest, error) {
+func (b *Bucket) GeneratePresignedURL(ctx context.Context, mediaLink string) (*v4.PresignedHTTPRequest, error) {
 	fileName, err := GetFileNameFromMediaLink(mediaLink)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get filename from mediaLink: %w", err)
 	}
 
 	inputGet := &s3.GetObjectInput{
-		Bucket: aws.String(bucketName),
+		Bucket: aws.String(b.BucketName),
 		Key:    aws.String(fileName),
 	}
 
-	presignClient := s3.NewPresignClient(svc)
+	presignClient := s3.NewPresignClient(b.Client)
 	presignedReq, err := presignClient.PresignGetObject(ctx, inputGet, func(opts *s3.PresignOptions) {
 		opts.Expires = time.Duration(60 * time.Minute) // URL expires in 1 hour
 	})

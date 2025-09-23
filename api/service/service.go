@@ -16,11 +16,10 @@ import (
 )
 
 type Service struct {
-	DB         *database.Database
-	S3         *bucket.Bucket
-	TableName  string
-	BucketName string
-	Routes     *[]RouteHandler
+	DB        *database.Database
+	S3        *bucket.Bucket
+	TableName string
+	Routes    *[]RouteHandler
 }
 
 type RouteHandler struct {
@@ -84,10 +83,9 @@ func NewService() *Service {
 	}
 
 	s := &Service{
-		DB:         database.NewDatabase(awsSession),
-		S3:         bucket.NewBucket(awsConfig),
-		TableName:  tableName,
-		BucketName: s3BucketName,
+		DB:        database.NewDatabase(awsSession),
+		S3:        bucket.NewBucket(awsConfig, s3BucketName),
+		TableName: tableName,
 	}
 
 	s.Routes = addRoutes(s)

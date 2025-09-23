@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/thomasmendez/personal-website-backend/api/bucket"
 	"github.com/thomasmendez/personal-website-backend/api/database"
 	"github.com/thomasmendez/personal-website-backend/api/models"
 )
@@ -30,7 +29,7 @@ func (s *Service) getProjectsHandler(ctx context.Context, request events.APIGate
 	for i, project := range projects {
 		if project.MediaLink != nil {
 			if strings.Contains(*project.MediaLink, ".s3.amazonaws.com") {
-				presignedReq, err := bucket.GeneratePresignedURL(ctx, s.S3.Client, s.BucketName, *project.MediaLink)
+				presignedReq, err := s.S3.GeneratePresignedURL(ctx, *project.MediaLink)
 				if err != nil {
 					log.Printf("error in generating presigned URL: %v", err)
 					return events.APIGatewayProxyResponse{
@@ -105,7 +104,7 @@ func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGat
 	// Upload image to S3 if it exists
 	if imageFile.Filename != "" && imageFile.Content != nil && imageFile.ContentType != "" {
 		log.Printf("uploading image file: %s to S3", imageFile.Filename)
-		mediaLink, err := bucket.SendFileToS3(ctx, s.S3.Client, s.BucketName, imageFile)
+		mediaLink, err := s.S3.SendFileToS3(ctx, imageFile)
 		if err != nil {
 			fmt.Println("failed to upload to S3: %w", err)
 			return events.APIGatewayProxyResponse{
@@ -198,7 +197,7 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 
 	if imageFile.Filename != "" && imageFile.Content != nil && imageFile.ContentType != "" {
 		log.Printf("uploading image file: %s to S3", imageFile.Filename)
-		mediaLink, err := bucket.SendFileToS3(ctx, s.S3.Client, s.BucketName, imageFile)
+		mediaLink, err := s.S3.SendFileToS3(ctx, imageFile)
 		if err != nil {
 			log.Printf("failed to upload to S3: %v", err)
 			return events.APIGatewayProxyResponse{
@@ -271,7 +270,7 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 	if existingProject.MediaLink != nil && strings.Contains(*existingProject.MediaLink, ".s3.amazonaws.com") {
 		// TODO: Verify file exists before attempting to delete
 		// If 404 not found, don't worry continue to delete from database
-		err = bucket.DeleteFileFromS3(ctx, s.S3.Client, s.BucketName, *existingProject.MediaLink)
+		err = s.S3.DeleteFileFromS3(ctx, *existingProject.MediaLink)
 		if err != nil {
 			log.Printf("error in deleting file from S3: %v", err)
 			return events.APIGatewayProxyResponse{
