@@ -269,17 +269,16 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 		}, err
 	}
 
-	if existingProject.MediaLink != nil && strings.Contains(*existingProject.MediaLink, ".s3.amazonaws.com") {
-		// TODO: Verify file exists before attempting to delete
-		// If 404 not found, don't worry continue to delete from database
-
-		// Check if file exists
-		// exists, err := s.S3.FileExistsInS3(ctx, *existingProject.MediaLink)
-		// if err != nil {
-		// 	log.Printf("error in getting file from S3: %v", err)
-		// }
-
-		if exists, err := s.S3.FileExistsInS3(ctx, *existingProject.MediaLink); exists {
+	if existingProject.MediaLinkIsS3Bucket() {
+		fileName, err := existingProject.GetFileNameFromMediaLink()
+		if err != nil {
+			log.Printf("error in getting filename from mediaLink: %v", err)
+			return events.APIGatewayProxyResponse{
+				StatusCode: http.StatusInternalServerError,
+				Body:       resError(http.StatusInternalServerError),
+			}, err
+		}
+		if exists, err := s.S3.FileExistsInS3(ctx, fileName); exists {
 			err = s.S3.DeleteFileFromS3(ctx, *existingProject.MediaLink)
 			if err != nil {
 				log.Printf("error in deleting file from S3: %v", err)
@@ -290,16 +289,13 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 			}
 		} else {
 			if err != nil {
-				// Check if it's a "not found" error
 				var nf *types.NoSuchKey
 				if errors.As(err, &nf) {
-					return false, nil // File doesn't exist, but no error
+					log.Printf("file %s does not exist in S3", *existingProject.MediaLink)
 				}
-				return false, err // Some other error occurred
+				log.Printf("error in getting file from S3: %v", err)
 			}
-			log.Printf("file does not exist in S3")
 		}
-
 	}
 
 	log.Printf("deleting project: %v", deleteProject)
