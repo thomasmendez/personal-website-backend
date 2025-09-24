@@ -1,108 +1,111 @@
 package database
 
 import (
+	"context"
 	"log"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/thomasmendez/personal-website-backend/api/models"
 )
 
 const partitionKeyWork = "Work"
 
-func GetWork(svc dynamodbiface.DynamoDBAPI, tableName string) (work []models.Work, err error) {
+func GetWork(ctx context.Context, svc *dynamodb.Client, tableName string) (work []models.Work, err error) {
 	work = make([]models.Work, 0)
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(tableName),
 		KeyConditionExpression: aws.String("personalWebsiteType = :partitionKey and sortValue > :startDateValue"),
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":partitionKey": {
-				S: aws.String(partitionKeyWork),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":partitionKey": &types.AttributeValueMemberS{
+				Value: partitionKeyWork,
 			},
-			":startDateValue": {
-				S: aws.String("1970-01-01"),
+			":startDateValue": &types.AttributeValueMemberS{
+				Value: "1970-01-01",
 			},
 		},
 		ScanIndexForward: aws.Bool(false),
 	}
-	queryOutput, err := svc.Query(input)
+	queryOutput, err := svc.Query(ctx, input)
 	if err != nil {
 		log.Printf("error in DynamoDB Query func: %v", err)
 		return work, err
 	}
-	err = unmarshalDynamodbMapSlice(*queryOutput, &work)
+	err = unmarshalDynamodbMapSlice(queryOutput, &work)
 	return work, err
 }
 
-func PostWork(svc dynamodbiface.DynamoDBAPI, tableName string, newWork models.Work) (work models.Work, err error) {
-	item := map[string]*dynamodb.AttributeValue{
-		"personalWebsiteType": {S: aws.String(partitionKeyWork)},
-		"sortValue":           {S: aws.String(newWork.SortValue)},
-		"jobTitle":            {S: aws.String(newWork.JobTitle)},
-		"company":             {S: aws.String(newWork.Company)},
-		"location": {
-			M: map[string]*dynamodb.AttributeValue{
-				"city":  {S: aws.String(newWork.Location.City)},
-				"state": {S: aws.String(newWork.Location.State)},
+func PostWork(ctx context.Context, svc *dynamodb.Client, tableName string, newWork models.Work) (work models.Work, err error) {
+	item := map[string]types.AttributeValue{
+		"personalWebsiteType": &types.AttributeValueMemberS{Value: partitionKeyWork},
+		"sortValue":           &types.AttributeValueMemberS{Value: newWork.SortValue},
+		"jobTitle":            &types.AttributeValueMemberS{Value: newWork.JobTitle},
+		"company":             &types.AttributeValueMemberS{Value: newWork.Company},
+		"location": &types.AttributeValueMemberM{
+			Value: map[string]types.AttributeValue{
+				"city":  &types.AttributeValueMemberS{Value: newWork.Location.City},
+				"state": &types.AttributeValueMemberS{Value: newWork.Location.State},
 			},
 		},
-		"startDate":      {S: aws.String(newWork.StartDate)},
-		"endDate":        {S: aws.String(newWork.EndDate)},
-		"jobRole":        {S: aws.String(newWork.JobRole)},
-		"jobDescription": {SS: aws.StringSlice(newWork.JobDescription)},
+		"startDate":      &types.AttributeValueMemberS{Value: newWork.StartDate},
+		"endDate":        &types.AttributeValueMemberS{Value: newWork.EndDate},
+		"jobRole":        &types.AttributeValueMemberS{Value: newWork.JobRole},
+		"jobDescription": &types.AttributeValueMemberSS{Value: newWork.JobDescription},
 	}
 	input := &dynamodb.PutItemInput{
 		Item:      item,
 		TableName: aws.String(tableName),
 	}
-	_, err = svc.PutItem(input)
+	_, err = svc.PutItem(ctx, input)
 	if err != nil {
 		log.Printf("error in DynamoDB PutItem func: %v", err)
 		return work, err
 	}
-	err = GetItem(svc, tableName, newWork.PersonalWebsiteType, newWork.SortValue, &work)
+	err = GetItem(ctx, svc, tableName, newWork.PersonalWebsiteType, newWork.SortValue, &work)
 	return work, err
 }
 
-func UpdateWork(svc dynamodbiface.DynamoDBAPI, tableName string, updateWork models.Work) (work models.Work, err error) {
+func UpdateWork(ctx context.Context, svc *dynamodb.Client, tableName string, updateWork models.Work) (work models.Work, err error) {
 	updateExpression := "SET #jobTitle = :jobTitleVal, #company = :companyVal, #location = :locationVal, #startDate = :startDateVal, #endDate = :endDateVal, #jobRole = :jobRoleVal, #jobDescription = :jobDescriptionVal"
-	expressionAttributeNames := map[string]*string{
-		"#jobTitle":       aws.String("jobTitle"),
-		"#company":        aws.String("company"),
-		"#location":       aws.String("location"),
-		"#startDate":      aws.String("startDate"),
-		"#endDate":        aws.String("endDate"),
-		"#jobRole":        aws.String("jobRole"),
-		"#jobDescription": aws.String("jobDescription"),
+	expressionAttributeNames := map[string]string{
+		"#jobTitle":       "jobTitle",
+		"#company":        "company",
+		"#location":       "location",
+		"#startDate":      "startDate",
+		"#endDate":        "endDate",
+		"#jobRole":        "jobRole",
+		"#jobDescription": "jobDescription",
 	}
-	expressionAttributeValues := map[string]*dynamodb.AttributeValue{
-		":jobTitleVal": {S: aws.String(updateWork.JobTitle)},
-		":companyVal":  {S: aws.String(updateWork.Company)},
-		":locationVal": {M: map[string]*dynamodb.AttributeValue{
-			"city":  {S: aws.String(updateWork.Location.City)},
-			"state": {S: aws.String(updateWork.Location.State)},
-		}},
-		":startDateVal":      {S: aws.String(updateWork.StartDate)},
-		":endDateVal":        {S: aws.String(updateWork.EndDate)},
-		":jobRoleVal":        {S: aws.String(updateWork.JobRole)},
-		":jobDescriptionVal": {SS: aws.StringSlice(updateWork.JobDescription)},
+	expressionAttributeValues := map[string]types.AttributeValue{
+		":jobTitleVal": &types.AttributeValueMemberS{Value: updateWork.JobTitle},
+		":companyVal":  &types.AttributeValueMemberS{Value: updateWork.Company},
+		":locationVal": &types.AttributeValueMemberM{
+			Value: map[string]types.AttributeValue{
+				"city":  &types.AttributeValueMemberS{Value: updateWork.Location.City},
+				"state": &types.AttributeValueMemberS{Value: updateWork.Location.State},
+			},
+		},
+		":startDateVal":      &types.AttributeValueMemberS{Value: updateWork.StartDate},
+		":endDateVal":        &types.AttributeValueMemberS{Value: updateWork.EndDate},
+		":jobRoleVal":        &types.AttributeValueMemberS{Value: updateWork.JobRole},
+		":jobDescriptionVal": &types.AttributeValueMemberSS{Value: updateWork.JobDescription},
 	}
 	updateInput := &dynamodb.UpdateItemInput{
 		TableName: aws.String(tableName),
-		Key: map[string]*dynamodb.AttributeValue{
-			"personalWebsiteType": {S: aws.String(partitionKeyWork)},
-			"sortValue":           {S: aws.String(updateWork.SortValue)},
+		Key: map[string]types.AttributeValue{
+			"personalWebsiteType": &types.AttributeValueMemberS{Value: partitionKeyWork},
+			"sortValue":           &types.AttributeValueMemberS{Value: updateWork.SortValue},
 		},
 		UpdateExpression:          aws.String(updateExpression),
 		ExpressionAttributeNames:  expressionAttributeNames,
 		ExpressionAttributeValues: expressionAttributeValues,
 	}
-	_, err = svc.UpdateItem(updateInput)
+	_, err = svc.UpdateItem(ctx, updateInput)
 	if err != nil {
 		log.Printf("error in DynamoDB UpdateItem func: %v", err)
 		return work, err
 	}
-	err = GetItem(svc, tableName, updateWork.PersonalWebsiteType, updateWork.SortValue, &work)
+	err = GetItem(ctx, svc, tableName, updateWork.PersonalWebsiteType, updateWork.SortValue, &work)
 	return work, err
 }

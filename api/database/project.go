@@ -1,128 +1,129 @@
 package database
 
 import (
+	"context"
 	"log"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/thomasmendez/personal-website-backend/api/models"
 )
 
 const partitionKeyProjects = "Projects"
 
-func GetProjects(svc dynamodbiface.DynamoDBAPI, tableName string) (projects []models.Project, err error) {
+func GetProjects(ctx context.Context, svc *dynamodb.Client, tableName string) (projects []models.Project, err error) {
 	projects = make([]models.Project, 0)
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(tableName),
 		KeyConditionExpression: aws.String("personalWebsiteType = :partitionKey"),
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":partitionKey": {
-				S: aws.String(partitionKeyProjects),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":partitionKey": &types.AttributeValueMemberS{
+				Value: partitionKeyProjects,
 			},
 		},
 	}
-	queryOutput, err := svc.Query(input)
+	queryOutput, err := svc.Query(ctx, input)
 	if err != nil {
 		log.Printf("error in DynamoDB Query func: %v", err)
 		return projects, err
 	}
-	err = unmarshalDynamodbMapSlice(*queryOutput, &projects)
+	err = unmarshalDynamodbMapSlice(queryOutput, &projects)
 	return projects, err
 }
 
-func PostProject(svc dynamodbiface.DynamoDBAPI, tableName string, newProject models.Project) (project models.Project, err error) {
+func PostProject(ctx context.Context, svc *dynamodb.Client, tableName string, newProject models.Project) (project models.Project, err error) {
 	item := projectItem(newProject)
 	input := &dynamodb.PutItemInput{
 		Item:      item,
 		TableName: aws.String(tableName),
 	}
-	_, err = svc.PutItem(input)
+	_, err = svc.PutItem(ctx, input)
 	if err != nil {
 		log.Printf("error in DynamoDB PutItem func: %v", err)
 		return project, err
 	}
-	err = GetItem(svc, tableName, newProject.PersonalWebsiteType, newProject.SortValue, &project)
+	err = GetItem(ctx, svc, tableName, newProject.PersonalWebsiteType, newProject.SortValue, &project)
 	return project, err
 }
 
-func projectItem(project models.Project) (item map[string]*dynamodb.AttributeValue) {
-	item = map[string]*dynamodb.AttributeValue{
-		"personalWebsiteType": {S: aws.String(project.PersonalWebsiteType)},
-		"sortValue":           {S: aws.String(project.SortValue)},
-		"category":            {S: aws.String(project.Category)},
-		"name":                {S: aws.String(project.Name)},
-		"description":         {S: aws.String(project.Description)},
-		"featuresDescription": {S: aws.String(project.FeaturesDescription)},
-		"role":                {S: aws.String(project.Role)},
-		"tasks":               {SS: aws.StringSlice(project.Tasks)},
-		"tools":               {SS: aws.StringSlice(project.Tools)},
-		"duration":            {S: aws.String(project.Duration)},
-		"startDate":           {S: aws.String(project.StartDate)},
-		"endDate":             {S: aws.String(project.EndDate)},
+func projectItem(project models.Project) (item map[string]types.AttributeValue) {
+	item = map[string]types.AttributeValue{
+		"personalWebsiteType": &types.AttributeValueMemberS{Value: project.PersonalWebsiteType},
+		"sortValue":           &types.AttributeValueMemberS{Value: project.SortValue},
+		"category":            &types.AttributeValueMemberS{Value: project.Category},
+		"name":                &types.AttributeValueMemberS{Value: project.Name},
+		"description":         &types.AttributeValueMemberS{Value: project.Description},
+		"featuresDescription": &types.AttributeValueMemberS{Value: project.FeaturesDescription},
+		"role":                &types.AttributeValueMemberS{Value: project.Role},
+		"tasks":               &types.AttributeValueMemberSS{Value: project.Tasks},
+		"tools":               &types.AttributeValueMemberSS{Value: project.Tools},
+		"duration":            &types.AttributeValueMemberS{Value: project.Duration},
+		"startDate":           &types.AttributeValueMemberS{Value: project.StartDate},
+		"endDate":             &types.AttributeValueMemberS{Value: project.EndDate},
 	}
 	if project.TeamSize != nil {
-		item["teamSize"] = &dynamodb.AttributeValue{N: aws.String(*project.TeamSize)}
+		item["teamSize"] = &types.AttributeValueMemberN{Value: *project.TeamSize}
 	} else {
-		item["teamSize"] = &dynamodb.AttributeValue{NULL: aws.Bool(true)}
+		item["teamSize"] = &types.AttributeValueMemberNULL{Value: true}
 	}
 	if project.TeamRoles != nil {
-		item["teamRoles"] = &dynamodb.AttributeValue{SS: aws.StringSlice(*project.TeamRoles)}
+		item["teamRoles"] = &types.AttributeValueMemberSS{Value: *project.TeamRoles}
 	} else {
-		item["teamRoles"] = &dynamodb.AttributeValue{NULL: aws.Bool(true)}
+		item["teamRoles"] = &types.AttributeValueMemberNULL{Value: true}
 	}
 	if project.CloudServices != nil {
-		item["cloudServices"] = &dynamodb.AttributeValue{SS: aws.StringSlice(*project.CloudServices)}
+		item["cloudServices"] = &types.AttributeValueMemberSS{Value: *project.CloudServices}
 	} else {
-		item["cloudServices"] = &dynamodb.AttributeValue{NULL: aws.Bool(true)}
+		item["cloudServices"] = &types.AttributeValueMemberNULL{Value: true}
 	}
 	if project.Notes != nil {
-		item["notes"] = &dynamodb.AttributeValue{S: aws.String(*project.Notes)}
+		item["notes"] = &types.AttributeValueMemberS{Value: *project.Notes}
 	} else {
-		item["notes"] = &dynamodb.AttributeValue{NULL: aws.Bool(true)}
+		item["notes"] = &types.AttributeValueMemberNULL{Value: true}
 	}
 	if project.Link != nil {
-		item["link"] = &dynamodb.AttributeValue{S: aws.String(*project.Link)}
+		item["link"] = &types.AttributeValueMemberS{Value: *project.Link}
 	} else {
-		item["link"] = &dynamodb.AttributeValue{NULL: aws.Bool(true)}
+		item["link"] = &types.AttributeValueMemberNULL{Value: true}
 	}
 	if project.LinkType != nil {
-		item["linkType"] = &dynamodb.AttributeValue{S: aws.String(*project.LinkType)}
+		item["linkType"] = &types.AttributeValueMemberS{Value: *project.LinkType}
 	} else {
-		item["linkType"] = &dynamodb.AttributeValue{NULL: aws.Bool(true)}
+		item["linkType"] = &types.AttributeValueMemberNULL{Value: true}
 	}
 	if project.MediaLink != nil {
-		item["mediaLink"] = &dynamodb.AttributeValue{S: aws.String(*project.MediaLink)}
+		item["mediaLink"] = &types.AttributeValueMemberS{Value: *project.MediaLink}
 	} else {
-		item["mediaLink"] = &dynamodb.AttributeValue{NULL: aws.Bool(true)}
+		item["mediaLink"] = &types.AttributeValueMemberNULL{Value: true}
 	}
 	return item
 }
 
-func UpdateProject(svc dynamodbiface.DynamoDBAPI, tableName string, newProject models.Project) (project models.Project, err error) {
+func UpdateProject(ctx context.Context, svc *dynamodb.Client, tableName string, newProject models.Project) (project models.Project, err error) {
 	item := projectItem(newProject)
 
 	updateExpression := "SET #category = :categoryVal, #name = :nameVal, #description = :descriptionVal, #featuresDescription = :featuresDescriptionVal, #role = :roleVal, #tasks = :tasksVal, #teamSize = :teamSizeVal, #teamRoles = :teamRolesVal, #cloudServices = :cloudServicesVal, #tools = :toolsVal, #duration = :durationVal, #startDate = :startDateVal, #endDate = :endDateVal, #notes = :notesVal, #link = :linkVal, #linkType = :linkTypeVal, #mediaLink = :mediaLinkVal"
-	expressionAttributeNames := map[string]*string{
-		"#category":            aws.String("category"),
-		"#name":                aws.String("name"),
-		"#description":         aws.String("description"),
-		"#featuresDescription": aws.String("featuresDescription"),
-		"#role":                aws.String("role"),
-		"#tasks":               aws.String("tasks"),
-		"#teamSize":            aws.String("teamSize"),
-		"#teamRoles":           aws.String("teamRoles"),
-		"#cloudServices":       aws.String("cloudServices"),
-		"#tools":               aws.String("tools"),
-		"#duration":            aws.String("duration"),
-		"#startDate":           aws.String("startDate"),
-		"#endDate":             aws.String("endDate"),
-		"#notes":               aws.String("notes"),
-		"#link":                aws.String("link"),
-		"#linkType":            aws.String("linkType"),
-		"#mediaLink":           aws.String("mediaLink"),
+	expressionAttributeNames := map[string]string{
+		"#category":            "category",
+		"#name":                "name",
+		"#description":         "description",
+		"#featuresDescription": "featuresDescription",
+		"#role":                "role",
+		"#tasks":               "tasks",
+		"#teamSize":            "teamSize",
+		"#teamRoles":           "teamRoles",
+		"#cloudServices":       "cloudServices",
+		"#tools":               "tools",
+		"#duration":            "duration",
+		"#startDate":           "startDate",
+		"#endDate":             "endDate",
+		"#notes":               "notes",
+		"#link":                "link",
+		"#linkType":            "linkType",
+		"#mediaLink":           "mediaLink",
 	}
-	expressionAttributeValues := map[string]*dynamodb.AttributeValue{
+	expressionAttributeValues := map[string]types.AttributeValue{
 		":categoryVal":            item["category"],
 		":nameVal":                item["name"],
 		":descriptionVal":         item["description"],
@@ -143,19 +144,19 @@ func UpdateProject(svc dynamodbiface.DynamoDBAPI, tableName string, newProject m
 	}
 	updateInput := &dynamodb.UpdateItemInput{
 		TableName: aws.String(tableName),
-		Key: map[string]*dynamodb.AttributeValue{
-			"personalWebsiteType": {S: aws.String(partitionKeyProjects)},
-			"sortValue":           {S: aws.String(newProject.SortValue)},
+		Key: map[string]types.AttributeValue{
+			"personalWebsiteType": &types.AttributeValueMemberS{Value: partitionKeyProjects},
+			"sortValue":           &types.AttributeValueMemberS{Value: newProject.SortValue},
 		},
 		UpdateExpression:          aws.String(updateExpression),
 		ExpressionAttributeNames:  expressionAttributeNames,
 		ExpressionAttributeValues: expressionAttributeValues,
 	}
-	_, err = svc.UpdateItem(updateInput)
+	_, err = svc.UpdateItem(ctx, updateInput)
 	if err != nil {
 		log.Printf("error in DynamoDB UpdateItem func: %v", err)
 		return project, err
 	}
-	err = GetItem(svc, tableName, newProject.PersonalWebsiteType, newProject.SortValue, &project)
+	err = GetItem(ctx, svc, tableName, newProject.PersonalWebsiteType, newProject.SortValue, &project)
 	return project, err
 }
