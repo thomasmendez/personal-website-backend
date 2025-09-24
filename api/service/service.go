@@ -8,13 +8,16 @@ import (
 	"os"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/thomasmendez/personal-website-backend/api/bucket"
 	"github.com/thomasmendez/personal-website-backend/api/database"
 )
 
 type Service struct {
 	DB        *database.Database
+	S3        *bucket.Bucket
 	TableName string
 	Routes    *[]RouteHandler
 }
@@ -28,12 +31,18 @@ type RouteHandler struct {
 func NewService() *Service {
 	var awsSession *session.Session
 	var tableName string
+	var s3BucketName string
 
 	env := os.Getenv("ENV")
 
 	tableName = os.Getenv("TABLE_NAME")
 	if tableName == "" {
 		log.Fatal("error in configuration: TABLE_NAME env not provided")
+	}
+
+	s3BucketName = os.Getenv("BUCKET_NAME")
+	if s3BucketName == "" {
+		log.Fatal("error in configuration: BUCKET_NAME env not provided")
 	}
 
 	if env != "Local" {
@@ -68,8 +77,14 @@ func NewService() *Service {
 		}))
 	}
 
+	awsConfig, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(os.Getenv("AWS_REGION")))
+	if err != nil {
+		log.Fatal("error loading AWS config: ", err)
+	}
+
 	s := &Service{
 		DB:        database.NewDatabase(awsSession),
+		S3:        bucket.NewBucket(awsConfig, s3BucketName),
 		TableName: tableName,
 	}
 
