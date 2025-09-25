@@ -80,15 +80,25 @@ Resources:
             UserPoolArn: !GetAtt UserPool.Arn
         AddDefaultAuthorizerToCorsPreflight: false
   PersonalWebsiteFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function
     Properties:
       CodeUri: api/
       Handler: bootstrap
       Runtime: provided.al2023
       Architectures: [arm64]
       Events:
-        CatchAll:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+        # Public GET requests (no auth required)
+        PublicGetRequests:
+          Type: Api
+          Properties:
+            Path: "/api/{proxy+}"
+            Method: GET
+            RestApiId: !Ref PersonalWebsiteAPIDeployment
+            Auth:
+              Authorizer: NONE
+        # Protected non-GET requests (auth required - uses default)
+        ProtectedRequests:
+          Type: Api
           Properties:
             Path: "/api/{proxy+}"
             Method: ANY
