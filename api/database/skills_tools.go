@@ -54,34 +54,7 @@ func PostSkillsTools(ctx context.Context, svc *dynamodb.Client, tableName string
 }
 
 func UpdateSkillsTools(ctx context.Context, svc *dynamodb.Client, tableName string, newSkillsTools models.SkillsTools) (skillsTools models.SkillsTools, err error) {
-	// Marshal the Categories field into DynamoDB-compatible values
-	categoriesAttrVal, err := attributevalue.Marshal(newSkillsTools.Categories)
-	if err != nil {
-		log.Printf("error marshalling Categories: %v", err)
-		return skillsTools, err
-	}
-	// Update expression for the fields you want to update
-	updateExpression := "SET #categories = :categoriesVal"
-	// Expression attribute names (used to avoid reserved keywords)
-	expressionAttributeNames := map[string]string{
-		"#categories": "categories",
-	}
-	// Expression attribute values (setting the values to be updated)
-	expressionAttributeValues := map[string]types.AttributeValue{
-		":categoriesVal": categoriesAttrVal,
-	}
-	// Define the primary key (personalWebsiteType and sortValue)
-	updateInput := &dynamodb.UpdateItemInput{
-		TableName: aws.String(tableName),
-		Key: map[string]types.AttributeValue{
-			"personalWebsiteType": &types.AttributeValueMemberS{Value: partitionKeySkillsTools},
-			"sortValue":           &types.AttributeValueMemberS{Value: newSkillsTools.SortValue},
-		},
-		UpdateExpression:          aws.String(updateExpression),
-		ExpressionAttributeNames:  expressionAttributeNames,
-		ExpressionAttributeValues: expressionAttributeValues,
-	}
-	_, err = svc.UpdateItem(ctx, updateInput)
+	err = UpdateItem(ctx, svc, tableName, newSkillsTools, newSkillsTools.PersonalWebsiteType, newSkillsTools.SortValue)
 	if err != nil {
 		log.Printf("error in DynamoDB UpdateItem func: %v", err)
 		return skillsTools, err

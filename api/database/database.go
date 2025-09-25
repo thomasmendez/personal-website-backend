@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -76,6 +77,47 @@ func GetItem(ctx context.Context, svc *dynamodb.Client, tableName string, person
 		log.Printf("error in DynamoDB UnmarshalMap func: %v", err)
 		return err
 	}
+	return nil
+}
+
+func UpdateItem(ctx context.Context, svc *dynamodb.Client, tableName string, item interface{}, partitionKeyValue, sortKeyValue string) error {
+	// Marshal the item
+	attributeMap, err := attributevalue.MarshalMap(item)
+	if err != nil {
+		return fmt.Errorf("error marshalling item: %w", err)
+	}
+
+	// Remove key attributes from the update item
+	delete(attributeMap, "personalWebsiteType")
+	delete(attributeMap, "sortValue")
+
+	// Build update expression dynamically
+	var updateExpressions []string
+	expressionAttributeNames := make(map[string]string)
+	expressionAttributeValues := make(map[string]types.AttributeValue)
+
+	for fieldName, value := range attributeMap {
+		updateExpressions = append(updateExpressions, fmt.Sprintf("#%s = :%sVal", fieldName, fieldName))
+		expressionAttributeNames[fmt.Sprintf("#%s", fieldName)] = fieldName
+		expressionAttributeValues[fmt.Sprintf(":%sVal", fieldName)] = value
+	}
+
+	updateInput := &dynamodb.UpdateItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]types.AttributeValue{
+			"personalWebsiteType": &types.AttributeValueMemberS{Value: partitionKeyValue},
+			"sortValue":           &types.AttributeValueMemberS{Value: sortKeyValue},
+		},
+		UpdateExpression:          aws.String("SET " + strings.Join(updateExpressions, ", ")),
+		ExpressionAttributeNames:  expressionAttributeNames,
+		ExpressionAttributeValues: expressionAttributeValues,
+	}
+
+	_, err = svc.UpdateItem(ctx, updateInput)
+	if err != nil {
+		return fmt.Errorf("error in DynamoDB UpdateItem: %w", err)
+	}
+
 	return nil
 }
 
