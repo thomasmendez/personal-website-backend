@@ -17,7 +17,7 @@ import (
 )
 
 func (s *Service) getProjectsHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	projects, err := database.GetProjects(s.DB, s.TableName)
+	projects, err := database.GetProjects(ctx, s.DB.Client, s.TableName)
 
 	if err != nil {
 		log.Printf("error in getting projects: %v", err)
@@ -95,7 +95,10 @@ func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGat
 			}, err
 		}
 	} else {
-		fmt.Println("POST project request format is invalid")
+		log.Println("POST project request format is invalid")
+		log.Printf("isBase64Encoded: %v", request.IsBase64Encoded)
+		log.Printf("headers: %v", request.Headers)
+
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Body:       resError(http.StatusBadRequest),
@@ -126,7 +129,7 @@ func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGat
 	}
 
 	log.Printf("adding new project: %v to database", newProject)
-	project, err := database.PostProject(s.DB, s.TableName, *newProject)
+	project, err := database.PostProject(ctx, s.DB.Client, s.TableName, *newProject)
 
 	if err != nil {
 		log.Printf("error in inserting project: %v", err)
@@ -222,7 +225,7 @@ func (s *Service) updateProjectsHandler(ctx context.Context, request events.APIG
 	}
 
 	log.Printf("updating project: %v", updateProject)
-	project, err := database.UpdateProject(s.DB, s.TableName, *updateProject)
+	project, err := database.UpdateProject(ctx, s.DB.Client, s.TableName, *updateProject)
 
 	if err != nil {
 		log.Printf("error in updating project: %v", err)
@@ -270,7 +273,7 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 	}
 
 	var existingProject models.Project
-	err = database.GetItem(s.DB, s.TableName, deleteProject.PersonalWebsiteType, deleteProject.SortValue, &existingProject)
+	err = database.GetItem(ctx, s.DB.Client, s.TableName, deleteProject.PersonalWebsiteType, deleteProject.SortValue, &existingProject)
 	if err != nil {
 		log.Printf("error in getting project: %v", err)
 		return events.APIGatewayProxyResponse{
@@ -280,36 +283,40 @@ func (s *Service) deleteProjectHandler(ctx context.Context, request events.APIGa
 	}
 
 	log.Printf("existing project: %v", existingProject)
-	if existingProject.MediaLinkIsS3Bucket() {
-		if fileName, err := existingProject.GetFileNameFromMediaLink(); fileName != "" {
-			if exists, err := s.S3.FileExistsInS3(ctx, fileName); exists {
-				err = s.S3.DeleteFileFromS3(ctx, fileName)
-				if err != nil {
-					log.Printf("error in deleting file from S3: %v", err)
-					return events.APIGatewayProxyResponse{
-						StatusCode: http.StatusInternalServerError,
-						Body:       resError(http.StatusInternalServerError),
-					}, err
+	if existingProject.MediaLink != nil {
+		if existingProject.MediaLinkIsS3Bucket() {
+			if fileName, err := existingProject.GetFileNameFromMediaLink(); fileName != "" {
+				if exists, err := s.S3.FileExistsInS3(ctx, fileName); exists {
+					err = s.S3.DeleteFileFromS3(ctx, fileName)
+					if err != nil {
+						log.Printf("error in deleting file from S3: %v", err)
+						return events.APIGatewayProxyResponse{
+							StatusCode: http.StatusInternalServerError,
+							Body:       resError(http.StatusInternalServerError),
+						}, err
+					}
+				} else {
+					if err != nil {
+						var nf *types.NoSuchKey
+						if errors.As(err, &nf) {
+							log.Printf("file %s does not exist in S3", fileName)
+						}
+						log.Printf("error in getting file from S3: %v", err)
+					}
 				}
 			} else {
-				if err != nil {
-					var nf *types.NoSuchKey
-					if errors.As(err, &nf) {
-						log.Printf("file %s does not exist in S3", fileName)
-					}
-					log.Printf("error in getting file from S3: %v", err)
-				}
+				log.Printf("error in getting filename from mediaLink %s: %v", *existingProject.MediaLink, err)
+				log.Printf("skipping deletion of file from S3")
 			}
 		} else {
-			log.Printf("error in getting filename from mediaLink %s: %v", *existingProject.MediaLink, err)
-			log.Printf("skipping deletion of file from S3")
+			log.Printf("mediaLink for project %s is not a valid S3 bucket link", *existingProject.MediaLink)
 		}
 	} else {
-		log.Printf("mediaLink for project %s is not a valid S3 bucket link", *existingProject.MediaLink)
+		log.Printf("mediaLink for project %s is nil", deleteProject.SortValue)
 	}
 
 	log.Printf("deleting project: %v", deleteProject)
-	err = database.DeleteItem(s.DB, s.TableName, deleteProject.PersonalWebsiteType, deleteProject.SortValue)
+	err = database.DeleteItem(ctx, s.DB.Client, s.TableName, deleteProject.PersonalWebsiteType, deleteProject.SortValue)
 
 	if err != nil {
 		log.Printf("error in deleting project: %v", err)

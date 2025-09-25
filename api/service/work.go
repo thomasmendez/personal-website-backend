@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,7 +15,7 @@ import (
 )
 
 func (s *Service) getWorkHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	work, err := database.GetWork(s.DB, s.TableName)
+	work, err := database.GetWork(ctx, s.DB.Client, s.TableName)
 
 	if err != nil {
 		log.Print(err.Error())
@@ -48,7 +49,20 @@ func (s *Service) postWorkHandler(ctx context.Context, request events.APIGateway
 		}, err
 	}
 
-	work, err := database.PostWork(s.DB, s.TableName, newWork)
+	err = s.validateWork(newWork)
+	if err != nil {
+		log.Print(err.Error())
+		errRes := ErrorResponse{
+			Message: fmt.Sprintf("There was an error in inserting work: %s", err),
+		}
+		res, _ := json.Marshal(errRes)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusBadRequest,
+			Body:       string(res),
+		}, nil
+	}
+
+	work, err := database.PostWork(ctx, s.DB.Client, s.TableName, newWork)
 
 	if err != nil {
 		log.Print(err.Error())
@@ -70,6 +84,19 @@ func (s *Service) postWorkHandler(ctx context.Context, request events.APIGateway
 	}, err
 }
 
+func (s *Service) validateWork(work models.Work) error {
+	if work.PersonalWebsiteType == "" {
+		return errors.New("personalWebsiteType cannot be empty")
+	}
+	if work.SortValue == "" {
+		return errors.New("sortValue cannot be empty")
+	}
+	if work.JobDescription == nil {
+		return errors.New("jobDescription cannot be empty")
+	}
+	return nil
+}
+
 func (s *Service) updateWorkHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	var updateWork models.Work
@@ -82,7 +109,20 @@ func (s *Service) updateWorkHandler(ctx context.Context, request events.APIGatew
 		}, err
 	}
 
-	work, err := database.PostWork(s.DB, s.TableName, updateWork)
+	err = s.validateWork(updateWork)
+	if err != nil {
+		log.Print(err.Error())
+		errRes := ErrorResponse{
+			Message: fmt.Sprintf("There was an error in inserting work: %s", err),
+		}
+		res, _ := json.Marshal(errRes)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusBadRequest,
+			Body:       string(res),
+		}, nil
+	}
+
+	work, err := database.UpdateWork(ctx, s.DB.Client, s.TableName, updateWork)
 
 	if err != nil {
 		log.Print(err.Error())
@@ -116,7 +156,7 @@ func (s *Service) deleteWorkHandler(ctx context.Context, request events.APIGatew
 	}
 
 	var existingWork models.Work
-	err = database.GetItem(s.DB, s.TableName, deleteWork.PersonalWebsiteType, deleteWork.SortValue, &existingWork)
+	err = database.GetItem(ctx, s.DB.Client, s.TableName, deleteWork.PersonalWebsiteType, deleteWork.SortValue, &existingWork)
 
 	if !reflect.DeepEqual(deleteWork, existingWork) {
 		log.Printf("err: %v", err)
@@ -126,7 +166,7 @@ func (s *Service) deleteWorkHandler(ctx context.Context, request events.APIGatew
 		}, err
 	}
 
-	err = database.DeleteItem(s.DB, s.TableName, deleteWork.PersonalWebsiteType, deleteWork.SortValue)
+	err = database.DeleteItem(ctx, s.DB.Client, s.TableName, deleteWork.PersonalWebsiteType, deleteWork.SortValue)
 
 	if err != nil {
 		log.Print(err.Error())

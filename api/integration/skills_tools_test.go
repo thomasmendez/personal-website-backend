@@ -77,6 +77,19 @@ func TestSkillsToolsApi(t *testing.T) {
 				}
 			},
 		},
+		{
+			label:  "Delete SkillsTools",
+			route:  "/api/v1/skillsTools",
+			method: http.MethodDelete,
+			reqBodySkillsTools: func() *models.SkillsTools {
+				return &latestSkillsToolsResponse
+			},
+			assertFunc: func(expectedStruct interface{}, resBody []byte) {
+				if string(resBody) != "Resource was successfully deleted" {
+					t.Fatalf("error in delete skillsTools response: %v", string(resBody))
+				}
+			},
+		},
 	} {
 		t.Run(test.label, func(t *testing.T) {
 			// arrange
@@ -99,6 +112,7 @@ func TestSkillsToolsApi(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to create request: %v", err)
 			}
+			req.Header.Set("Content-Type", "application/json")
 
 			// act
 			res, err := httpClient.Do(req)
@@ -116,17 +130,23 @@ func TestSkillsToolsApi(t *testing.T) {
 			}
 
 			// check if it is a slice or array and then assert
-			var data interface{}
-			if err := json.Unmarshal(body, &data); err != nil {
-				t.Fatalf("Error: %v", err)
-				return
-			}
+			if test.method != http.MethodDelete {
+				var data interface{}
+				if err := json.Unmarshal(body, &data); err != nil {
+					t.Fatalf("Error: %v", err)
+					return
+				}
 
-			value := reflect.ValueOf(data)
-			if value.Kind() == reflect.Slice || value.Kind() == reflect.Array {
-				test.assertFunc([]models.SkillsTools{latestSkillsToolsResponse}, body)
+				value := reflect.ValueOf(data)
+				if value.Kind() == reflect.Slice || value.Kind() == reflect.Array {
+					test.assertFunc([]models.SkillsTools{latestSkillsToolsResponse}, body)
+				} else {
+					test.assertFunc(*reqBodySkillsTools, body)
+				}
 			} else {
-				test.assertFunc(*reqBodySkillsTools, body)
+				if string(body) != "Resource was successfully deleted" {
+					t.Fatalf("error in delete skillsTools response: %v", string(body))
+				}
 			}
 		})
 	}

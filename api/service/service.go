@@ -8,9 +8,9 @@ import (
 	"os"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/thomasmendez/personal-website-backend/api/bucket"
 	"github.com/thomasmendez/personal-website-backend/api/database"
 )
@@ -29,20 +29,23 @@ type RouteHandler struct {
 }
 
 func NewService() *Service {
-	var awsSession *session.Session
-	var tableName string
-	var s3BucketName string
+	options := func(options *dynamodb.Options) {}
 
 	env := os.Getenv("ENV")
 
-	tableName = os.Getenv("TABLE_NAME")
+	tableName := os.Getenv("TABLE_NAME")
 	if tableName == "" {
 		log.Fatal("error in configuration: TABLE_NAME env not provided")
 	}
 
-	s3BucketName = os.Getenv("BUCKET_NAME")
+	s3BucketName := os.Getenv("BUCKET_NAME")
 	if s3BucketName == "" {
 		log.Fatal("error in configuration: BUCKET_NAME env not provided")
+	}
+
+	region := os.Getenv("REGION")
+	if region == "" {
+		log.Fatal("error in configuration: REGION env not provided")
 	}
 
 	if env != "Local" {
@@ -60,21 +63,10 @@ func NewService() *Service {
 				log.Fatalf("error in configuration: ENV 'Stg' requires 'METHODS' variable")
 			}
 		}
-		awsSession = session.Must(session.NewSessionWithOptions(session.Options{
-			SharedConfigState: session.SharedConfigEnable,
-		}))
 	} else {
-		region := os.Getenv("REGION")
-		if region == "" {
-			log.Fatal("error in configuration: REGION env not provided")
+		options = func(options *dynamodb.Options) {
+			options.BaseEndpoint = aws.String("http://dynamodb:8000")
 		}
-		awsSession = session.Must(session.NewSessionWithOptions(session.Options{
-			Config: aws.Config{
-				Endpoint: aws.String("http://dynamodb:8000"),
-				Region:   aws.String(region),
-			},
-			SharedConfigState: session.SharedConfigEnable,
-		}))
 	}
 
 	awsConfig, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(os.Getenv("AWS_REGION")))
@@ -83,7 +75,7 @@ func NewService() *Service {
 	}
 
 	s := &Service{
-		DB:        database.NewDatabase(awsSession),
+		DB:        database.NewDatabase(awsConfig, options),
 		S3:        bucket.NewBucket(awsConfig, s3BucketName),
 		TableName: tableName,
 	}

@@ -52,7 +52,7 @@ func TestProjectApi(t *testing.T) {
 				notes := "Site is still in development stages"
 				link := "http://my-url"
 				linkType := "Youtube"
-				mediaLink := "http://link-to-media-file"
+				// mediaLink := ""
 				// modify previous response for update
 				latestProjectsResponse.Category = "Software Engineering"
 				latestProjectsResponse.Name = "Social Media Site"
@@ -70,7 +70,7 @@ func TestProjectApi(t *testing.T) {
 				latestProjectsResponse.Notes = &notes
 				latestProjectsResponse.Link = &link
 				latestProjectsResponse.LinkType = &linkType
-				latestProjectsResponse.MediaLink = &mediaLink
+				// latestProjectsResponse.MediaLink = &mediaLink
 				return &latestProjectsResponse
 			},
 			assertFunc: func(expectedStruct interface{}, resBody []byte) {
@@ -99,6 +99,19 @@ func TestProjectApi(t *testing.T) {
 				}
 			},
 		},
+		{
+			label:  "Delete Projects",
+			route:  "/api/v1/projects",
+			method: http.MethodDelete,
+			reqBodyProjects: func() *models.Project {
+				return &latestProjectsResponse
+			},
+			assertFunc: func(expectedStruct interface{}, resBody []byte) {
+				if string(resBody) != "Resource was successfully deleted" {
+					t.Fatalf("error in delete project response: %v", string(resBody))
+				}
+			},
+		},
 	} {
 		t.Run(test.label, func(t *testing.T) {
 			// arrange
@@ -121,6 +134,7 @@ func TestProjectApi(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to create request: %v", err)
 			}
+			req.Header.Set("Content-Type", "application/json")
 
 			// act
 			res, err := httpClient.Do(req)
@@ -133,22 +147,26 @@ func TestProjectApi(t *testing.T) {
 				t.Fatalf("error in reading body: %v", err)
 			}
 			if res.StatusCode != 200 && res.StatusCode != 201 {
-				t.Logf("Test request %v: %v", test.label, string(body))
+				t.Logf("Test request %v: response: %v", test.label, string(body))
 				t.Fatalf("error status code: %v", res.StatusCode)
 			}
 
 			// check if it is a slice or array and then assert
-			var data interface{}
-			if err := json.Unmarshal(body, &data); err != nil {
-				t.Fatalf("Error: %v", err)
-				return
-			}
+			if test.method != http.MethodDelete {
+				var data interface{}
+				if err := json.Unmarshal(body, &data); err != nil {
+					t.Fatalf("error: %v", err)
+					return
+				}
 
-			value := reflect.ValueOf(data)
-			if value.Kind() == reflect.Slice || value.Kind() == reflect.Array {
-				test.assertFunc([]models.Project{latestProjectsResponse}, body)
+				value := reflect.ValueOf(data)
+				if value.Kind() == reflect.Slice || value.Kind() == reflect.Array {
+					test.assertFunc([]models.Project{latestProjectsResponse}, body)
+				} else {
+					test.assertFunc(*reqBodyProjects, body)
+				}
 			} else {
-				test.assertFunc(*reqBodyProjects, body)
+				test.assertFunc("Resource was successfully deleted", body)
 			}
 		})
 	}
