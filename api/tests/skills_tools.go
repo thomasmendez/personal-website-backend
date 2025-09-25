@@ -1,6 +1,9 @@
 package tests
 
 import (
+	"reflect"
+	"testing"
+
 	"github.com/thomasmendez/personal-website-backend/api/models"
 )
 
@@ -44,8 +47,8 @@ var TestSkillsTools = models.SkillsTools{
 // 	},
 // }
 
-// func AssertSkillsTools(t *testing.T, expectedSkillsTools models.SkillsTools, actualSkillsTools models.SkillsTools) {
-// 	assert.Equal(t, expectedSkillsTools.PersonalWebsiteType, actualSkillsTools.PersonalWebsiteType)
-// 	assert.Equal(t, expectedSkillsTools.SortValue, actualSkillsTools.SortValue)
-// 	assert.Equal(t, expectedSkillsTools.Categories, actualSkillsTools.Categories)
-// }
+func AssertSkillsTools(t *testing.T, expectedSkillsTools models.SkillsTools, actualSkillsTools models.SkillsTools) {
+	if !reflect.DeepEqual(expectedSkillsTools, actualSkillsTools) {
+		t.Errorf("expected %v, got %v", expectedSkillsTools, actualSkillsTools)
+	}
+}

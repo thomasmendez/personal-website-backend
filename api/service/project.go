@@ -95,7 +95,10 @@ func (s *Service) postProjectsHandler(ctx context.Context, request events.APIGat
 			}, err
 		}
 	} else {
-		fmt.Println("POST project request format is invalid")
+		log.Println("POST project request format is invalid")
+		log.Printf("isBase64Encoded: %v", request.IsBase64Encoded)
+		log.Printf("headers: %v", request.Headers)
+
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Body:       resError(http.StatusBadRequest),

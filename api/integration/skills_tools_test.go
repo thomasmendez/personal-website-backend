@@ -1,120 +1,153 @@
 package integration
 
-// func TestSkillsToolsApi(t *testing.T) {
-// 	integrationTest(t)
+import (
+	"bytes"
+	"encoding/json"
+	"io"
+	"log"
+	"net/http"
+	"reflect"
+	"testing"
 
-// 	var latestSkillsToolsResponse models.SkillsTools
-// 	for _, test := range []struct {
-// 		label              string
-// 		route              string
-// 		method             string
-// 		reqBodySkillsTools func() *models.SkillsTools
-// 		assertFunc         func(expectedStruct interface{}, resBody []byte)
-// 	}{
-// 		{
-// 			label:  "Post SkillsTools",
-// 			route:  "/api/v1/skillsTools",
-// 			method: http.MethodPost,
-// 			reqBodySkillsTools: func() *models.SkillsTools {
-// 				return &tests.TestSkillsTools
-// 			},
-// 			assertFunc: func(expectedStruct interface{}, resBody []byte) {
-// 				var skillsTools models.SkillsTools
-// 				err := json.Unmarshal(resBody, &skillsTools)
-// 				if err != nil {
-// 					t.Fatalf("error in unmarshal: %v", err)
-// 				}
-// 				tests.AssertSkillsTools(t, expectedStruct.(models.SkillsTools), skillsTools)
-// 				latestSkillsToolsResponse = skillsTools
-// 			},
-// 		},
-// 		{
-// 			label:  "Update SkillsTools",
-// 			route:  "/api/v1/skillsTools",
-// 			method: http.MethodPut,
-// 			reqBodySkillsTools: func() *models.SkillsTools {
-// 				// modify previous response for update
-// 				latestSkillsToolsResponse.Categories[0].Category = "Cloud Services"
-// 				latestSkillsToolsResponse.Categories[0].List = []string{"AWS", "Azure", "GCP"}
-// 				return &latestSkillsToolsResponse
-// 			},
-// 			assertFunc: func(expectedStruct interface{}, resBody []byte) {
-// 				var skillsTools models.SkillsTools
-// 				err := json.Unmarshal(resBody, &skillsTools)
-// 				if err != nil {
-// 					t.Fatalf("error in unmarshal: %v", err)
-// 				}
-// 				tests.AssertSkillsTools(t, expectedStruct.(models.SkillsTools), skillsTools)
-// 				latestSkillsToolsResponse = skillsTools
-// 			},
-// 		},
-// 		{
-// 			label:              "Get SkillsTools list",
-// 			route:              "/api/v1/skillsTools",
-// 			method:             http.MethodGet,
-// 			reqBodySkillsTools: nil,
-// 			assertFunc: func(expectedStruct interface{}, resBody []byte) {
-// 				var skillsTools []models.SkillsTools
-// 				err := json.Unmarshal(resBody, &skillsTools)
-// 				if err != nil {
-// 					t.Fatalf("error in unmarshal: %v", err)
-// 				}
-// 				for i, result := range skillsTools {
-// 					tests.AssertSkillsTools(t, expectedStruct.([]models.SkillsTools)[i], result)
-// 				}
-// 			},
-// 		},
-// 	} {
-// 		t.Run(test.label, func(t *testing.T) {
-// 			// arrange
-// 			httpClient := &http.Client{}
-// 			url := "http://127.0.0.1:3000" + test.route
+	"github.com/thomasmendez/personal-website-backend/api/models"
+	"github.com/thomasmendez/personal-website-backend/api/tests"
+)
 
-// 			var reqBodySkillsTools *models.SkillsTools
-// 			if test.reqBodySkillsTools != nil {
-// 				reqBodySkillsTools = test.reqBodySkillsTools()
-// 			}
-// 			reqBodyJson, err := json.Marshal(&reqBodySkillsTools)
-// 			log.Print(string(reqBodyJson))
-// 			if err != nil {
-// 				t.Fatalf("failed to marshal skillsTools request: %v", err)
-// 			}
-// 			req, err := http.NewRequest(test.method, url, nil)
-// 			if test.reqBodySkillsTools != nil {
-// 				req, err = http.NewRequest(test.method, url, bytes.NewBuffer(reqBodyJson))
-// 			}
-// 			if err != nil {
-// 				t.Fatalf("failed to create request: %v", err)
-// 			}
+func TestSkillsToolsApi(t *testing.T) {
+	integrationTest(t)
 
-// 			// act
-// 			res, err := httpClient.Do(req)
-// 			if err != nil {
-// 				t.Fatalf("failed to send request: %v", err)
-// 			}
-// 			defer res.Body.Close()
-// 			body, err := io.ReadAll(res.Body)
-// 			if err != nil {
-// 				t.Fatalf("error in reading body: %v", err)
-// 			}
-// 			if res.StatusCode != 200 && res.StatusCode != 201 {
-// 				t.Log(string(body))
-// 				t.Fatalf("error status code: %v", res.StatusCode)
-// 			}
+	var latestSkillsToolsResponse models.SkillsTools
+	for _, test := range []struct {
+		label              string
+		route              string
+		method             string
+		reqBodySkillsTools func() *models.SkillsTools
+		assertFunc         func(expectedStruct interface{}, resBody []byte)
+	}{
+		{
+			label:  "Post SkillsTools",
+			route:  "/api/v1/skillsTools",
+			method: http.MethodPost,
+			reqBodySkillsTools: func() *models.SkillsTools {
+				return &tests.TestSkillsTools
+			},
+			assertFunc: func(expectedStruct interface{}, resBody []byte) {
+				var skillsTools models.SkillsTools
+				err := json.Unmarshal(resBody, &skillsTools)
+				if err != nil {
+					t.Fatalf("error in unmarshal: %v", err)
+				}
+				tests.AssertSkillsTools(t, expectedStruct.(models.SkillsTools), skillsTools)
+				latestSkillsToolsResponse = skillsTools
+			},
+		},
+		{
+			label:  "Update SkillsTools",
+			route:  "/api/v1/skillsTools",
+			method: http.MethodPut,
+			reqBodySkillsTools: func() *models.SkillsTools {
+				// modify previous response for update
+				latestSkillsToolsResponse.Categories[0].Category = "Cloud Services"
+				latestSkillsToolsResponse.Categories[0].List = []string{"AWS", "Azure", "GCP"}
+				return &latestSkillsToolsResponse
+			},
+			assertFunc: func(expectedStruct interface{}, resBody []byte) {
+				var skillsTools models.SkillsTools
+				err := json.Unmarshal(resBody, &skillsTools)
+				if err != nil {
+					t.Fatalf("error in unmarshal: %v", err)
+				}
+				tests.AssertSkillsTools(t, expectedStruct.(models.SkillsTools), skillsTools)
+				latestSkillsToolsResponse = skillsTools
+			},
+		},
+		{
+			label:              "Get SkillsTools list",
+			route:              "/api/v1/skillsTools",
+			method:             http.MethodGet,
+			reqBodySkillsTools: nil,
+			assertFunc: func(expectedStruct interface{}, resBody []byte) {
+				var skillsTools []models.SkillsTools
+				err := json.Unmarshal(resBody, &skillsTools)
+				if err != nil {
+					t.Fatalf("error in unmarshal: %v", err)
+				}
+				for i, result := range skillsTools {
+					tests.AssertSkillsTools(t, expectedStruct.([]models.SkillsTools)[i], result)
+				}
+			},
+		},
+		{
+			label:  "Delete SkillsTools",
+			route:  "/api/v1/skillsTools",
+			method: http.MethodDelete,
+			reqBodySkillsTools: func() *models.SkillsTools {
+				return &latestSkillsToolsResponse
+			},
+			assertFunc: func(expectedStruct interface{}, resBody []byte) {
+				if string(resBody) != "Resource was successfully deleted" {
+					t.Fatalf("error in delete skillsTools response: %v", string(resBody))
+				}
+			},
+		},
+	} {
+		t.Run(test.label, func(t *testing.T) {
+			// arrange
+			httpClient := &http.Client{}
+			url := "http://127.0.0.1:3000" + test.route
 
-// 			// check if it is a slice or array and then assert
-// 			var data interface{}
-// 			if err := json.Unmarshal(body, &data); err != nil {
-// 				t.Fatalf("Error: %v", err)
-// 				return
-// 			}
+			var reqBodySkillsTools *models.SkillsTools
+			if test.reqBodySkillsTools != nil {
+				reqBodySkillsTools = test.reqBodySkillsTools()
+			}
+			reqBodyJson, err := json.Marshal(&reqBodySkillsTools)
+			log.Print(string(reqBodyJson))
+			if err != nil {
+				t.Fatalf("failed to marshal skillsTools request: %v", err)
+			}
+			req, err := http.NewRequest(test.method, url, nil)
+			if test.reqBodySkillsTools != nil {
+				req, err = http.NewRequest(test.method, url, bytes.NewBuffer(reqBodyJson))
+			}
+			if err != nil {
+				t.Fatalf("failed to create request: %v", err)
+			}
+			req.Header.Set("Content-Type", "application/json")
 
-// 			value := reflect.ValueOf(data)
-// 			if value.Kind() == reflect.Slice || value.Kind() == reflect.Array {
-// 				test.assertFunc([]models.SkillsTools{latestSkillsToolsResponse}, body)
-// 			} else {
-// 				test.assertFunc(*reqBodySkillsTools, body)
-// 			}
-// 		})
-// 	}
-// }
+			// act
+			res, err := httpClient.Do(req)
+			if err != nil {
+				t.Fatalf("failed to send request: %v", err)
+			}
+			defer res.Body.Close()
+			body, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Fatalf("error in reading body: %v", err)
+			}
+			if res.StatusCode != 200 && res.StatusCode != 201 {
+				t.Log(string(body))
+				t.Fatalf("error status code: %v", res.StatusCode)
+			}
+
+			// check if it is a slice or array and then assert
+			if test.method != http.MethodDelete {
+				var data interface{}
+				if err := json.Unmarshal(body, &data); err != nil {
+					t.Fatalf("Error: %v", err)
+					return
+				}
+
+				value := reflect.ValueOf(data)
+				if value.Kind() == reflect.Slice || value.Kind() == reflect.Array {
+					test.assertFunc([]models.SkillsTools{latestSkillsToolsResponse}, body)
+				} else {
+					test.assertFunc(*reqBodySkillsTools, body)
+				}
+			} else {
+				if string(body) != "Resource was successfully deleted" {
+					t.Fatalf("error in delete skillsTools response: %v", string(body))
+				}
+			}
+		})
+	}
+}

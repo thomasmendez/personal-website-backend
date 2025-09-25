@@ -1,6 +1,9 @@
 package tests
 
 import (
+	"reflect"
+	"testing"
+
 	"github.com/thomasmendez/personal-website-backend/api/models"
 )
 
@@ -38,15 +41,8 @@ var TestWork = models.Work{
 // 	"jobDescription": {SS: []*string{aws.String("Developed backend systems"), aws.String("Optimized database queries")}},
 // }
 
-// func AssertWork(t *testing.T, expectedWork models.Work, actualWork models.Work) {
-// 	assert.Equal(t, expectedWork.PersonalWebsiteType, actualWork.PersonalWebsiteType)
-// 	assert.Equal(t, expectedWork.SortValue, actualWork.SortValue)
-// 	assert.Equal(t, expectedWork.JobTitle, actualWork.JobTitle)
-// 	assert.Equal(t, expectedWork.Company, actualWork.Company)
-// 	assert.Equal(t, expectedWork.Location.City, actualWork.Location.City)
-// 	assert.Equal(t, expectedWork.Location.State, actualWork.Location.State)
-// 	assert.Equal(t, expectedWork.StartDate, actualWork.StartDate)
-// 	assert.Equal(t, expectedWork.EndDate, actualWork.EndDate)
-// 	assert.Equal(t, expectedWork.JobRole, actualWork.JobRole)
-// 	assert.Equal(t, expectedWork.JobDescription, actualWork.JobDescription)
-// }
+func AssertWork(t *testing.T, expectedWork models.Work, actualWork models.Work) {
+	if !reflect.DeepEqual(expectedWork, actualWork) {
+		t.Errorf("expected %v, got %v", expectedWork, actualWork)
+	}
+}

@@ -1,12 +1,12 @@
 package models
 
 type SkillsTools struct {
-	PersonalWebsiteType string     `json:"personalWebsiteType"`
-	SortValue           string     `json:"sortValue"` // value should be "Skills" or "Tools"
-	Categories          []Category `json:"categories"`
+	PersonalWebsiteType string     `json:"personalWebsiteType" dynamodbav:"personalWebsiteType"`
+	SortValue           string     `json:"sortValue" dynamodbav:"sortValue"`
+	Categories          []Category `json:"categories" dynamodbav:"categories"`
 }
 
 type Category struct {
-	Category string   `json:"category"`
-	List     []string `json:"list"`
+	Category string   `json:"category" dynamodbav:"category"`
+	List     []string `json:"list" dynamodbav:"list"`
 }

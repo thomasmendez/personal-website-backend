@@ -1,6 +1,9 @@
 package tests
 
 import (
+	"reflect"
+	"testing"
+
 	"github.com/thomasmendez/personal-website-backend/api/models"
 )
 
@@ -24,7 +27,7 @@ var TestProject = models.Project{
 	Notes:               &notes,
 	Link:                &link,
 	LinkType:            &linkType,
-	MediaLink:           &mediaLink,
+	// MediaLink:           &mediaLink,
 }
 
 var teamSize = "1"
@@ -33,7 +36,8 @@ var cloudServices = []string{"AWS"}
 var notes = "Site is still in development stages"
 var link = "http://my-url"
 var linkType = "YouTube"
-var mediaLink = "http://link-to-media-file"
+
+// var mediaLink = ""
 
 // Project Item model used for dynamodb
 // var TestProjectItem = map[string]*dynamodb.AttributeValue{
@@ -104,24 +108,8 @@ var TestProjectNil = models.Project{
 // 	"mediaLink":           {NULL: aws.Bool(true)},
 // }
 
-// func AssertProject(t *testing.T, expectedProject models.Project, actualProject models.Project) {
-// 	assert.Equal(t, expectedProject.PersonalWebsiteType, actualProject.PersonalWebsiteType)
-// 	assert.Equal(t, expectedProject.SortValue, actualProject.SortValue)
-// 	assert.Equal(t, expectedProject.Category, actualProject.Category)
-// 	assert.Equal(t, expectedProject.Name, actualProject.Name)
-// 	assert.Equal(t, expectedProject.Description, actualProject.Description)
-// 	assert.Equal(t, expectedProject.FeaturesDescription, actualProject.FeaturesDescription)
-// 	assert.Equal(t, expectedProject.Role, actualProject.Role)
-// 	assert.Equal(t, expectedProject.Tasks, actualProject.Tasks)
-// 	assert.Equal(t, expectedProject.TeamSize, actualProject.TeamSize)
-// 	assert.Equal(t, expectedProject.TeamRoles, actualProject.TeamRoles)
-// 	assert.Equal(t, expectedProject.CloudServices, actualProject.CloudServices)
-// 	assert.Equal(t, expectedProject.Tools, actualProject.Tools)
-// 	assert.Equal(t, expectedProject.Duration, actualProject.Duration)
-// 	assert.Equal(t, expectedProject.StartDate, actualProject.StartDate)
-// 	assert.Equal(t, expectedProject.EndDate, actualProject.EndDate)
-// 	assert.Equal(t, expectedProject.Notes, actualProject.Notes)
-// 	assert.Equal(t, expectedProject.Link, actualProject.Link)
-// 	assert.Equal(t, expectedProject.LinkType, actualProject.LinkType)
-// 	assert.Equal(t, expectedProject.MediaLink, actualProject.MediaLink)
-// }
+func AssertProject(t *testing.T, expectedProject models.Project, actualProject models.Project) {
+	if !reflect.DeepEqual(expectedProject, actualProject) {
+		t.Errorf("expected %v, got %v", expectedProject, actualProject)
+	}
+}
