@@ -341,7 +341,7 @@ func setSliceFromBytes(field reflect.Value, value []byte) error {
 }
 
 func detectContentType(data []byte) (string, error) {
-	if len(data) < 8 {
+	if len(data) < 12 {
 		return "application/octet-stream", nil
 	}
 
@@ -356,6 +356,10 @@ func detectContentType(data []byte) (string, error) {
 	case data[0] == 0x52 && data[1] == 0x49 && data[2] == 0x46 && data[3] == 0x46 &&
 		data[8] == 0x57 && data[9] == 0x45 && data[10] == 0x42 && data[11] == 0x50:
 		return "image/webp", nil
+	case data[4] == 0x66 && data[5] == 0x74 && data[6] == 0x79 && data[7] == 0x70:
+		// ISO Base Media File Format container (MP4, MOV, M4V, etc.)
+		// bytes 8-11 are the "major brand" - useful if you want to distinguish subtypes
+		return "video/mp4", nil
 	default:
 		return "", fmt.Errorf("unknown content type")
 	}
