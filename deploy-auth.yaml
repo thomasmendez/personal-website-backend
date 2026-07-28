@@ -66,7 +66,7 @@ Resources:
           KeyType: HASH
         - AttributeName: sortValue
           KeyType: RANGE
-      ProvisionedThroughput: 
+      ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
   PersonalWebsiteAPIDeployment:
@@ -151,7 +151,7 @@ Resources:
   AppClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
-      AllowedOAuthFlows: 
+      AllowedOAuthFlows:
         - implicit
       AllowedOAuthScopes:
         - email
@@ -166,10 +166,10 @@ Resources:
         - ALLOW_USER_SRP_AUTH
       UserPoolId: !Ref UserPool
       SupportedIdentityProviders:
-        - COGNITO 
+        - COGNITO
   HostedUI:
     Type: AWS::Cognito::UserPoolDomain
-    Properties: 
+    Properties:
       Domain: !Join
         - '-'
         - - !Ref PersonalWebsiteAPIDeployment
@@ -189,8 +189,14 @@ Outputs:
   S3BucketName:
     Description: Name of the S3 bucket for file storage
     Value: !Ref PersonalWebsiteFilesBucket
-    Export:
-      Name: !Sub "${AWS::StackName}-S3BucketName"
+    # Export:
+    #   Name: !Sub "${AWS::StackName}-S3BucketName"
   LoginURL:
     Value: !Sub https://${HostedUI}.auth.${AWS::Region}.amazoncognito.com/oauth2/authorize?client_id=${AppClient}&response_type=token&scope=email+openid+profile&redirect_uri=https://jwt.io
     Description: Output is a URL for an Amazon Cognito hosted UI where clients can sign up and sign in to receive a JWT. After a client signs in, the client is redirected to jwt.io where the token details can be viewed.
+  CognitoUserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref UserPool
+  CognitoUserPoolClientId:
+    Description: Cognito User Pool Client ID
+    Value: !Ref AppClient
